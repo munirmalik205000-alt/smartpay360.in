@@ -84,10 +84,11 @@ const AdminPanel: React.FC<AdminProps> = ({
         mrp: parseFloat(newProdMrp) || parseFloat(newProdPrice) * 1.2,
         price: parseFloat(newProdPrice),
         description: newProdDesc || 'Brand new item',
-        category: newProdCat,
+        category: newProdCat as any,
         mlmPoints: parseFloat(newProdMlmPoints),
         image: newProdIcon,
         stock: 100,
+        vendorId: 'admin',
         vendorName: 'SMARTPAY CENTRAL'
       });
       // reset

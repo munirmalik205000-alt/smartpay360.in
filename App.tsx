@@ -6,6 +6,8 @@ import Dashboard from './components/Dashboard';
 import AdminPanel from './components/AdminPanel';
 import VendorPanel from './components/VendorPanel';
 import { Layout } from './components/Layout';
+import { safeLocalStorage } from './services/storage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 const DEFAULT_LEVEL_PERCENTAGES_20 = [
   0.15, 0.08, 0.05, 0.03, 0.02, 0.02, 0.01, 0.01, 0.01, 0.01,
@@ -50,7 +52,7 @@ const INITIAL_REWARDS = [
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<User | null>(() => {
     try {
-      const saved = localStorage.getItem('spay_current_user');
+      const saved = safeLocalStorage.getItem('spay_current_user', '');
       return saved ? JSON.parse(saved) : null;
     } catch {
       return null;
@@ -58,26 +60,26 @@ const App: React.FC = () => {
   });
   const [activeTab, setActiveTab] = useState('home');
   const [darkMode, setDarkMode] = useState<boolean>(() => {
-    return localStorage.getItem('spay_theme') === 'dark';
+    return safeLocalStorage.getItem('spay_theme', 'dark') === 'dark';
   });
 
-  const [users, setUsers] = useState<User[]>(() => JSON.parse(localStorage.getItem('spay_users') || '[]'));
-  const [products, setProducts] = useState<Product[]>(() => JSON.parse(localStorage.getItem('spay_products') || JSON.stringify(INITIAL_PRODUCTS)));
-  const [orders, setOrders] = useState<Order[]>(() => JSON.parse(localStorage.getItem('spay_orders') || '[]'));
-  const [transactions, setTransactions] = useState<Transaction[]>(() => JSON.parse(localStorage.getItem('spay_tx') || '[]'));
-  const [mlmConfig, setMlmConfig] = useState<MLMConfig>(() => JSON.parse(localStorage.getItem('spay_config') || JSON.stringify(DEFAULT_MLM_CONFIG)));
-  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>(() => JSON.parse(localStorage.getItem('spay_payments') || '[]'));
-  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>(() => JSON.parse(localStorage.getItem('spay_withdrawals') || '[]'));
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => JSON.parse(localStorage.getItem('spay_chats') || '[]'));
+  const [users, setUsers] = useState<User[]>(() => JSON.parse(safeLocalStorage.getItem('spay_users', '[]')));
+  const [products, setProducts] = useState<Product[]>(() => JSON.parse(safeLocalStorage.getItem('spay_products', JSON.stringify(INITIAL_PRODUCTS))));
+  const [orders, setOrders] = useState<Order[]>(() => JSON.parse(safeLocalStorage.getItem('spay_orders', '[]')));
+  const [transactions, setTransactions] = useState<Transaction[]>(() => JSON.parse(safeLocalStorage.getItem('spay_tx', '[]')));
+  const [mlmConfig, setMlmConfig] = useState<MLMConfig>(() => JSON.parse(safeLocalStorage.getItem('spay_config', JSON.stringify(DEFAULT_MLM_CONFIG))));
+  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>(() => JSON.parse(safeLocalStorage.getItem('spay_payments', '[]')));
+  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>(() => JSON.parse(safeLocalStorage.getItem('spay_withdrawals', '[]')));
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => JSON.parse(safeLocalStorage.getItem('spay_chats', '[]')));
 
   // Theme support
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
-      localStorage.setItem('spay_theme', 'dark');
+      safeLocalStorage.setItem('spay_theme', 'dark');
     } else {
       document.documentElement.classList.remove('dark');
-      localStorage.setItem('spay_theme', 'light');
+      safeLocalStorage.setItem('spay_theme', 'light');
     }
   }, [darkMode]);
 
@@ -85,9 +87,9 @@ const App: React.FC = () => {
   useEffect(() => {
     try {
       if (currentUser) {
-        localStorage.setItem('spay_current_user', JSON.stringify(currentUser));
+        safeLocalStorage.setItem('spay_current_user', JSON.stringify(currentUser));
       } else {
-        localStorage.removeItem('spay_current_user');
+        safeLocalStorage.removeItem('spay_current_user');
       }
     } catch {}
   }, [currentUser]);
@@ -168,15 +170,15 @@ const App: React.FC = () => {
   // Save changes locally
   useEffect(() => {
     if (users.length > 0) {
-      localStorage.setItem('spay_users', JSON.stringify(users));
+      safeLocalStorage.setItem('spay_users', JSON.stringify(users));
     }
-    localStorage.setItem('spay_products', JSON.stringify(products));
-    localStorage.setItem('spay_orders', JSON.stringify(orders));
-    localStorage.setItem('spay_tx', JSON.stringify(transactions));
-    localStorage.setItem('spay_config', JSON.stringify(mlmConfig));
-    localStorage.setItem('spay_payments', JSON.stringify(paymentRequests));
-    localStorage.setItem('spay_withdrawals', JSON.stringify(withdrawalRequests));
-    localStorage.setItem('spay_chats', JSON.stringify(chatMessages));
+    safeLocalStorage.setItem('spay_products', JSON.stringify(products));
+    safeLocalStorage.setItem('spay_orders', JSON.stringify(orders));
+    safeLocalStorage.setItem('spay_tx', JSON.stringify(transactions));
+    safeLocalStorage.setItem('spay_config', JSON.stringify(mlmConfig));
+    safeLocalStorage.setItem('spay_payments', JSON.stringify(paymentRequests));
+    safeLocalStorage.setItem('spay_withdrawals', JSON.stringify(withdrawalRequests));
+    safeLocalStorage.setItem('spay_chats', JSON.stringify(chatMessages));
   }, [users, products, orders, transactions, mlmConfig, paymentRequests, withdrawalRequests, chatMessages]);
 
   // Helper helper to distribute commissions up to 20 levels deep
@@ -380,17 +382,17 @@ const App: React.FC = () => {
     setCurrentUser(newUser);
   };
 
-  const handleLogin = (email: string, password?: string) => {
-    const trimmedEmail = email.trim().toLowerCase();
+  const handleLogin = (phoneOrEmail: string, password?: string) => {
+    const trimmedInput = phoneOrEmail.trim().toLowerCase();
     const trimmedPassword = password?.trim();
     const u = users.find(user => 
-      user.email.toLowerCase() === trimmedEmail && 
+      (user.email.toLowerCase() === trimmedInput || user.phone === trimmedInput) && 
       user.password === trimmedPassword
     );
     if (u) {
       setCurrentUser(u);
     } else {
-      alert('🚨 Secure Auth Failed. Please ensure password and email are correct.');
+      alert('🚨 Secure Auth Failed. Please ensure password and Mobile number / Email are correct.');
     }
   };
 
@@ -407,10 +409,19 @@ const App: React.FC = () => {
     const user = users.find(u => u.id === userId);
     if (!user || !user.isActivated) return alert('🚨 MLM Warning: Please activate your account first with the active package to start earning cashback.');
     if (user.transactionPin !== pin) return alert('🚨 Security Error: Transaction PIN incorrect.');
-    if (user.wallets.recharge < amount) return alert('🚨 Wallet Error: Insufficient funds in Recharge Wallet.');
+    
+    // Choose wallets: deduct from recharge wallet first, or fallback to main wallet
+    let walletToDebit: 'recharge' | 'main' = 'recharge';
+    if (user.wallets.recharge >= amount) {
+      walletToDebit = 'recharge';
+    } else if (user.wallets.main >= amount) {
+      walletToDebit = 'main';
+    } else {
+      return alert(`🚨 Wallet Error: Insufficient funds. Payment requires ₹${amount.toFixed(2)}. Your Recharge Wallet has ₹${user.wallets.recharge.toFixed(2)} and Main Wallet has ₹${user.wallets.main.toFixed(2)}.`);
+    }
 
     // Process recharge
-    handleTransaction(userId, -amount, 'recharge', 'recharge', `${operator} ${service} Recharge of ₹${amount}`);
+    handleTransaction(userId, -amount, walletToDebit, 'recharge', `${operator} ${service} Recharge of ₹${amount}`);
     
     // Instant 2% cashback
     const cashback = parseFloat((amount * 0.02).toFixed(2));
@@ -418,7 +429,7 @@ const App: React.FC = () => {
 
     // Distribute 20 Level commissions!
     distributeMLMCommissions(userId, amount, 'recharge');
-    alert(`🎉 ${operator} ${service} payment of ₹${amount} successful! Cashback of ₹${cashback} credited.`);
+    alert(`🎉 ${operator} ${service} payment of ₹${amount} successful! Cashback of ₹${cashback} credited. Debited from your ${walletToDebit === 'recharge' ? 'Recharge' : 'Main'} Wallet.`);
   };
 
   // Upgraded Place Order with shopping cashback + rewards logic and 20 level BV (BV distribution)
@@ -487,14 +498,23 @@ const App: React.FC = () => {
   const handleActivateAccount = (userId: string) => {
     const user = users.find(u => u.id === userId);
     if (!user) return;
-    if (user.wallets.recharge < mlmConfig.packagePrice) return alert(`🚨 activation requires ₹${mlmConfig.packagePrice} in Recharge Wallet.`);
+    
+    // Check if either recharge or main wallet has enough funds
+    let walletToDebit: 'recharge' | 'main' = 'recharge';
+    if (user.wallets.recharge >= mlmConfig.packagePrice) {
+      walletToDebit = 'recharge';
+    } else if (user.wallets.main >= mlmConfig.packagePrice) {
+      walletToDebit = 'main';
+    } else {
+      return alert(`🚨 activation requires ₹${mlmConfig.packagePrice} in Recharge Wallet or Main Cash Wallet. Your Recharge Wallet has ₹${user.wallets.recharge.toFixed(2)} and Main Wallet has ₹${user.wallets.main.toFixed(2)}.`);
+    }
 
-    handleTransaction(userId, -mlmConfig.packagePrice, 'recharge', 'activation', `S360 Elite Active Member Package Joining fee`);
+    handleTransaction(userId, -mlmConfig.packagePrice, walletToDebit, 'activation', `S360 Elite Active Member Package Joining fee`);
     setUsers(prev => prev.map(u => u.id === userId ? { ...u, isActivated: true, status: 'active' } : u));
 
     // Distribute core Level Package commissions up to 20 levels!
     distributeMLMCommissions(userId, mlmConfig.packagePrice, 'package');
-    alert('🎉 Congratulations! Your active core MLM distribution portfolio is online now.');
+    alert(`🎉 Congratulations! Your active core MLM distribution portfolio is online now. Debited from your ${walletToDebit === 'recharge' ? 'Recharge' : 'Main'} Wallet.`);
   };
 
   // Submit KYC
@@ -584,69 +604,75 @@ const App: React.FC = () => {
   const activeUser = users.find(u => u.id === (currentUser ? currentUser.id : '')) || currentUser;
 
   if (!currentUser || !activeUser) {
-    return <Auth onLogin={handleLogin} onSignup={handleSignup} onRecover={handleRecover} users={users} />;
+    return (
+      <ErrorBoundary>
+        <Auth onLogin={handleLogin} onSignup={handleSignup} onRecover={handleRecover} users={users} />
+      </ErrorBoundary>
+    );
   }
 
   return (
-    <Layout 
-      user={activeUser} 
-      onLogout={() => setCurrentUser(null)} 
-      activeTab={activeTab} 
-      onTabChange={setActiveTab}
-      darkMode={darkMode}
-      setDarkMode={setDarkMode}
-    >
-      {activeUser.role === UserRole.ADMIN ? (
-        <AdminPanel 
-          users={users} 
-          transactions={transactions} 
-          config={mlmConfig} 
-          onUpdateConfig={setMlmConfig}
-          paymentRequests={paymentRequests}
-          onApprovePayment={handleApprovePayment}
-          withdrawalRequests={withdrawalRequests}
-          onApproveWithdrawal={handleApproveWithdrawal}
-          chatMessages={chatMessages}
-          onSendMessage={handleSendMessage}
-          products={products}
-          onAddProduct={handleAddProduct}
-          onApproveKYC={handleApproveKYC}
-          onApproveReward={handleApproveReward}
-          onToggleUserRole={handleToggleUserRole}
-        />
-      ) : activeUser.role === UserRole.VENDOR ? (
-        <VendorPanel 
-          user={activeUser}
-          products={products}
-          orders={orders}
-          onAddProduct={handleAddProduct}
-        />
-      ) : (
-        <Dashboard 
-          user={activeUser} 
-          users={users} 
-          products={products.filter(p => p.isApproved !== false)}
-          transactions={transactions.filter(t => t.userId === activeUser.id)} 
-          onRecharge={handleRecharge}
-          onOrder={placeOrder}
-          onTransfer={handleTransfer}
-          onActivate={handleActivateAccount}
-          packagePrice={mlmConfig.packagePrice}
-          qrCode={mlmConfig.qrCode}
-          onAddMoney={handleAddMoneyRequest}
-          paymentRequests={paymentRequests.filter(r => r.userId === activeUser.id)}
-          withdrawalRequests={withdrawalRequests.filter(r => r.userId === activeUser.id)}
-          onWithdrawal={handleWithdrawalRequest}
-          onUpdateBankDetails={handleUpdateBankDetails}
-          chatMessages={chatMessages.filter(m => m.senderId === activeUser.id || m.receiverId === activeUser.id)}
-          onSendMessage={handleSendMessage}
-          tab={activeTab}
-          setTab={setActiveTab}
-          onSubmitKYC={handleSubmitKYC}
-          onClaimReward={handleClaimReward}
-        />
-      )}
-    </Layout>
+    <ErrorBoundary>
+      <Layout 
+        user={activeUser} 
+        onLogout={() => setCurrentUser(null)} 
+        activeTab={activeTab} 
+        onTabChange={setActiveTab}
+        darkMode={darkMode}
+        setDarkMode={setDarkMode}
+      >
+        {activeUser.role === UserRole.ADMIN ? (
+          <AdminPanel 
+            users={users} 
+            transactions={transactions} 
+            config={mlmConfig} 
+            onUpdateConfig={setMlmConfig}
+            paymentRequests={paymentRequests}
+            onApprovePayment={handleApprovePayment}
+            withdrawalRequests={withdrawalRequests}
+            onApproveWithdrawal={handleApproveWithdrawal}
+            chatMessages={chatMessages}
+            onSendMessage={handleSendMessage}
+            products={products}
+            onAddProduct={handleAddProduct}
+            onApproveKYC={handleApproveKYC}
+            onApproveReward={handleApproveReward}
+            onToggleUserRole={handleToggleUserRole}
+          />
+        ) : activeUser.role === UserRole.VENDOR ? (
+          <VendorPanel 
+            user={activeUser}
+            products={products}
+            orders={orders}
+            onAddProduct={handleAddProduct}
+          />
+        ) : (
+          <Dashboard 
+            user={activeUser} 
+            users={users} 
+            products={products.filter(p => p.isApproved !== false)}
+            transactions={transactions.filter(t => t.userId === activeUser.id)} 
+            onRecharge={handleRecharge}
+            onOrder={placeOrder}
+            onTransfer={handleTransfer}
+            onActivate={handleActivateAccount}
+            packagePrice={mlmConfig.packagePrice}
+            qrCode={mlmConfig.qrCode}
+            onAddMoney={handleAddMoneyRequest}
+            paymentRequests={paymentRequests.filter(r => r.userId === activeUser.id)}
+            withdrawalRequests={withdrawalRequests.filter(r => r.userId === activeUser.id)}
+            onWithdrawal={handleWithdrawalRequest}
+            onUpdateBankDetails={handleUpdateBankDetails}
+            chatMessages={chatMessages.filter(m => m.senderId === activeUser.id || m.receiverId === activeUser.id)}
+            onSendMessage={handleSendMessage}
+            tab={activeTab}
+            setTab={setActiveTab}
+            onSubmitKYC={handleSubmitKYC}
+            onClaimReward={handleClaimReward}
+          />
+        )}
+      </Layout>
+    </ErrorBoundary>
   );
 };
 

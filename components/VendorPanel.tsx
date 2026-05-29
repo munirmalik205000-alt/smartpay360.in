@@ -88,7 +88,7 @@ const VendorPanel: React.FC<VendorProps> = ({ user, products, orders, onAddProdu
                </div>
                <div className="space-y-1">
                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Central Category</label>
-                 <select className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl bg-white text-slate-800" onChange={e => setNewProduct({...newProduct, category: e.target.value})} required>
+                 <select className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl bg-white text-slate-800" onChange={e => setNewProduct({...newProduct, category: e.target.value as any})} required>
                      {['Electronics', 'Mobile', 'Fashion', 'Grocery', 'Healthcare', 'Home Appliances', 'Beauty', 'Books'].map(cat => (
                        <option key={cat} value={cat}>{cat}</option>
                      ))}

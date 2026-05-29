@@ -42,12 +42,12 @@ export const Layout: React.FC<LayoutProps> = ({
   return (
     <div className={cn(
       "h-[100dvh] flex flex-col overflow-hidden transition-colors duration-200",
-      darkMode ? "bg-slate-950 text-slate-100" : "bg-slate-50 text-slate-900"
+      darkMode ? "bg-[#0c0d1b] text-slate-100" : "bg-slate-50 text-slate-900"
     )}>
       {/* Desktop & Mobile Header */}
       <header className={cn(
         "shrink-0 backdrop-blur-md border-b z-40 relative transition-colors duration-200",
-        darkMode ? "bg-slate-900/90 border-slate-800" : "bg-white/90 border-slate-200"
+        darkMode ? "bg-[#101229]/90 border-indigo-500/10" : "bg-white/90 border-slate-200"
       )}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -114,7 +114,7 @@ export const Layout: React.FC<LayoutProps> = ({
       {/* Mobile Bottom Navigation */}
       <nav className={cn(
         "shrink-0 backdrop-blur-xl border-t px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex justify-around items-center z-50 md:hidden relative transition-colors duration-200",
-        darkMode ? "bg-slate-900/95 border-slate-800" : "bg-white/95 border-slate-200"
+        darkMode ? "bg-[#101229]/95 border-indigo-500/10" : "bg-white/95 border-slate-200"
       )}>
         {navItems.map((item) => (
           <button

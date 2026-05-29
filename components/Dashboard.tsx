@@ -111,7 +111,8 @@ const Dashboard: React.FC<DashboardProps> = ({
     { label: 'Direct Referrals', val: users.filter(u => u.referrerId === user.id).length.toString(), color: 'text-violet-500 dark:text-violet-400', icon: Users, desc: 'Direct Team' },
   ];
 
-  const shareText = `🚀 Start earning passive income with SmartPay360! Utility payments, Recharge, Multi-vendor Marketplace & 20 Level Income distribution! Join using my referral: ${user.referralCode}`;
+  const signupUrl = `${window.location.origin}?ref=${user.referralCode}`;
+  const shareText = `🚀 Start earning passive income with SmartPay360! Utility payments, Recharge, Multi-vendor Marketplace & 20 Level Income distribution! Join using my referral signup link: ${signupUrl}`;
   
   const handleScreenshotChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -200,7 +201,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="text-left py-2">
             <p className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest pl-0.5 leading-none">Welcome back,</p>
             <h1 className="text-3xl font-black text-slate-950 dark:text-white tracking-tight mt-1 flex items-center gap-1.5 leading-tight">
-              {user.name} <span className="text-2xl animate-bounce">👋</span>
+              {user.name}
             </h1>
           </div>
 
@@ -285,11 +286,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <button 
                   onClick={() => {
-                    navigator.clipboard.writeText(user.referralCode); 
-                    alert('Sponsor Referral Code Copied Successfully!');
+                    const signupUrl = `${window.location.origin}?ref=${user.referralCode}`;
+                    navigator.clipboard.writeText(signupUrl); 
+                    alert('Referral Sign-up Link Copied Successfully!');
                   }} 
                   className="p-2 bg-white/15 hover:bg-white/25 rounded-xl transition-all border border-white/10 hover:border-white/20 active:scale-90 text-white"
-                  title="Copy code"
+                  title="Copy Refer Link"
                 >
                   <Copy size={12} />
                 </button>
@@ -479,8 +481,13 @@ const Dashboard: React.FC<DashboardProps> = ({
                       <p className="font-mono font-black text-xl tracking-[0.1em] text-violet-700 dark:text-violet-300">{user.referralCode}</p>
                     </div>
                     <button 
-                      onClick={() => {navigator.clipboard.writeText(user.referralCode); alert('Sponsor Referral Code Copied!');}} 
+                      onClick={() => {
+                        const signupUrl = `${window.location.origin}?ref=${user.referralCode}`;
+                        navigator.clipboard.writeText(signupUrl); 
+                        alert('Sponsor Referral Sign-up Link Copied!');
+                      }} 
                       className="p-3 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl transition-all"
+                      title="Copy Refer Link"
                     >
                       <Copy size={16} />
                     </button>
@@ -506,6 +513,36 @@ const Dashboard: React.FC<DashboardProps> = ({
             <p className="text-xs text-[#0077C0] font-black uppercase tracking-widest mt-2">Claim instant 2% cashback + matrix downline share</p>
           </div>
 
+          {!user.isActivated && (
+            <div className="p-6 bg-gradient-to-r from-amber-500/10 via-purple-500/10 to-[#8b5cf6]/10 border border-purple-500/20 rounded-[2.5rem] flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-amber-500/15 rounded-2xl flex items-center justify-center text-amber-500 shrink-0">
+                  <AlertCircle size={24} />
+                </div>
+                <div>
+                  <h4 className="text-slate-800 dark:text-amber-400 font-extrabold text-xs uppercase tracking-wider">Recharge Portals Locked</h4>
+                  <p className="text-[10px] text-slate-550 dark:text-slate-400 font-bold uppercase tracking-widest mt-0.5">Activate your premium contractor ID pack for ₹{packagePrice} to perform utility bill pay actions.</p>
+                </div>
+              </div>
+              <div className="flex gap-2 w-full md:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setTab('add_money')}
+                  className="w-full md:w-auto px-6 py-3 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 font-black rounded-2xl text-[9px] uppercase tracking-wider hover:bg-slate-200 transition-all text-center shrink-0 cursor-pointer"
+                >
+                  ⚡ Deposit Funds
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onActivate(user.id)}
+                  className="w-full md:w-auto px-8 py-3 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-black rounded-2xl text-[9px] uppercase tracking-wider transition-all shadow-md flex items-center justify-center gap-1.5 shrink-0 cursor-pointer"
+                >
+                  🔋 Activate ID Now
+                </button>
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { name: 'Prepaid Recharge', icon: '📱', color: 'bg-blue-50 dark:bg-blue-950/20 border-blue-105' },
@@ -516,23 +553,36 @@ const Dashboard: React.FC<DashboardProps> = ({
               { name: 'Broadband Wifi', icon: '🌐', color: 'bg-indigo-50 dark:bg-indigo-950/20 border-indigo-105' },
               { name: 'FASTag RFID', icon: '🚗', color: 'bg-pink-50 dark:bg-pink-950/20 border-pink-105' },
               { name: 'LPG Cooking Gas', icon: '🔥', color: 'bg-rose-50 dark:bg-rose-950/20 border-rose-105' },
-            ].map(u => (
-              <motion.button 
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                key={u.name} 
-                disabled={!user.isActivated} 
-                onClick={() => setSelectedUtility(u)}
-                className={cn(
-                  "bg-white dark:bg-slate-900 p-6 rounded-[2rem] border shadow-sm text-center transition-all",
-                  !user.isActivated ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:border-blue-400'
-                )}
-              >
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl bg-slate-50 dark:bg-slate-800">{u.icon}</div>
-                <p className="text-xs font-black text-slate-800 dark:text-slate-200 mt-1 uppercase tracking-wider">{u.name}</p>
-                <p className="text-[9px] font-black text-emerald-500 uppercase mt-0.5">2% CASHBACK + 20-L MLM</p>
-              </motion.button>
-            ))}
+            ].map(u => {
+              const handleSelect = () => {
+                if (!user.isActivated) {
+                  alert(`🔒 Services Restricted: Please activate your account first to unlock Prepaid, electricity & bills payments! You can activate right from the top of this page using 'Activate ID Now'.`);
+                  return;
+                }
+                setSelectedUtility(u);
+              };
+              return (
+                <motion.button 
+                  whileHover={{ scale: user.isActivated ? 1.02 : 1 }}
+                  whileTap={{ scale: user.isActivated ? 0.98 : 1 }}
+                  key={u.name} 
+                  onClick={handleSelect}
+                  className={cn(
+                    "bg-white dark:bg-slate-900 p-6 rounded-[2rem] border shadow-sm text-center transition-all cursor-pointer",
+                    !user.isActivated ? 'border-amber-500/10 hover:border-amber-500/35 bg-amber-50/5 dark:bg-amber-950/5' : 'hover:border-blue-400'
+                  )}
+                >
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl bg-slate-50 dark:bg-slate-800">{u.icon}</div>
+                  <p className="text-xs font-black text-slate-800 dark:text-slate-200 mt-1 uppercase tracking-wider">{u.name}</p>
+                  <p className="text-[9px] font-black text-emerald-500 uppercase mt-0.5">2% CASHBACK + 20-L MLM</p>
+                  {!user.isActivated && (
+                    <span className="inline-block mt-2 px-1.5 py-0.5 bg-amber-500/15 border border-amber-500/20 text-[7px] text-amber-500 font-extrabold uppercase rounded-full tracking-wider">
+                      🔒 Locked
+                    </span>
+                  )}
+                </motion.button>
+              );
+            })}
           </div>
 
           {/* Dedicated Operator Selection / Recharge Interface (combining PhonePe feel) */}
@@ -756,7 +806,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <div className="space-y-1">
                   <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">UPI ID for settlements (Paytm/BHIM)</label>
-                  <input type="text" className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl font-bold text-sm" placeholder="username@upi" value={bankForm.upiId || ''} onChange={e => setBankForm({...bankForm, uppiId: e.target.value})} />
+                  <input type="text" className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl font-bold text-sm" placeholder="username@upi" value={bankForm.upiId || ''} onChange={e => setBankForm({...bankForm, upiId: e.target.value})} />
                 </div>
                 <button type="submit" className="w-full py-4 bg-slate-800 hover:bg-black text-white text-xs font-black rounded-xl uppercase tracking-widest transition-all">
                   Apply Bank Details
