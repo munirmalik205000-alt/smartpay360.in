@@ -106,7 +106,17 @@ const AdminPanel: React.FC<AdminProps> = ({
   const uniqueChatUsers = Array.from(new Set(chatMessages.map(m => m.senderId === 'admin' ? m.receiverId : m.senderId))).filter(id => id !== 'admin');
 
   return (
-    <div className="space-y-6 text-left">
+    <div className="space-y-6 text-left relative">
+      {/* Decorative Multi-Color Spectrum bar for White, Blue, Purple, Green, Red, Orange */}
+      <div className="h-1.5 w-full rounded-full flex overflow-hidden shadow-sm mb-2">
+        <div className="w-[16%] h-full bg-slate-300"></div>
+        <div className="w-[17%] h-full bg-blue-500"></div>
+        <div className="w-[17%] h-full bg-purple-600"></div>
+        <div className="w-[17%] h-full bg-emerald-500"></div>
+        <div className="w-[17%] h-full bg-rose-500"></div>
+        <div className="w-[16%] h-full bg-orange-500"></div>
+      </div>
+      
       {/* Admin Header */}
       <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
         <div>

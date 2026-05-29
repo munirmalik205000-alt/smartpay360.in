@@ -110,11 +110,18 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users }) => {
 
   return (
     <div className="h-[100dvh] w-full overflow-y-auto no-scrollbar flex flex-col items-center justify-center p-6 relative bg-[#040814] text-slate-100 font-sans">
-      {/* Liquid Electric Dark Blue Glowing Orbs */}
+      {/* Liquid Electric Glowing Orbs: White base, Blue, Purple, Green, Red, Orange */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] bg-blue-600/15 rounded-full blur-[160px] transition-all"></div>
-        <div className="absolute top-[30%] right-[-15%] w-[60%] h-[60%] bg-sky-500/10 rounded-full blur-[180px] transition-all"></div>
-        <div className="absolute bottom-[-10%] left-[15%] w-[55%] h-[55%] bg-indigo-600/15 rounded-full blur-[150px] transition-all"></div>
+        {/* Blue Orb */}
+        <div className="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-blue-600/20 rounded-full blur-[140px] transition-all animate-pulse"></div>
+        {/* Purple Orb */}
+        <div className="absolute top-[20%] right-[-10%] w-[50%] h-[50%] bg-purple-600/20 rounded-full blur-[140px] transition-all animate-pulse duration-1000"></div>
+        {/* Green Orb */}
+        <div className="absolute bottom-[-5%] left-[-5%] w-[45%] h-[45%] bg-emerald-500/15 rounded-full blur-[130px] transition-all"></div>
+        {/* Red Orb */}
+        <div className="absolute top-[50%] left-[30%] w-[35%] h-[35%] bg-rose-500/10 rounded-full blur-[120px] transition-all"></div>
+        {/* Orange Orb */}
+        <div className="absolute bottom-[10%] right-[10%] w-[40%] h-[40%] bg-orange-500/15 rounded-full blur-[130px] transition-all"></div>
       </div>
 
       {/* Main Authentication Card */}
@@ -122,8 +129,17 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users }) => {
         initial={{ opacity: 0, scale: 0.98, y: 15 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="w-full max-w-sm p-10 rounded-[2.5rem] bg-[#0a1226]/90 backdrop-blur-3xl border border-blue-500/20 shadow-[0_0_50px_rgba(29,78,216,0.2)] shadow-blue-950/60 relative z-10"
+        className="w-full max-w-sm p-10 rounded-[2.5rem] bg-[#0a1226]/90 backdrop-blur-3xl border border-blue-500/20 shadow-[0_0_50px_rgba(29,78,216,0.2)] shadow-blue-950/60 relative z-10 overflow-hidden"
       >
+        {/* Accent spectrum top bar (White, Blue, Purple, Green, Red, Orange) */}
+        <div className="absolute top-0 left-0 right-0 h-1.5 flex">
+          <div className="w-[16%] h-full bg-white"></div>
+          <div className="w-[17%] h-full bg-blue-500"></div>
+          <div className="w-[17%] h-full bg-purple-600"></div>
+          <div className="w-[17%] h-full bg-emerald-500"></div>
+          <div className="w-[17%] h-full bg-rose-550 bg-rose-500"></div>
+          <div className="w-[16%] h-full bg-orange-500"></div>
+        </div>
         {/* Branding Header */}
         <div className="flex flex-col items-center text-center mb-6">
           <Logo size="lg" lightText={true} className="justify-center" />

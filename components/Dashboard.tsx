@@ -192,14 +192,23 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [products, shopCategory, shopSearch]);
 
   return (
-    <div className="space-y-6 md:pb-6">
+    <div className="space-y-6 md:pb-6 relative">
+      {/* Decorative Multi-Color Spectrum bar for White, Blue, Purple, Green, Red, Orange */}
+      <div className="h-1.5 w-full rounded-full flex overflow-hidden shadow-sm">
+        <div className="w-[16%] h-full bg-white dark:bg-slate-300"></div>
+        <div className="w-[17%] h-full bg-blue-500"></div>
+        <div className="w-[17%] h-full bg-purple-600"></div>
+        <div className="w-[17%] h-full bg-emerald-500"></div>
+        <div className="w-[17%] h-full bg-rose-500"></div>
+        <div className="w-[16%] h-full bg-orange-500"></div>
+      </div>
       
       {/* Beautiful Home Header & Balance Cards replacing previous bento stats/sliders */}
       {tab === 'home' && (
         <div className="space-y-6">
           {/* 1. Header Greetings in high UX design */}
           <div className="text-left py-2">
-            <p className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest pl-0.5 leading-none">Welcome back,</p>
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest pl-0.5 leading-none font-mono">Welcome back,</p>
             <h1 className="text-3xl font-black text-slate-950 dark:text-white tracking-tight mt-1 flex items-center gap-1.5 leading-tight">
               {user.name}
             </h1>
@@ -214,7 +223,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               
               {/* Row 1: TOTAL BALANCE pill + Eye Toggle */}
               <div className="flex items-center justify-between">
-                <span className="px-3.5 py-1.5 bg-white/15 border border-white/20 rounded-full text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-1.5 shadow-inner leading-none">
+                <span className="px-3.5 py-1.5 bg-white/15 border border-white/20 rounded-full text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-1.5 shadow-inner leading-none font-mono">
                   ✨ Total Balance
                 </span>
                 <button 
@@ -233,25 +242,25 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </p>
               </div>
 
-              {/* Row 3: Sub-balances Row */}
+              {/* Row 3: Sub-balances Row styled in custom Blue, Purple, Green glass tags */}
               <div className="grid grid-cols-3 gap-3">
-                <div className="bg-white/10 border border-white/10 p-3 flex flex-col justify-between shadow-inner rounded-2xl">
-                  <span className="text-[8px] font-black text-white/70 uppercase tracking-wider pl-0.5">MAIN</span>
-                  <span className="text-xs md:text-sm font-black tracking-tight mt-1 truncate">
+                <div className="bg-blue-600/35 border border-blue-400/30 p-3 flex flex-col justify-between shadow-inner rounded-2xl relative overflow-hidden backdrop-blur-sm">
+                  <span className="text-[8px] font-black text-blue-100 uppercase tracking-wider pl-0.5 font-mono">MAIN</span>
+                  <span className="text-xs md:text-sm font-black tracking-tight mt-1 truncate text-white">
                     ₹{showBalances ? user.wallets.recharge.toFixed(2) : "•••••"}
                   </span>
                 </div>
 
-                <div className="bg-white/10 border border-white/10 p-3 flex flex-col justify-between shadow-inner rounded-2xl">
-                  <span className="text-[8px] font-black text-white/70 uppercase tracking-wider pl-0.5">E-WALLET</span>
-                  <span className="text-xs md:text-sm font-black tracking-tight mt-1 truncate">
+                <div className="bg-purple-600/35 border border-purple-400/30 p-3 flex flex-col justify-between shadow-inner rounded-2xl relative overflow-hidden backdrop-blur-sm">
+                  <span className="text-[8px] font-black text-purple-100 uppercase tracking-wider pl-0.5 font-mono font-mono">E-WALLET</span>
+                  <span className="text-xs md:text-sm font-black tracking-tight mt-1 truncate text-white">
                     ₹{showBalances ? user.wallets.main.toFixed(2) : "•••••"}
                   </span>
                 </div>
 
-                <div className="bg-white/10 border border-white/10 p-3 flex flex-col justify-between shadow-inner rounded-2xl">
-                  <span className="text-[8px] font-black text-white/70 uppercase tracking-wider pl-0.5">COINS</span>
-                  <span className="text-xs md:text-sm font-black tracking-tight mt-1 truncate">
+                <div className="bg-emerald-600/35 border border-emerald-400/30 p-3 flex flex-col justify-between shadow-inner rounded-2xl relative overflow-hidden backdrop-blur-sm">
+                  <span className="text-[8px] font-black text-emerald-100 uppercase tracking-wider pl-0.5 font-mono">COINS</span>
+                  <span className="text-xs md:text-sm font-black tracking-tight mt-1 truncate text-white">
                     {showBalances ? Math.floor(user.wallets.commission) : "•••••"}
                   </span>
                 </div>
