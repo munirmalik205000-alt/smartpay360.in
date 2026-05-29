@@ -105,7 +105,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users }) => {
   const foundUpline = useMemo(() => {
     const code = formData.referralCode.trim().toUpperCase();
     if (!code) return null;
-    return users.find(u => u.referralCode.toUpperCase() === code);
+    return users.find(u => u.referralCode && typeof u.referralCode === 'string' && u.referralCode.toUpperCase() === code);
   }, [formData.referralCode, users]);
 
   return (

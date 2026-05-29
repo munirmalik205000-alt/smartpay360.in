@@ -354,7 +354,7 @@ const App: React.FC = () => {
   const handleSignup = (data: any) => {
     if (users.some(u => u.email.toLowerCase() === data.email.toLowerCase().trim())) return alert('🚨 Error: Email registered with another account.');
     // Check sponsor ID
-    const ref = users.find(u => u.referralCode === data.referralCode.trim()) || users[0]; // defaults to admin-0 if empty
+    const ref = users.find(u => u.referralCode && typeof u.referralCode === 'string' && u.referralCode.toUpperCase() === data.referralCode.trim().toUpperCase()) || users[0]; // defaults to admin-0 if empty
     
     const initialRewardsList: RewardTarget[] = INITIAL_REWARDS.map(r => ({ ...r, currentSalesCount: 0 }));
 
