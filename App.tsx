@@ -48,7 +48,14 @@ const INITIAL_REWARDS = [
 ];
 
 const App: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<User | null>(() => {
+    try {
+      const saved = localStorage.getItem('spay_current_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [activeTab, setActiveTab] = useState('home');
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     return localStorage.getItem('spay_theme') === 'dark';
@@ -73,6 +80,17 @@ const App: React.FC = () => {
       localStorage.setItem('spay_theme', 'light');
     }
   }, [darkMode]);
+
+  // Persist current session
+  useEffect(() => {
+    try {
+      if (currentUser) {
+        localStorage.setItem('spay_current_user', JSON.stringify(currentUser));
+      } else {
+        localStorage.removeItem('spay_current_user');
+      }
+    } catch {}
+  }, [currentUser]);
 
   // Seed default admin and high level structure on load
   useEffect(() => {
@@ -548,10 +566,25 @@ const App: React.FC = () => {
     alert('✅ Reward target verified! Dispatched instantly to achiever!');
   };
 
+  const handleToggleUserRole = (userId: string) => {
+    if (currentUser?.id === userId) {
+      alert('⚠️ Security Guard: You cannot change your own Administrator permissions!');
+      return;
+    }
+    setUsers(prev => prev.map(u => {
+      if (u.id === userId) {
+        const newRole = u.role === UserRole.ADMIN ? UserRole.USER : UserRole.ADMIN;
+        return { ...u, role: newRole };
+      }
+      return u;
+    }));
+    alert('🛡️ Member administrative group privileges updated successfully!');
+  };
+
   const activeUser = users.find(u => u.id === (currentUser ? currentUser.id : '')) || currentUser;
 
   if (!currentUser || !activeUser) {
-    return <Auth onLogin={handleLogin} onSignup={handleSignup} onRecover={handleRecover} />;
+    return <Auth onLogin={handleLogin} onSignup={handleSignup} onRecover={handleRecover} users={users} />;
   }
 
   return (
@@ -579,6 +612,7 @@ const App: React.FC = () => {
           onAddProduct={handleAddProduct}
           onApproveKYC={handleApproveKYC}
           onApproveReward={handleApproveReward}
+          onToggleUserRole={handleToggleUserRole}
         />
       ) : activeUser.role === UserRole.VENDOR ? (
         <VendorPanel 

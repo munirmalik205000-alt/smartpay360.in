@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { User, Transaction, Product, PaymentRequest, WithdrawalRequest, ChatMessage, BankDetails, RewardTarget } from '../types';
-import { Wallet, Bell, LogOut, ShieldCheck, MessageSquare, Share2, Copy, CheckCircle2, AlertCircle, TrendingUp, Users, ShoppingBag, ArrowRight, UserCheck, HelpCircle, Trophy, Sparkles, Landmark, FileText, Compass, Search, Tag, Eye, Heart, Check, Trash2 } from 'lucide-react';
+import { Wallet, Bell, LogOut, ShieldCheck, MessageSquare, Share2, Copy, CheckCircle2, AlertCircle, TrendingUp, Users, ShoppingBag, ArrowRight, UserCheck, HelpCircle, Trophy, Sparkles, Landmark, FileText, Compass, Search, Tag, Eye, EyeOff, Heart, Check, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../services/utils';
 
@@ -50,6 +50,24 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [withdrawalPin, setWithdrawalPin] = useState('');
   const [bankForm, setBankForm] = useState<BankDetails>(user.bankDetails || { bankName: '', accountNumber: '', ifscCode: '', holderName: '', upiId: '' });
   const [chatInput, setChatInput] = useState('');
+  const [showBalances, setShowBalances] = useState<boolean>(() => {
+    try {
+      const persisted = localStorage.getItem('s360_show_balances');
+      return persisted !== 'false';
+    } catch {
+      return true;
+    }
+  });
+
+  const toggleShowBalances = () => {
+    setShowBalances(prev => {
+      const newVal = !prev;
+      try {
+        localStorage.setItem('s360_show_balances', String(newVal));
+      } catch {}
+      return newVal;
+    });
+  };
 
   // Search & Categories for Shop
   const [shopCategory, setShopCategory] = useState<string>('All');
@@ -175,111 +193,143 @@ const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="space-y-6 md:pb-6">
       
-      {/* Banner Advert slider - Combines Amazon & PhonePe Super feel */}
+      {/* Beautiful Home Header & Balance Cards replacing previous bento stats/sliders */}
       {tab === 'home' && (
-        <div className="relative rounded-[2rem] overflow-hidden bg-gradient-to-r from-violet-600 via-purple-700 to-emerald-600 border border-white/10 p-6 md:p-10 text-white shadow-xl shadow-purple-950/20">
-          <div className="absolute right-0 bottom-0 opacity-20 transform translate-y-6 translate-x-3 text-[10rem] select-none pointer-events-none font-black text-white/10 tracking-widest font-mono">360</div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 items-center gap-6 relative z-10">
-            <div className="space-y-4 text-left">
-              <span className="px-3 py-1 bg-emerald-500 text-white text-[9px] font-black rounded-full uppercase tracking-widest border border-emerald-300 flex items-center gap-1.5 w-fit">
-                <Sparkles size={10} /> Active 20-Level Network
-              </span>
-              <h2 className="text-2xl md:text-4xl font-black tracking-tight leading-tight">
-                India's First <span className="text-emerald-300">Super MLM Utility</span> Ecosystem
-              </h2>
-              <p className="text-xs md:text-sm text-slate-100 font-medium max-w-md">
-                Claim up to 2% instant cashback on operator recharges, shop the vendor marketplace and enjoy binary levels deep passive payouts.
-              </p>
+        <div className="space-y-6">
+          {/* 1. Header Greetings in high UX design */}
+          <div className="text-left py-2">
+            <p className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest pl-0.5 leading-none">Welcome back,</p>
+            <h1 className="text-3xl font-black text-slate-950 dark:text-white tracking-tight mt-1 flex items-center gap-1.5 leading-tight">
+              {user.name} <span className="text-2xl animate-bounce">👋</span>
+            </h1>
+          </div>
+
+          {/* 2. Unified Premium Gradient Balance Card */}
+          <div className="relative rounded-[2.5rem] bg-gradient-to-br from-[#9a62fc] via-[#6e4afd] to-[#36d8b7] p-6 text-white shadow-xl overflow-hidden text-left transition-all duration-300 border border-white/10">
+            {/* Soft overlay */}
+            <div className="absolute inset-0 bg-black/5 mix-blend-overlay pointer-events-none"></div>
+            
+            <div className="relative z-10 flex flex-col gap-6">
               
-              <div className="flex gap-3 pt-2">
-                <button onClick={() => setTab('utility')} className="px-6 py-3 bg-white text-violet-700 hover:bg-slate-10 border border-white font-black rounded-xl text-xs uppercase tracking-widest shadow-lg transition-all active:scale-95">
-                  Prepaid Recharge
-                </button>
-                <button onClick={() => setTab('shop')} className="px-6 py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-black rounded-xl text-xs uppercase tracking-widest border border-emerald-400/20 transition-all active:scale-95">
-                  Browse Shop
+              {/* Row 1: TOTAL BALANCE pill + Eye Toggle */}
+              <div className="flex items-center justify-between">
+                <span className="px-3.5 py-1.5 bg-white/15 border border-white/20 rounded-full text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-1.5 shadow-inner leading-none">
+                  ✨ Total Balance
+                </span>
+                <button 
+                  onClick={toggleShowBalances} 
+                  className="p-2 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-full transition-all border border-white/10 shadow-sm"
+                  title={showBalances ? "Hide details" : "Show details"}
+                >
+                  {showBalances ? <Eye size={18} /> : <EyeOff size={18} />}
                 </button>
               </div>
-            </div>
 
-            <div className="hidden md:flex justify-end relative">
-              <div className="relative p-6 bg-white/10 backdrop-blur-xl border border-white/10 rounded-[2.5rem] w-80 text-left">
-                <p className="text-[10px] font-black tracking-widest text-emerald-300 uppercase mb-4">🏆 REWARDS PROGRESS</p>
-                <div className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-xs font-bold mb-1">
-                      <span>Classic Royal Enfield</span>
-                      <span className="text-emerald-300 font-black">{activeDownlineCount} / 400</span>
-                    </div>
-                    <div className="w-full h-2 bg-purple-950/45 rounded-full overflow-hidden border border-white/5">
-                      <div className="h-full bg-gradient-to-r from-emerald-400 to-green-500 rounded-full" style={{ width: `${Math.min(100, (activeDownlineCount / 400) * 100)}%` }}></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-xs font-bold mb-1">
-                      <span>BMW 3-Series Luxury</span>
-                      <span className="text-emerald-300 font-black">{activeDownlineCount} / 12000</span>
-                    </div>
-                    <div className="w-full h-2 bg-purple-950/45 rounded-full overflow-hidden border border-white/5">
-                      <div className="h-full bg-gradient-to-r from-violet-400 to-purple-500 rounded-full" style={{ width: `${Math.min(100, (activeDownlineCount / 12000) * 100)}%` }}></div>
-                    </div>
-                  </div>
+              {/* Row 2: Heavy visual balance amount */}
+              <div>
+                <p className="text-4xl md:text-5xl font-black tracking-tight flex items-center gap-0.5 leading-none">
+                  ₹{showBalances ? (user.wallets.recharge + user.wallets.main + user.wallets.commission).toFixed(2) : "•••••"}
+                </p>
+              </div>
+
+              {/* Row 3: Sub-balances Row */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-white/10 border border-white/10 p-3 flex flex-col justify-between shadow-inner rounded-2xl">
+                  <span className="text-[8px] font-black text-white/70 uppercase tracking-wider pl-0.5">MAIN</span>
+                  <span className="text-xs md:text-sm font-black tracking-tight mt-1 truncate">
+                    ₹{showBalances ? user.wallets.recharge.toFixed(2) : "•••••"}
+                  </span>
+                </div>
+
+                <div className="bg-white/10 border border-white/10 p-3 flex flex-col justify-between shadow-inner rounded-2xl">
+                  <span className="text-[8px] font-black text-white/70 uppercase tracking-wider pl-0.5">E-WALLET</span>
+                  <span className="text-xs md:text-sm font-black tracking-tight mt-1 truncate">
+                    ₹{showBalances ? user.wallets.main.toFixed(2) : "•••••"}
+                  </span>
+                </div>
+
+                <div className="bg-white/10 border border-white/10 p-3 flex flex-col justify-between shadow-inner rounded-2xl">
+                  <span className="text-[8px] font-black text-white/70 uppercase tracking-wider pl-0.5">COINS</span>
+                  <span className="text-xs md:text-sm font-black tracking-tight mt-1 truncate">
+                    {showBalances ? Math.floor(user.wallets.commission) : "•••••"}
+                  </span>
                 </div>
               </div>
+
+              {/* Row 4: Action helper navigation buttons (Added Money + Withdraw - REMOVED Invest) */}
+              <div className="grid grid-cols-2 gap-4 pt-1">
+                <button 
+                  onClick={() => setTab('add_money')}
+                  className="py-3.5 bg-white text-violet-700 hover:bg-slate-50 font-black rounded-full text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all text-center animate-pulse"
+                >
+                  + Add Money
+                </button>
+                <button 
+                  onClick={() => setTab('withdraw')}
+                  className="py-3.5 bg-white/15 hover:bg-white/25 text-white font-black rounded-full text-xs uppercase tracking-widest border border-white/25 hover:border-white/40 active:scale-95 transition-all text-center flex items-center justify-center gap-1.5"
+                >
+                  🏦 Withdraw
+                </button>
+              </div>
+
+              {/* Row 5: Referral sponsor portfolio bar */}
+              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex items-center justify-between border border-white/10 mt-1 shadow-inner">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center text-white text-sm">
+                    👥
+                  </div>
+                  <div>
+                    <span className="text-[7.5px] font-black text-white/70 uppercase tracking-widest block leading-none">Your Referral Code</span>
+                    <span className="font-mono font-black text-xs tracking-widest mt-0.5 block leading-none">{user.referralCode}</span>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(user.referralCode); 
+                    alert('Sponsor Referral Code Copied Successfully!');
+                  }} 
+                  className="p-2 bg-white/15 hover:bg-white/25 rounded-xl transition-all border border-white/10 hover:border-white/20 active:scale-90 text-white"
+                  title="Copy code"
+                >
+                  <Copy size={12} />
+                </button>
+              </div>
+
             </div>
           </div>
-        </div>
-      )}
 
-      {/* Activation Banner */}
-      {!user.isActivated && (
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-violet-50 border-2 border-dashed border-violet-200 p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 dark:bg-violet-950/20 dark:border-violet-800"
-        >
-           <div className="flex items-center gap-4 text-left">
-              <div className="w-12 h-12 bg-violet-100 dark:bg-violet-900/40 rounded-2xl flex items-center justify-center text-violet-600 dark:text-violet-400 shrink-0">
-                <AlertCircle size={24} />
+          {/* 3. Activation Banner (rendered inline if not activated) */}
+          {!user.isActivated && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-purple-505/10 border-2 border-dashed border-purple-500/20 p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 text-left bg-violet-50 dark:bg-violet-950/20 dark:border-violet-800"
+            >
+              <div className="flex items-center gap-4 text-left">
+                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center text-purple-605 dark:text-purple-400 shrink-0">
+                  <AlertCircle size={24} />
+                </div>
+                <div>
+                  <h3 className="text-purple-900 dark:text-[#a855f7] font-extrabold text-base tracking-tight">Ecosystem Locked</h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-0.5">Activate account for ₹{packagePrice} to claim downline 20-level commission structures!</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-violet-900 dark:text-violet-200 font-black text-lg tracking-tight">Ecosystem Locked</h3>
-                <p className="text-slate-500 dark:text-slate-405 text-xs font-bold uppercase tracking-widest mt-0.5">Activate for ₹{packagePrice} to claim downline 20-level commission structures!</p>
-              </div>
-           </div>
-           <button 
+              <button 
                 onClick={() => onActivate(user.id)} 
-                className="w-full md:w-auto bg-emerald-500 text-white font-extrabold px-10 py-4 rounded-xl hover:bg-emerald-600 transition-all active:scale-95 uppercase tracking-widest text-xs shadow-lg shadow-emerald-500/20"
-           >
-            Activate Now
-           </button>
-        </motion.div>
-      )}
+                className="w-full md:w-auto bg-[#36d8b7] hover:bg-[#28c2a3] text-slate-900 font-black px-8 py-3.5 rounded-2xl transition-all active:scale-95 uppercase tracking-widest text-[10px] shadow-lg shadow-teal-400/20"
+              >
+                Activate Now
+              </button>
+            </motion.div>
+          )}
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {stats.map(s => (
-          <div key={s.label} className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] shadow-sm border border-slate-100 dark:border-slate-800/80 flex flex-col gap-1 text-left relative overflow-hidden transition-all duration-200">
-            <div className="flex items-center justify-between mb-2">
-              <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center")}>
-                <s.icon size={22} className={s.color} />
-              </div>
-              <Compass size={14} className="text-slate-300 dark:text-slate-700" />
-            </div>
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{s.label}</p>
-            <p className={cn("text-2xl font-black tracking-tight", s.color)}>{s.val}</p>
-            <p className="text-[9px] text-slate-400 mt-1 uppercase font-bold tracking-tight">{s.desc}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* Main Content Areas */}
-      {tab === 'home' && (
-        <div className="space-y-8">
-          {/* Quick Actions */}
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800/80">
-            <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 mb-6 text-left">QUICK TRANSFER GATEWAY</p>
-            <div className="grid grid-cols-4 gap-4">
+          {/* 4. Highly Polished "Quick Actions" Section */}
+          <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800/60">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 mb-6 text-left flex items-center gap-2">
+              <span className="w-1.5 h-3 bg-violet-600 rounded-full inline-block"></span>
+              Quick Actions
+            </h3>
+            <div className="grid grid-cols-4 gap-3 md:gap-4">
               {[
                 { id: 'utility', icon: Wallet, label: 'Utility Pay', color: 'from-violet-500 to-purple-600 shadow-violet-500/10' },
                 { id: 'add_money', icon: Landmark, label: 'Add Cash', color: 'from-emerald-500 to-green-600 shadow-emerald-500/10' },
@@ -291,10 +341,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                   onClick={() => setTab(action.id)}
                   className="flex flex-col items-center gap-2 group cursor-pointer"
                 >
-                  <div className={cn("w-16 h-16 rounded-[1.8rem] flex items-center justify-center text-white shadow-lg transition-all group-hover:scale-110 group-active:scale-95 bg-gradient-to-br", action.color)}>
-                    <action.icon size={26} />
+                  <div className={cn("w-14 h-14 md:w-16 md:h-16 rounded-[1.8rem] flex items-center justify-center text-white shadow-lg transition-all group-hover:scale-105 group-active:scale-95 bg-gradient-to-br", action.color)}>
+                    <action.icon size={22} className="md:size-[26px]" />
                   </div>
-                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-wider">{action.label}</span>
+                  <span className="text-[9px] md:text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">{action.label}</span>
                 </button>
               ))}
             </div>

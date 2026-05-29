@@ -18,11 +18,13 @@ import {
 } from 'lucide-react';
 import { cn } from '../services/utils';
 import { Logo } from './Logo';
+import { User as UserType } from '../types';
 
 interface AuthProps {
   onLogin: (email: string, password?: string) => void;
   onSignup: (data: any) => void;
   onRecover: (email: string, phone: string, type: 'password' | 'pin') => string | null;
+  users: UserType[];
 }
 
 const STATES = [
@@ -34,7 +36,7 @@ const STATES = [
   "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
 ];
 
-const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
+const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users }) => {
   const [view, setView] = useState<'login' | 'signup' | 'recover-password' | 'recover-pin'>('login');
   const [stateSearch, setStateSearch] = useState('');
   const [isStateOpen, setIsStateOpen] = useState(false);
@@ -377,6 +379,20 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
                     <p>🧑‍💼 <span className="text-slate-400">User:</span> <span className="text-blue-400 font-bold select-all">level1@spay.com</span> / <span className="text-indigo-400">password123</span></p>
                     <p>🛡️ <span className="text-slate-400">Admin:</span> <span className="text-emerald-400 font-bold select-all">admin@spay.com</span> / <span className="text-indigo-400">admin123</span></p>
                   </div>
+                  {users.filter(u => u.id && u.id.startsWith('U')).length > 0 && (
+                    <div className="mt-3 pt-2.5 border-t border-blue-500/10 space-y-1.5">
+                      <p className="text-[8.5px] font-black text-emerald-400 uppercase tracking-[0.15em]">🆕 Custom Registered Logins</p>
+                      {users.filter(u => u.id && u.id.startsWith('U')).slice(-3).map(u => (
+                        <div key={u.id} className="flex flex-col gap-0.5 bg-slate-950 p-2 rounded-lg border border-emerald-500/15 text-left">
+                          <p className="text-[9.5px] font-extrabold text-slate-200">{u.name}</p>
+                          <div className="flex justify-between font-mono text-[8.5px] text-slate-400 mt-1">
+                            <span>Email: <span className="text-blue-400 select-all font-bold">{u.email}</span></span>
+                            <span>Pass: <span className="text-emerald-400 select-all font-bold">{u.password}</span></span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </motion.form>

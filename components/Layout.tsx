@@ -27,10 +27,10 @@ export const Layout: React.FC<LayoutProps> = ({
 }) => {
   const navItems = [
     { id: 'home', icon: Home, label: 'Home' },
-    { id: 'utility', icon: Wallet, label: 'Pay' },
+    { id: 'utility', icon: Wallet, label: 'Recharge' },
     { id: 'shop', icon: ShoppingBag, label: 'Shop' },
-    { id: 'mlm', icon: Users, label: 'Team' },
-    { id: 'support', icon: MessageSquare, label: 'Chat' },
+    { id: 'mlm', icon: Users, label: 'Refer' },
+    { id: 'support', icon: MessageSquare, label: 'Support' },
   ];
 
   if (user.role === UserRole.ADMIN) {
