@@ -97,7 +97,7 @@ const App: React.FC = () => {
   // Seed default admin and high level structure on load
   useEffect(() => {
     const adminEmail = 'admin@spay.com';
-    const hasAdmin = users.some(u => u.email.toLowerCase() === adminEmail);
+    const hasAdmin = users.some(u => u && u.email && u.email.toLowerCase() === adminEmail);
     if (!hasAdmin) {
       const admin: User = {
         id: 'admin-0',
@@ -163,7 +163,15 @@ const App: React.FC = () => {
         lastReferralCode = dummyUser.referralCode;
       }
       
-      setUsers(cachedUsers);
+      setUsers(prev => {
+        const merged = [...cachedUsers];
+        prev.forEach(u => {
+          if (u && u.email && !merged.some(m => m.email.toLowerCase() === u.email.toLowerCase())) {
+            merged.push(u);
+          }
+        });
+        return merged;
+      });
     }
   }, []);
 
@@ -352,9 +360,17 @@ const App: React.FC = () => {
   };
 
   const handleSignup = (data: any) => {
-    if (users.some(u => u.email.toLowerCase() === data.email.toLowerCase().trim())) return alert('🚨 Error: Email registered with another account.');
+    const signupEmail = String(data.email || '').trim().toLowerCase();
+    if (users.some(u => u && u.email && u.email.toLowerCase().trim() === signupEmail)) {
+      return alert('🚨 Error: Email registered with another account.');
+    }
+
     // Check sponsor ID
-    const ref = users.find(u => u.referralCode && typeof u.referralCode === 'string' && u.referralCode.toUpperCase() === data.referralCode.trim().toUpperCase()) || users[0]; // defaults to admin-0 if empty
+    const inputReferralCode = String(data.referralCode || '').trim().toUpperCase();
+    const ref = users.find(u => {
+      if (!u || !u.referralCode) return false;
+      return String(u.referralCode).trim().toUpperCase() === inputReferralCode;
+    }) || users[0]; // defaults to admin-0 if empty
     
     const initialRewardsList: RewardTarget[] = INITIAL_REWARDS.map(r => ({ ...r, currentSalesCount: 0 }));
 
