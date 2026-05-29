@@ -5,9 +5,9 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-brand-primary: #003B73;
-  --color-brand-secondary: #0077C0;
-  --color-brand-accent: #4DB8E5;
+  --color-brand-primary: #8b5cf6; /* Gorgeous vibrant light purple */
+  --color-brand-secondary: #c084fc; /* Soft lavender / light purple */
+  --color-brand-accent: #10b981; /* Refreshing green */
 }
 
 @layer base {

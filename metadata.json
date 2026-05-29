@@ -1,7 +1,10 @@
 {
   "name": "SmartPay 360",
-  "description": "The ultimate mobile recharge and utility payment platform with a powerful 10-level referral ecosystem.",
+  "description": "Enterprise-grade multi-level marketing (MLM), smart mobile recharge, e-commerce, and multi-vendor platform.",
   "requestFramePermissions": [
     "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]
 }
