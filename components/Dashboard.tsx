@@ -207,90 +207,106 @@ const Dashboard: React.FC<DashboardProps> = ({
       {tab === 'home' && (
         <div className="space-y-6">
           {/* 1. Header Greetings in high UX design */}
-          <div className="text-left py-2">
-            <p className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest pl-0.5 leading-none font-mono">Welcome back,</p>
-            <h1 className="text-3xl font-black text-slate-950 dark:text-white tracking-tight mt-1 flex items-center gap-1.5 leading-tight">
-              {user.name}
-            </h1>
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 py-2 border-b border-slate-100 dark:border-white/5 pb-4">
+            <div className="text-left">
+              <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest pl-0.5 leading-none font-mono">
+                ⚡ NODE ID SYSTEM ENABLED
+              </p>
+              <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight mt-1 flex items-center gap-1.5 leading-tight">
+                {user.name} <Sparkles size={18} className="text-amber-500 animate-spin duration-3000" />
+              </h1>
+            </div>
+            
+            <div className="bg-slate-100 dark:bg-slate-950/80 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-white/10 flex items-center gap-3 shadow-inner">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 font-mono">
+                SECURE PLATFORM LIVE
+              </p>
+            </div>
           </div>
 
-          {/* 2. Unified Premium Gradient Balance Card */}
-          <div className="relative rounded-[2.5rem] bg-gradient-to-br from-[#9a62fc] via-[#6e4afd] to-[#36d8b7] p-6 text-white shadow-xl overflow-hidden text-left transition-all duration-300 border border-white/10">
-            {/* Soft overlay */}
-            <div className="absolute inset-0 bg-black/5 mix-blend-overlay pointer-events-none"></div>
+          {/* 2. Unified Premium Gradient Balance Card - Elevated 3D Glass Layer */}
+          <div className="relative rounded-[3rem] bg-gradient-to-br from-[#1e1b4b] via-[#090b16] to-[#010204] p-8 text-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),_inset_0_1px_3px_rgba(255,255,255,0.15)] overflow-hidden text-left transition-all duration-300 border border-white/10">
+            {/* Dynamic visual ambient lights inside card */}
+            <div className="absolute top-[-20%] right-[-10%] w-[180px] h-[180px] bg-purple-600/25 rounded-full blur-[60px] pointer-events-none animate-pulse"></div>
+            <div className="absolute bottom-[-20%] left-[10%] w-[180px] h-[180px] bg-blue-600/25 rounded-full blur-[60px] pointer-events-none animate-pulse duration-4000"></div>
             
             <div className="relative z-10 flex flex-col gap-6">
               
               {/* Row 1: TOTAL BALANCE pill + Eye Toggle */}
               <div className="flex items-center justify-between">
-                <span className="px-3.5 py-1.5 bg-white/15 border border-white/20 rounded-full text-[9px] font-black uppercase tracking-widest text-white flex items-center gap-1.5 shadow-inner leading-none font-mono">
-                  ✨ Total Balance
+                <span className="px-3.5 py-1.5 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-widest text-blue-400 flex items-center gap-1.5 shadow-inner leading-none font-mono">
+                  ✨ Combined Wallet Ledger
                 </span>
                 <button 
                   onClick={toggleShowBalances} 
-                  className="p-2 bg-white/15 hover:bg-white/25 active:scale-95 text-white rounded-full transition-all border border-white/10 shadow-sm"
+                  className="p-2.5 bg-slate-800/80 hover:bg-slate-700/80 active:scale-95 text-white rounded-2xl transition-all border border-white/5 shadow-[0_4px_10px_rgba(0,0,0,0.3)] cursor-pointer"
                   title={showBalances ? "Hide details" : "Show details"}
                 >
-                  {showBalances ? <Eye size={18} /> : <EyeOff size={18} />}
+                  {showBalances ? <Eye size={18} className="text-purple-400" /> : <EyeOff size={18} className="text-slate-400" />}
                 </button>
               </div>
 
-              {/* Row 2: Heavy visual balance amount */}
+              {/* Row 2: Heavy visual balance amount with beveled shadow */}
               <div>
-                <p className="text-4xl md:text-5xl font-black tracking-tight flex items-center gap-0.5 leading-none">
+                <p className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-400 tracking-tight flex items-center gap-0.5 leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                   ₹{showBalances ? (user.wallets.recharge + user.wallets.main + user.wallets.commission).toFixed(2) : "•••••"}
                 </p>
+                <p className="text-[9.5px] font-extrabold uppercase tracking-widest text-slate-400 mt-2 ml-1">AVAILABLE LIQUIDITY VALUE</p>
               </div>
 
               {/* Row 3: Sub-balances Row styled in custom Blue, Purple, Green glass tags */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-blue-600/35 border border-blue-400/30 p-3 flex flex-col justify-between shadow-inner rounded-2xl relative overflow-hidden backdrop-blur-sm">
-                  <span className="text-[8px] font-black text-blue-100 uppercase tracking-wider pl-0.5 font-mono">MAIN</span>
-                  <span className="text-xs md:text-sm font-black tracking-tight mt-1 truncate text-white">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-gradient-to-b from-blue-950/40 to-blue-900/10 border border-blue-500/20 p-4 flex flex-col justify-between shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] rounded-2xl relative overflow-hidden backdrop-blur-md">
+                  <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest font-mono">RECHARGE WALLET</span>
+                  <span className="text-lg font-black tracking-tight mt-1 text-white">
                     ₹{showBalances ? user.wallets.recharge.toFixed(2) : "•••••"}
                   </span>
+                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full absolute top-2 right-2 animate-ping"></div>
                 </div>
 
-                <div className="bg-purple-600/35 border border-purple-400/30 p-3 flex flex-col justify-between shadow-inner rounded-2xl relative overflow-hidden backdrop-blur-sm">
-                  <span className="text-[8px] font-black text-purple-100 uppercase tracking-wider pl-0.5 font-mono font-mono">E-WALLET</span>
-                  <span className="text-xs md:text-sm font-black tracking-tight mt-1 truncate text-white">
+                <div className="bg-gradient-to-b from-purple-950/40 to-purple-900/10 border border-purple-500/20 p-4 flex flex-col justify-between shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] rounded-2xl relative overflow-hidden backdrop-blur-md">
+                  <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest font-mono">ROYAL E-CASH</span>
+                  <span className="text-lg font-black tracking-tight mt-1 text-white">
                     ₹{showBalances ? user.wallets.main.toFixed(2) : "•••••"}
                   </span>
+                  <div className="w-1.5 h-1.5 bg-purple-500 rounded-full absolute top-2 right-2 animate-ping"></div>
                 </div>
 
-                <div className="bg-emerald-600/35 border border-emerald-400/30 p-3 flex flex-col justify-between shadow-inner rounded-2xl relative overflow-hidden backdrop-blur-sm">
-                  <span className="text-[8px] font-black text-emerald-100 uppercase tracking-wider pl-0.5 font-mono">COINS</span>
-                  <span className="text-xs md:text-sm font-black tracking-tight mt-1 truncate text-white">
-                    {showBalances ? Math.floor(user.wallets.commission) : "•••••"}
+                <div className="bg-gradient-to-b from-emerald-950/40 to-emerald-900/10 border border-emerald-500/20 p-4 flex flex-col justify-between shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] rounded-2xl relative overflow-hidden backdrop-blur-md">
+                  <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest font-mono">COIN MLM BONUS</span>
+                  <span className="text-lg font-black tracking-tight mt-1 text-white">
+                    ₹{showBalances ? user.wallets.commission.toFixed(2) : "•••••"}
                   </span>
+                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full absolute top-2 right-2 animate-ping"></div>
                 </div>
               </div>
 
-              {/* Row 4: Action helper navigation buttons (Added Money + Withdraw - REMOVED Invest) */}
+              {/* Row 4: Action helper navigation buttons (Added Money + Withdraw) */}
               <div className="grid grid-cols-2 gap-4 pt-1">
                 <button 
                   onClick={() => setTab('add_money')}
-                  className="py-3.5 bg-white text-violet-700 hover:bg-slate-50 font-black rounded-full text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all text-center animate-pulse"
+                  className="py-4 bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 hover:from-blue-400 hover:via-indigo-500 hover:to-purple-500 text-white font-black rounded-full text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all text-center border border-white/10 cursor-pointer"
                 >
-                  + Add Money
+                  ➕ Add Money
                 </button>
                 <button 
                   onClick={() => setTab('withdraw')}
-                  className="py-3.5 bg-white/15 hover:bg-white/25 text-white font-black rounded-full text-xs uppercase tracking-widest border border-white/25 hover:border-white/40 active:scale-95 transition-all text-center flex items-center justify-center gap-1.5"
+                  className="py-4 bg-white/5 hover:bg-white/10 text-white font-black rounded-full text-xs uppercase tracking-widest border border-white/15 hover:border-white/30 active:scale-95 transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  🏦 Withdraw
+                  🏦 Pay Out
                 </button>
               </div>
 
               {/* Row 5: Referral sponsor portfolio bar */}
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 flex items-center justify-between border border-white/10 mt-1 shadow-inner">
+              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 flex items-center justify-between border border-white/10 mt-1 shadow-inner">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 bg-white/15 rounded-lg flex items-center justify-center text-white text-sm">
+                  <div className="w-9 h-9 bg-purple-950/55 rounded-xl flex items-center justify-center text-purple-400 border border-purple-500/35">
                     👥
                   </div>
                   <div>
-                    <span className="text-[7.5px] font-black text-white/70 uppercase tracking-widest block leading-none">Your Referral Code</span>
-                    <span className="font-mono font-black text-xs tracking-widest mt-0.5 block leading-none">{user.referralCode}</span>
+                    <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block leading-none">Your Sponsor Code</span>
+                    <span className="font-mono font-black text-sm tracking-widest mt-1 block leading-none text-sky-400">{user.referralCode}</span>
                   </div>
                 </div>
                 <button 
@@ -299,10 +315,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                     navigator.clipboard.writeText(signupUrl); 
                     alert('Referral Sign-up Link Copied Successfully!');
                   }} 
-                  className="p-2 bg-white/15 hover:bg-white/25 rounded-xl transition-all border border-white/10 hover:border-white/20 active:scale-90 text-white"
+                  className="p-2.5 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/5 hover:border-white/20 active:scale-90 text-white cursor-pointer"
                   title="Copy Refer Link"
                 >
-                  <Copy size={12} />
+                  <Copy size={13} />
                 </button>
               </div>
 

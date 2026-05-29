@@ -106,24 +106,29 @@ const AdminPanel: React.FC<AdminProps> = ({
   const uniqueChatUsers = Array.from(new Set(chatMessages.map(m => m.senderId === 'admin' ? m.receiverId : m.senderId))).filter(id => id !== 'admin');
 
   return (
-    <div className="space-y-6 text-left relative">
-      {/* Decorative Multi-Color Spectrum bar for White, Blue, Purple, Green, Red, Orange */}
-      <div className="h-1.5 w-full rounded-full flex overflow-hidden shadow-sm mb-2">
-        <div className="w-[16%] h-full bg-slate-300"></div>
-        <div className="w-[17%] h-full bg-blue-500"></div>
-        <div className="w-[17%] h-full bg-purple-600"></div>
+    <div className="space-y-8 text-left relative">
+      {/* Decorative 3D Multicolored Spectrum Bar containing premium colors */}
+      <div className="h-2 w-full rounded-full flex overflow-hidden shadow-[0_4px_12px_rgba(0,0,0,0.15)] opacity-95">
+        <div className="w-[16%] h-full bg-slate-50 border-r border-white/10"></div>
+        <div className="w-[17%] h-full bg-blue-500 animate-pulse"></div>
+        <div className="w-[17%] h-full bg-[#8b5cf6]"></div>
         <div className="w-[17%] h-full bg-emerald-500"></div>
-        <div className="w-[17%] h-full bg-rose-500"></div>
+        <div className="w-[17%] h-full bg-[#ef4444]"></div>
         <div className="w-[16%] h-full bg-orange-500"></div>
       </div>
       
-      {/* Admin Header */}
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-black text-slate-800 tracking-tight">Admin Console Area</h2>
-          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Super App Platform Ledger Controls</p>
+      {/* Admin Header with 3D elements */}
+      <div className="bg-gradient-to-br from-slate-900 via-[#101229] to-[#0a0c1a] p-8 rounded-[2.5rem] border border-white/5 shadow-2xl relative overflow-hidden flex flex-col xl:flex-row xl:items-center justify-between gap-6">
+        <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
+        <div className="relative z-10">
+          <span className="px-3.5 py-1.5 bg-red-500/15 border border-red-500/30 rounded-full text-[9px] font-black uppercase tracking-widest text-red-500 flex items-center gap-1.5 w-max shadow-inner leading-none font-mono">
+            🛡️ Centralized Control Node
+          </span>
+          <h2 className="text-3xl font-black text-white tracking-tight mt-3">Admin Console Area</h2>
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">Super App Platform Ledger Controls & System Audits</p>
         </div>
-        <nav className="flex gap-1 bg-white p-1 rounded-2xl shadow-sm border overflow-x-auto no-scrollbar">
+        
+        <nav className="flex gap-1.5 bg-slate-950/80 p-2 rounded-2xl border border-white/5 shadow-inner overflow-x-auto no-scrollbar relative z-10">
           {[
             { id: 'stats', icon: TrendingUp, label: 'Stats' },
             { id: 'members', icon: Users, label: 'Members' },
@@ -132,17 +137,19 @@ const AdminPanel: React.FC<AdminProps> = ({
             { id: 'withdrawals', icon: Landmark, label: 'Payouts' },
             { id: 'rewards', icon: Award, label: 'Bounties' },
             { id: 'products', icon: Smartphone, label: 'Shop List' },
-            { id: 'support', icon: MessageSquare, label: 'Inbox' },
+            {id: 'support', icon: MessageSquare, label: 'Inbox' },
             { id: 'config', icon: Settings, label: 'Matrix' },
           ].map(t => (
             <button 
               key={t.id} onClick={() => setActiveTab(t.id as any)}
               className={cn(
-                "flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-black transition-all whitespace-nowrap uppercase tracking-widest",
-                activeTab === t.id ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'
+                "flex items-center gap-1.5 px-4 py-3 rounded-xl text-[10px] font-black transition-all whitespace-nowrap uppercase tracking-widest cursor-pointer border",
+                activeTab === t.id 
+                  ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-white/10 shadow-[0_4px_12px_rgba(79,70,229,0.3)] font-black' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/5 border-transparent'
               )}
             >
-              <t.icon size={13} />
+              {React.createElement(t.icon, { size: 12 })}
               {t.label}
             </button>
           ))}
@@ -150,34 +157,34 @@ const AdminPanel: React.FC<AdminProps> = ({
       </div>
 
       {activeTab === 'stats' && (
-        <div className="space-y-6">
+        <div className="space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
-              { l: 'Platform Fee (5%)', v: `₹${(totalVolume * 0.05).toFixed(2)}`, c: 'text-[#0077C0]', i: TrendingUp, bg: 'bg-[#0077C0]/10' },
-              { l: 'Transaction Volume', v: `₹${totalVolume.toFixed(2)}`, c: 'text-violet-600', i: Wallet, bg: 'bg-violet-50' },
-              { l: 'Total Active Franchise', v: activeUsers.toString() + ' Members', c: 'text-emerald-600', i: Users, bg: 'bg-emerald-50' },
-              { l: 'Pending Bank Settlements', v: withdrawalRequests.filter(r => r.status === 'pending').length.toString(), c: 'text-amber-600', i: Clock, bg: 'bg-amber-50' },
+              { l: 'Platform Fee (5%)', v: `₹${(totalVolume * 0.05).toFixed(2)}`, c: 'text-blue-500', i: TrendingUp, bg: 'bg-blue-500/10 border-blue-500/20' },
+              { l: 'Transaction Volume', v: `₹${totalVolume.toFixed(2)}`, c: 'text-purple-500', i: Wallet, bg: 'bg-purple-500/10 border-purple-500/20' },
+              { l: 'Total Active Franchise', v: activeUsers.toString() + ' Members', c: 'text-emerald-500', i: Users, bg: 'bg-emerald-500/10 border-emerald-500/20' },
+              { l: 'Pending Bank Settlements', v: withdrawalRequests.filter(r => r.status === 'pending').length.toString() + ' Payouts', c: 'text-amber-500', i: Clock, bg: 'bg-amber-500/10 border-amber-500/20' },
             ].map(s => (
-              <div key={s.l} className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-slate-100 flex flex-col justify-between">
-                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-4", s.bg)}>
-                  <s.i size={24} className={s.c} />
+              <div key={s.l} className="bg-slate-900/60 backdrop-blur-md p-8 rounded-[2.5rem] shadow-[0_15px_30px_rgba(0,0,0,0.25)] border border-white/5 flex flex-col justify-between transition-all duration-300 hover:scale-102">
+                <div className={cn("w-12 h-12 rounded-2xl flex items-center justify-center mb-5 border", s.bg)}>
+                  <s.i size={22} className={s.c} />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none">{s.l}</p>
-                  <p className={`text-2xl font-black mt-2 tracking-tight ${s.c}`}>{s.v}</p>
+                  <p className="text-[10px] font-black text-slate-450 uppercase tracking-widest leading-none mb-2">{s.l}</p>
+                  <p className={`text-2xl font-black tracking-tight ${s.c}`}>{s.v}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="bg-white rounded-[2.5rem] border shadow-sm overflow-hidden">
-            <div className="p-6 border-b bg-slate-50 flex items-center justify-between">
-              <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest">Platform Activity Ledger Log</h3>
-              <button className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:underline">Download report.csv</button>
+          <div className="bg-white dark:bg-slate-950/80 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-[0_10px_25px_-5px_rgba(0,0,0,0.1)] dark:shadow-[0_20px_40px_rgba(0,0,0,0.4)] overflow-hidden">
+            <div className="p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-900/60 flex items-center justify-between">
+              <h3 className="text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest">Platform Activity Ledger Log</h3>
+              <button className="text-[10px] font-black text-blue-500 hover:text-blue-400 uppercase tracking-widest hover:underline transition-colors">Download report.csv</button>
             </div>
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50/50 text-slate-400 font-bold text-[10px] uppercase tracking-widest">
+                <thead className="bg-slate-100/50 dark:bg-slate-900/20 text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase tracking-widest border-b border-slate-100 dark:border-white/5">
                   <tr>
                     <th className="px-8 py-4">TX REF ID</th>
                     <th className="px-8 py-4">Legal Member</th>
@@ -186,19 +193,19 @@ const AdminPanel: React.FC<AdminProps> = ({
                     <th className="px-8 py-4">Result</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-50">
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                   {transactions.slice(0, 10).map(tx => (
-                    <tr key={tx.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="px-8 py-4 font-mono text-[10px] text-slate-400">#{tx.id.toUpperCase()}</td>
-                      <td className="px-8 py-4 font-bold text-slate-700">{users.find(u => u.id === tx.userId)?.name || 'Central Ledger'}</td>
+                    <tr key={tx.id} className="hover:bg-slate-50/50 dark:hover:bg-white/5 transition-all">
+                      <td className="px-8 py-4 font-mono text-[10px] text-slate-400 dark:text-slate-500">#{tx.id.toUpperCase()}</td>
+                      <td className="px-8 py-4 font-bold text-slate-700 dark:text-slate-300">{users.find(u => u.id === tx.userId)?.name || 'Central Ledger'}</td>
                       <td className="px-8 py-4">
-                        <span className="px-3 py-1 bg-slate-150 rounded-full text-[10px] font-black uppercase tracking-tighter">{tx.type}</span>
+                        <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-full text-[10px] font-black uppercase tracking-tighter border border-slate-200/50 dark:border-white/5">{tx.type}</span>
                       </td>
-                      <td className={cn("px-8 py-4 font-black", tx.amount > 0 ? 'text-green-600' : 'text-red-600')}>
+                      <td className={cn("px-8 py-4 font-black", tx.amount > 0 ? 'text-green-500' : 'text-red-500')}>
                         {tx.amount > 0 ? '+' : ''}₹{Math.abs(tx.amount).toFixed(2)}
                       </td>
                       <td className="px-8 py-4">
-                        <div className="flex items-center gap-1 text-green-600 font-extrabold text-[10px] uppercase">
+                        <div className="flex items-center gap-1 text-green-500 font-extrabold text-[10px] uppercase">
                           <CheckCircle2 size={12} /> VERIFIED
                         </div>
                       </td>
@@ -211,43 +218,43 @@ const AdminPanel: React.FC<AdminProps> = ({
         </div>
       )}
 
-      {/* Manage Members Tab */}
+              {/* Manage Members Tab */}
       {activeTab === 'members' && (
         <div className="space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h3 className="text-xl font-black text-slate-800 uppercase tracking-wide">Manage Franchise Members</h3>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Audit profiles, verify activations and toggle administrative access roles</p>
+              <h3 className="text-xl font-black text-slate-800 dark:text-white uppercase tracking-wide">Manage Franchise Members</h3>
+              <p className="text-xs text-slate-400 dark:text-slate-400 font-bold uppercase tracking-widest mt-1.5">Audit profiles, verify activations and toggle administrative access roles</p>
             </div>
             
-            <div className="flex flex-col sm:flex-row gap-2">
+            <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                 <input 
                   type="text" 
                   placeholder="Query Name, Email, ID..." 
-                  className="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-bold w-52 focus:outline-none focus:border-slate-400"
+                  className="pl-10 pr-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl text-xs font-bold w-56 focus:outline-none focus:border-indigo-500 text-slate-800 dark:text-white"
                   value={memberSearch}
                   onChange={e => setMemberSearch(e.target.value)}
                 />
               </div>
               <select 
-                className="px-3 py-2.5 bg-white border border-slate-200 rounded-xl text-xs font-black uppercase text-slate-700 focus:outline-none bg-white font-sans"
+                className="px-4 py-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-2xl text-xs font-black uppercase text-slate-705 dark:text-slate-300 focus:outline-none font-sans"
                 value={memberRoleFilter}
                 onChange={e => setMemberRoleFilter(e.target.value as any)}
               >
-                <option value="all">ANY ROLE</option>
-                <option value="USER">ROLE: USER</option>
-                <option value="ADMIN">ROLE: ADMIN</option>
-                <option value="VENDOR">ROLE: VENDOR</option>
+                <option value="all" className="bg-white dark:bg-slate-900">ANY ROLE</option>
+                <option value="USER" className="bg-white dark:bg-slate-900">ROLE: USER</option>
+                <option value="ADMIN" className="bg-white dark:bg-slate-900">ROLE: ADMIN</option>
+                <option value="VENDOR" className="bg-white dark:bg-slate-900">ROLE: VENDOR</option>
               </select>
             </div>
           </div>
 
-          <div className="bg-white rounded-[2.5rem] border shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-slate-950/80 rounded-[2.5rem] border border-slate-100 dark:border-white/5 shadow-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50/50 text-slate-400 font-bold text-[10px] uppercase tracking-widest border-b">
+                <thead className="bg-slate-100/50 dark:bg-slate-900/35 text-slate-400 dark:text-slate-500 font-bold text-[10px] uppercase tracking-widest border-b border-slate-100 dark:border-white/5">
                   <tr>
                     <th className="px-8 py-4">Node Profile</th>
                     <th className="px-8 py-4">UPI & Contact info</th>
@@ -256,7 +263,7 @@ const AdminPanel: React.FC<AdminProps> = ({
                     <th className="px-8 py-4 text-right">Access Controls & Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
                   {users
                     .filter(u => {
                       const q = memberSearch.toLowerCase().trim();
