@@ -1,0 +1,7 @@
+{
+  "name": "SmartPay 360",
+  "description": "The ultimate mobile recharge and utility payment platform with a powerful 10-level referral ecosystem.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
