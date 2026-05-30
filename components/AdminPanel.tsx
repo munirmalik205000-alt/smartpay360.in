@@ -21,12 +21,14 @@ interface AdminProps {
   onApproveKYC?: (userId: string, status: 'approved' | 'rejected') => void;
   onApproveReward?: (userId: string, rewardId: string) => void;
   onToggleUserRole?: (userId: string) => void;
+  onSwitchTab?: (tab: string) => void;
 }
 
 const AdminPanel: React.FC<AdminProps> = ({ 
   users, transactions, config, onUpdateConfig, products, onAddProduct, paymentRequests, 
   onApprovePayment, withdrawalRequests, onApproveWithdrawal,
-  chatMessages, onSendMessage, onApproveKYC, onApproveReward, onToggleUserRole
+  chatMessages, onSendMessage, onApproveKYC, onApproveReward, onToggleUserRole,
+  onSwitchTab
 }) => {
   const [activeTab, setActiveTab] = useState<'stats' | 'members' | 'kyc' | 'payments' | 'withdrawals' | 'rewards' | 'support' | 'products' | 'config'>('stats');
   const [selectedChatUser, setSelectedChatUser] = useState<string | null>(null);
@@ -121,9 +123,20 @@ const AdminPanel: React.FC<AdminProps> = ({
       <div className="bg-gradient-to-br from-slate-900 via-[#101229] to-[#0a0c1a] p-8 rounded-[2.5rem] border border-white/5 shadow-2xl relative overflow-hidden flex flex-col xl:flex-row xl:items-center justify-between gap-6">
         <div className="absolute top-[-50%] right-[-10%] w-[300px] h-[300px] bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
         <div className="relative z-10">
-          <span className="px-3.5 py-1.5 bg-red-500/15 border border-red-500/30 rounded-full text-[9px] font-black uppercase tracking-widest text-red-500 flex items-center gap-1.5 w-max shadow-inner leading-none font-mono">
-            🛡️ Centralized Control Node
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="px-3.5 py-1.5 bg-red-500/15 border border-red-500/30 rounded-full text-[9px] font-black uppercase tracking-widest text-red-500 flex items-center gap-1.5 w-max shadow-inner leading-none font-mono">
+              🛡️ Centralized Control Node
+            </span>
+            {onSwitchTab && (
+              <button
+                onClick={() => onSwitchTab('home')}
+                className="px-3 py-1.5 bg-indigo-500/10 hover:bg-indigo-500/20 active:scale-95 transition-all text-[#8b5cf6] border border-indigo-500/30 rounded-full text-[9px] font-black uppercase tracking-widest flex items-center gap-1 cursor-pointer hover:shadow-md"
+                title="Switch to user view mode"
+              >
+                🔄 Switch to User Dashboard Mode
+              </button>
+            )}
+          </div>
           <h2 className="text-3xl font-black text-white tracking-tight mt-3">Admin Console Area</h2>
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1.5">Super App Platform Ledger Controls & System Audits</p>
         </div>

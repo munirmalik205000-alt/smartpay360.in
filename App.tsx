@@ -58,7 +58,17 @@ const App: React.FC = () => {
       return null;
     }
   });
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState(() => {
+    try {
+      const saved = safeLocalStorage.getItem('spay_current_user', '');
+      if (saved) {
+        const u = JSON.parse(saved) as User;
+        if (u.role === UserRole.ADMIN) return 'admin';
+        if (u.role === UserRole.VENDOR) return 'vendor';
+      }
+    } catch {}
+    return 'home';
+  });
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     return safeLocalStorage.getItem('spay_theme', 'dark') === 'dark';
   });
@@ -407,6 +417,13 @@ const App: React.FC = () => {
     );
     if (u) {
       setCurrentUser(u);
+      if (u.role === UserRole.ADMIN) {
+        setActiveTab('admin');
+      } else if (u.role === UserRole.VENDOR) {
+        setActiveTab('vendor');
+      } else {
+        setActiveTab('home');
+      }
     } else {
       alert('🚨 Secure Auth Failed. Please ensure password and Mobile number / Email are correct.');
     }
@@ -637,7 +654,7 @@ const App: React.FC = () => {
         darkMode={darkMode}
         setDarkMode={setDarkMode}
       >
-        {activeUser.role === UserRole.ADMIN ? (
+        {activeUser.role === UserRole.ADMIN && activeTab === 'admin' ? (
           <AdminPanel 
             users={users} 
             transactions={transactions} 
@@ -654,6 +671,7 @@ const App: React.FC = () => {
             onApproveKYC={handleApproveKYC}
             onApproveReward={handleApproveReward}
             onToggleUserRole={handleToggleUserRole}
+            onSwitchTab={setActiveTab}
           />
         ) : activeUser.role === UserRole.VENDOR ? (
           <VendorPanel 

@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { User, Transaction, Product, PaymentRequest, WithdrawalRequest, ChatMessage, BankDetails, RewardTarget } from '../types';
+import { User, Transaction, Product, PaymentRequest, WithdrawalRequest, ChatMessage, BankDetails, RewardTarget, UserRole } from '../types';
 import { Wallet, Bell, LogOut, ShieldCheck, MessageSquare, Share2, Copy, CheckCircle2, AlertCircle, TrendingUp, Users, ShoppingBag, ArrowRight, UserCheck, HelpCircle, Trophy, Sparkles, Landmark, FileText, Compass, Search, Tag, Eye, EyeOff, Heart, Check, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../services/utils';
@@ -202,6 +202,26 @@ const Dashboard: React.FC<DashboardProps> = ({
         <div className="w-[17%] h-full bg-rose-500"></div>
         <div className="w-[16%] h-full bg-orange-500"></div>
       </div>
+
+      {user.role === UserRole.ADMIN && (
+        <div className="bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-blue-950/40 backdrop-blur-md border border-indigo-500/30 p-4 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg text-left">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-xl shrink-0 animate-pulse">
+              🛡️
+            </div>
+            <div>
+              <p className="text-[10px] uppercase font-black text-indigo-400 tracking-wider font-mono">ADMINISTRATOR CONTROL VIEW ACTIVATED</p>
+              <p className="text-xs text-slate-300 font-medium leading-relaxed">You are exploring the live <b>User Dashboard</b> of SmartPay 360 using your single unified ID.</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setTab('admin')}
+            className="px-5 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black text-[10px] uppercase tracking-wider rounded-2xl border border-white/10 active:scale-95 transition-all shadow-md cursor-pointer shrink-0"
+          >
+            🛡️ Go Back to Admin Panel
+          </button>
+        </div>
+      )}
       
       {/* Beautiful Home Header & Balance Cards replacing previous bento stats/sliders */}
       {tab === 'home' && (
