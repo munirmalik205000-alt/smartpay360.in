@@ -25,6 +25,7 @@ interface AuthProps {
   onSignup: (data: any) => void;
   onRecover: (email: string, phone: string, type: 'password' | 'pin') => string | null;
   users: UserType[];
+  onEnsureSponsor?: (code: string) => void;
 }
 
 const STATES = [
@@ -36,7 +37,7 @@ const STATES = [
   "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
 ];
 
-const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users }) => {
+const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsureSponsor }) => {
   const [view, setView] = useState<'login' | 'signup' | 'recover-password' | 'recover-pin'>('login');
   const [stateSearch, setStateSearch] = useState('');
   const [isStateOpen, setIsStateOpen] = useState(false);
@@ -61,6 +62,22 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users }) => {
       setView('signup');
     }
   }, []);
+
+  useEffect(() => {
+    const code = String(formData.referralCode || '').trim().toUpperCase();
+    if (!code) return;
+    
+    // Check if the sponsor code already exists in users
+    const exists = users.some(u => u && u.referralCode && String(u.referralCode).trim().toUpperCase() === code);
+    
+    if (!exists && onEnsureSponsor) {
+      // Validate pattern first
+      const isValidPattern = /^(SP|SPAY|LVL|SP360)[A-Z0-9]{2,10}$/i.test(code);
+      if (isValidPattern) {
+        onEnsureSponsor(code);
+      }
+    }
+  }, [formData.referralCode, users, onEnsureSponsor]);
 
   const filteredStates = useMemo(() => {
     return STATES.filter(s => s.toLowerCase().includes(stateSearch.toLowerCase()));
