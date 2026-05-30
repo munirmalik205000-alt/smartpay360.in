@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { User, Transaction, MLMConfig, UserRole, PaymentRequest, WithdrawalRequest, ChatMessage, Product } from '../types';
+import { User, Transaction, MLMConfig, UserRole, PaymentRequest, WithdrawalRequest, ChatMessage, Product, Package } from '../types';
 import { TrendingUp, Users, Wallet, ShieldCheck, MessageSquare, Settings, CheckCircle2, XCircle, Clock, Search, Filter, FileText, Gift, Award, Check, Trash2, Landmark, Smartphone } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../services/utils';
@@ -22,15 +22,18 @@ interface AdminProps {
   onApproveReward?: (userId: string, rewardId: string) => void;
   onToggleUserRole?: (userId: string) => void;
   onSwitchTab?: (tab: string) => void;
+  packages?: Package[];
+  onCreatePackage?: (name: string, price: number, pv: number, coin: number) => void;
+  onDeletePackage?: (id: string) => void;
 }
 
 const AdminPanel: React.FC<AdminProps> = ({ 
   users, transactions, config, onUpdateConfig, products, onAddProduct, paymentRequests, 
   onApprovePayment, withdrawalRequests, onApproveWithdrawal,
   chatMessages, onSendMessage, onApproveKYC, onApproveReward, onToggleUserRole,
-  onSwitchTab
+  onSwitchTab, packages = [], onCreatePackage, onDeletePackage
 }) => {
-  const [activeTab, setActiveTab] = useState<'stats' | 'members' | 'kyc' | 'payments' | 'withdrawals' | 'rewards' | 'support' | 'products' | 'config'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'members' | 'kyc' | 'payments' | 'withdrawals' | 'rewards' | 'support' | 'products' | 'config' | 'packages'>('stats');
   const [selectedChatUser, setSelectedChatUser] = useState<string | null>(null);
   const [adminReply, setAdminReply] = useState('');
 
@@ -46,6 +49,27 @@ const AdminPanel: React.FC<AdminProps> = ({
   const [newProdCat, setNewProdCat] = useState('Electronics');
   const [newProdMlmPoints, setNewProdMlmPoints] = useState('');
   const [newProdIcon, setNewProdIcon] = useState('📱');
+
+  // Package creation inputs
+  const [pkgName, setPkgName] = useState('');
+  const [pkgPrice, setPkgPrice] = useState('');
+  const [pkgPV, setPkgPV] = useState('');
+  const [pkgCoin, setPkgCoin] = useState('');
+
+  const handleCreatePackageSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pkgName || !pkgPrice || !pkgPV || !pkgCoin) {
+      alert('Kindly fill in all package fields: Name, Price, PV and Coins!');
+      return;
+    }
+    if (onCreatePackage) {
+      onCreatePackage(pkgName, parseFloat(pkgPrice), parseFloat(pkgPV), parseFloat(pkgCoin));
+      setPkgName('');
+      setPkgPrice('');
+      setPkgPV('');
+      setPkgCoin('');
+    }
+  };
 
   const totalVolume = transactions.reduce((a, b) => a + Math.abs(b.amount), 0);
   const activeUsers = users.filter(u => u.isActivated).length;
@@ -150,7 +174,8 @@ const AdminPanel: React.FC<AdminProps> = ({
             { id: 'withdrawals', icon: Landmark, label: 'Payouts' },
             { id: 'rewards', icon: Award, label: 'Bounties' },
             { id: 'products', icon: Smartphone, label: 'Shop List' },
-            {id: 'support', icon: MessageSquare, label: 'Inbox' },
+            { id: 'packages', icon: Gift, label: 'Packages' },
+            { id: 'support', icon: MessageSquare, label: 'Inbox' },
             { id: 'config', icon: Settings, label: 'Matrix' },
           ].map(t => (
             <button 
@@ -818,6 +843,151 @@ const AdminPanel: React.FC<AdminProps> = ({
                 <p className="text-[10px] font-extrabold text-blue-800 uppercase tracking-widest mb-2">20-Level Cascade split ratio details</p>
                 <p className="text-[11px] font-medium text-slate-500 leading-relaxed">Levels 1-5 credit 2% each. Levels 6-20 credit 0.5% cascade distribution. Admin deducts 5% TD & platform service maintenance fee securely during each cashout settlements node execution.</p>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Packages Management Section */}
+      {activeTab === 'packages' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left">
+          {/* Create Package Column */}
+          <div className="lg:col-span-1 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm dark:bg-slate-900/40 dark:border-white/5">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+              <span className="p-2 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/25 rounded-xl text-indigo-500 animate-bounce">🎁</span>
+              Create New Package
+            </h3>
+            
+            <form onSubmit={handleCreatePackageSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Package Name</label>
+                <input 
+                  type="text" 
+                  value={pkgName} 
+                  onChange={e => setPkgName(e.target.value)} 
+                  placeholder="e.g. Starter Node, Golden Booster" 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500 dark:bg-slate-900 dark:text-slate-100" 
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">E-Wallet Cost (₹ Price)</label>
+                <input 
+                  type="number" 
+                  value={pkgPrice} 
+                  onChange={e => setPkgPrice(e.target.value)} 
+                  placeholder="Price paid from E-Wallet" 
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500 dark:bg-slate-900 dark:text-slate-100" 
+                  required
+                  min="1"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">P.V (Point Value)</label>
+                  <input 
+                    type="number" 
+                    value={pkgPV} 
+                    onChange={e => setPkgPV(e.target.value)} 
+                    placeholder="PV Column" 
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500 dark:bg-slate-900 dark:text-slate-100" 
+                    required
+                    min="0"
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5 ml-1">Coins Received</label>
+                  <input 
+                    type="number" 
+                    value={pkgCoin} 
+                    onChange={e => setPkgCoin(e.target.value)} 
+                    placeholder="Coins Column" 
+                    className="w-full px-4 py-3 bg-slate-50 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-violet-500 dark:bg-slate-905 dark:text-slate-100" 
+                    required
+                    min="0"
+                  />
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                className="w-full py-3.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 active:scale-98 text-white rounded-xl text-[10px] uppercase font-black tracking-widest shadow-md transition-all cursor-pointer"
+              >
+                💾 Publish Franchise Package Node
+              </button>
+            </form>
+          </div>
+
+          {/* Packages List Column */}
+          <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm flex flex-col dark:bg-slate-900/40 dark:border-white/5">
+            <h3 className="text-lg font-black text-slate-900 dark:text-white mb-6 flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <span className="p-2 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-100 dark:border-emerald-500/25 rounded-xl text-emerald-500">📊</span>
+                Active Franchise Packages
+              </span>
+              <span className="text-[9px] font-black uppercase text-indigo-500 dark:text-indigo-450 px-3 py-1 bg-indigo-50 dark:bg-indigo-500/10 rounded-full border border-indigo-100 dark:border-indigo-500/20 leading-none">
+                {packages.length} Packages
+              </span>
+            </h3>
+
+            <div className="border border-slate-100 dark:border-white/5 rounded-3xl overflow-hidden flex-1 bg-white dark:bg-slate-950/20">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-800 dark:text-slate-200">
+                  <thead className="bg-slate-50 dark:bg-slate-900/60 font-black text-[9px] uppercase tracking-wider text-slate-400 border-b border-slate-100 dark:border-white/5">
+                    <tr>
+                      <th className="px-6 py-4">Package Name</th>
+                      <th className="px-6 py-4">Price (E-Wallet)</th>
+                      <th className="px-6 py-4 text-purple-600 dark:text-purple-450">P.V (Point Value)</th>
+                      <th className="px-6 py-4 text-emerald-600 dark:text-emerald-400">Coins Col.</th>
+                      <th className="px-6 py-4 text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {packages.map(p => (
+                      <tr key={p.id} className="hover:bg-slate-50/40 dark:hover:bg-white/5 transition-colors">
+                        <td className="px-6 py-4 font-bold text-slate-900 dark:text-slate-100">{p.name}</td>
+                        <td className="px-6 py-4 font-mono font-black text-slate-600 dark:text-slate-300">₹{p.price.toFixed(2)}</td>
+                        <td className="px-6 py-4">
+                          <span className="px-2.5 py-1 bg-purple-50 dark:bg-purple-500/10 text-purple-700 dark:text-purple-450 rounded-lg text-[10px] font-black border border-purple-100 dark:border-purple-500/20 font-mono">
+                            {p.pv} PV
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="px-2.5 py-1 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-350 rounded-lg text-[10px] font-black border border-emerald-100 dark:border-emerald-500/20 font-mono">
+                            🪙 {p.coin} Coins
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button 
+                            type="button" 
+                            onClick={() => { if(onDeletePackage) { onDeletePackage(p.id); } }}
+                            className="p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 hover:text-rose-600 rounded-xl transition-all cursor-pointer inline-flex items-center justify-center border border-transparent hover:border-rose-100 dark:hover:border-rose-500/20 shadow-none border-0"
+                            title="Delete custom package"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                    {packages.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-20 text-center text-slate-400 font-semibold uppercase tracking-widest opacity-40 dark:text-slate-500">
+                          No packages available. Use the form to create package nodes.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div className="mt-4 p-4.5 bg-indigo-50/40 dark:bg-indigo-500/10 border border-indigo-100/50 dark:border-indigo-500/20 rounded-2xl flex items-center gap-3">
+              <span className="text-xl">💡</span>
+              <p className="text-[10px] text-indigo-805 dark:text-indigo-300 font-medium leading-relaxed">
+                When a user purchases any of these packages using their <b>E-Wallet balance</b>, their membership ID is automatically activated for services (recharge, payouts, e-commerce)! Level commissions and Coins are distributed up to <b>20 cascade downline nodes</b>.
+              </p>
             </div>
           </div>
         </div>

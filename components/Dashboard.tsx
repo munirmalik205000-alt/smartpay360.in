@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo } from 'react';
-import { User, Transaction, Product, PaymentRequest, WithdrawalRequest, ChatMessage, BankDetails, RewardTarget, UserRole } from '../types';
-import { Wallet, Bell, LogOut, ShieldCheck, MessageSquare, Share2, Copy, CheckCircle2, AlertCircle, TrendingUp, Users, ShoppingBag, ArrowRight, UserCheck, HelpCircle, Trophy, Sparkles, Landmark, FileText, Compass, Search, Tag, Eye, EyeOff, Heart, Check, Trash2 } from 'lucide-react';
+import { User, Transaction, Product, PaymentRequest, WithdrawalRequest, ChatMessage, BankDetails, RewardTarget, UserRole, Package } from '../types';
+import { Wallet, Bell, LogOut, ShieldCheck, MessageSquare, Share2, Copy, CheckCircle2, AlertCircle, TrendingUp, Users, ShoppingBag, ArrowRight, UserCheck, HelpCircle, Trophy, Sparkles, Landmark, FileText, Compass, Search, Tag, Eye, EyeOff, Heart, Check, Trash2, ShieldAlert } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../services/utils';
 
@@ -27,6 +27,10 @@ interface DashboardProps {
   setTab: (tab: any) => void;
   onSubmitKYC?: (aadhaar: string, pan: string, gst?: string) => void;
   onClaimReward?: (rewardId: string) => void;
+  packages?: Package[];
+  onBuyPackage?: (userId: string, packageId: string) => void;
+  onMainToEWalletTransfer?: (userId: string, amount: number) => void;
+  onEWalletToEWalletTransfer?: (senderId: string, recipientEmail: string, amount: number) => void;
 }
 
 const INDIAN_OPERATORS = [
@@ -42,9 +46,40 @@ const Dashboard: React.FC<DashboardProps> = ({
   user, users, products, transactions, onRecharge, onOrder, onTransfer, 
   onActivate, packagePrice, qrCode, onAddMoney, paymentRequests,
   withdrawalRequests, onWithdrawal, onUpdateBankDetails, chatMessages, onSendMessage,
-  tab, setTab, onSubmitKYC, onClaimReward
+  tab, setTab, onSubmitKYC, onClaimReward,
+  packages = [], onBuyPackage, onMainToEWalletTransfer, onEWalletToEWalletTransfer
 }) => {
   const [transferData, setTransferData] = useState({ email: '', amount: '', pin: '' });
+  const [transferSubTab, setTransferSubTab] = useState<'main' | 'ewallet' | 'self_conversion'>('main');
+  const [ewalletTransfer, setEwalletTransfer] = useState({ email: '', amount: '', pin: '' });
+  const [selfEwalletConversion, setSelfEwalletConversion] = useState({ amount: '', pin: '' });
+
+  const handleEwalletTransferSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const amt = parseFloat(ewalletTransfer.amount);
+    if (isNaN(amt) || amt <= 0) return alert('🚨 Provide a valid positive currency amount.');
+    if (!ewalletTransfer.email) return alert('🚨 Provide recipient email ID.');
+    if (ewalletTransfer.pin.length !== 4) return alert('🚨 Confirm your 4 digit secure PIN code.');
+    if (ewalletTransfer.pin !== user.transactionPin) return alert('🚨 Wrong secure PIN code submitted.');
+
+    if (onEWalletToEWalletTransfer) {
+      onEWalletToEWalletTransfer(user.id, ewalletTransfer.email, amt);
+      setEwalletTransfer({ email: '', amount: '', pin: '' });
+    }
+  };
+
+  const handleSelfEwalletConversionSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const amt = parseFloat(selfEwalletConversion.amount);
+    if (isNaN(amt) || amt <= 0) return alert('🚨 Please input a valid conversions amount.');
+    if (selfEwalletConversion.pin.length !== 4) return alert('🚨 Provide your secure 4 digit PIN.');
+    if (selfEwalletConversion.pin !== user.transactionPin) return alert('🚨 Security Error: Pin code incorrect.');
+
+    if (onMainToEWalletTransfer) {
+      onMainToEWalletTransfer(user.id, amt);
+      setSelfEwalletConversion({ amount: '', pin: '' });
+    }
+  };
   const [addMoneyData, setAddMoneyData] = useState({ amount: '', utr: '', screenshot: '' });
   const [withdrawalAmount, setWithdrawalAmount] = useState('');
   const [withdrawalPin, setWithdrawalPin] = useState('');
@@ -105,10 +140,12 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [myDownline]);
 
   const stats = [
-    { label: 'Recharge Bal', val: `₹${user.wallets.recharge.toFixed(2)}`, color: 'text-emerald-500', icon: Wallet, desc: 'Used for bills' },
-    { label: 'Royal Cash', val: `₹${user.wallets.main.toFixed(2)}`, color: 'text-violet-600 dark:text-violet-400', icon: TrendingUp, desc: 'Main balance' },
-    { label: 'MLM Income', val: `₹${user.wallets.commission.toFixed(2)}`, color: 'text-emerald-600', icon: Trophy, desc: 'Locked earnings' },
-    { label: 'Direct Referrals', val: users.filter(u => u.referrerId === user.id).length.toString(), color: 'text-violet-500 dark:text-violet-400', icon: Users, desc: 'Direct Team' },
+    { label: 'E-Wallet Balance', val: `₹${(user.wallets.ewallet || 0).toFixed(2)}`, color: 'text-indigo-600 dark:text-indigo-400', icon: Wallet, desc: 'Used for package activation' },
+    { label: 'Coin Wallet', val: `${(user.wallets.coinwallet || 0).toLocaleString()} Coins`, color: 'text-amber-500', icon: Sparkles, desc: 'Level coin rewards' },
+    { label: 'Self P.V.', val: `${(user.selfPV || 0)} PV`, color: 'text-fuchsia-500', icon: Trophy, desc: 'Accumulated Point Value' },
+    { label: 'Royal Cash (Main)', val: `₹${user.wallets.main.toFixed(2)}`, color: 'text-violet-600 dark:text-violet-400', icon: TrendingUp, desc: 'Convert/invest/transfer' },
+    { label: 'MLM Income', val: `₹${user.wallets.commission.toFixed(2)}`, color: 'text-teal-600 dark:text-teal-400', icon: Trophy, desc: 'Commission balance' },
+    { label: 'Recharge Bal', val: `₹${user.wallets.recharge.toFixed(2)}`, color: 'text-emerald-500', icon: Wallet, desc: 'Utility bill funds' },
   ];
 
   const signupUrl = `${window.location.origin}?ref=${user.referralCode}`;
@@ -345,30 +382,86 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
           </div>
 
-          {/* 3. Activation Banner (rendered inline if not activated) */}
-          {!user.isActivated && (
-            <motion.div 
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-purple-505/10 border-2 border-dashed border-purple-500/20 p-6 rounded-[2rem] flex flex-col md:flex-row items-center justify-between gap-6 text-left bg-violet-50 dark:bg-violet-950/20 dark:border-violet-800"
-            >
-              <div className="flex items-center gap-4 text-left">
-                <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center text-purple-605 dark:text-purple-400 shrink-0">
-                  <AlertCircle size={24} />
+          {/* 3. Franchise Upgrade & Activation Packages Grid */}
+          <div className="space-y-4 text-left border-0">
+            {!user.isActivated && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-amber-500/10 border border-amber-500/30 p-5 rounded-2xl flex items-center gap-3.5 text-left bg-amber-50/5 dark:bg-amber-955/20"
+              >
+                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center text-amber-600 shrink-0">
+                  <ShieldAlert size={20} />
                 </div>
                 <div>
-                  <h3 className="text-purple-900 dark:text-[#a855f7] font-extrabold text-base tracking-tight">Ecosystem Locked</h3>
-                  <p className="text-slate-500 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-0.5">Activate account for ₹{packagePrice} to claim downline 20-level commission structures!</p>
+                  <h3 className="text-amber-805 dark:text-amber-305 font-extrabold text-sm tracking-tight">ID Activation Required</h3>
+                  <p className="text-slate-550 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-0.5 leading-relaxed">
+                    Aapka account active nahi hai. Please buy any Franchise Package below using your <b>E-Wallet balance</b> to activate your ID for recharges and other services!
+                  </p>
                 </div>
-              </div>
-              <button 
-                onClick={() => onActivate(user.id)} 
-                className="w-full md:w-auto bg-[#36d8b7] hover:bg-[#28c2a3] text-slate-900 font-black px-8 py-3.5 rounded-2xl transition-all active:scale-95 uppercase tracking-widest text-[10px] shadow-lg shadow-teal-400/20"
-              >
-                Activate Now
-              </button>
-            </motion.div>
-          )}
+              </motion.div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {packages.map(p => {
+                const isAffordable = (user.wallets?.ewallet || 0) >= p.price;
+                return (
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    key={p.id}
+                    className={cn(
+                      "p-6 rounded-3xl border flex flex-col justify-between relative overflow-hidden transition-all bg-white dark:bg-slate-900/40 shadow-sm",
+                      !user.isActivated && p.price === 999 
+                        ? "border-amber-500/60 ring-2 ring-amber-550/15" 
+                        : "border-slate-150 dark:border-white/5"
+                    )}
+                  >
+                    {!user.isActivated && p.price === 999 && (
+                      <span className="absolute top-4 right-4 px-2.5 py-1 bg-amber-500 text-white rounded-lg text-[8px] font-black uppercase tracking-widest leading-none">
+                        Recommended
+                      </span>
+                    )}
+                    
+                    <div>
+                      <h4 className="text-xs font-black text-slate-805 dark:text-slate-200 mb-2">{p.name}</h4>
+                      <div className="flex items-baseline gap-1 mb-4">
+                        <span className="text-2xl font-black text-slate-900 dark:text-white">₹{p.price}</span>
+                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">E-Wallet</span>
+                      </div>
+                      
+                      <div className="space-y-2 bg-slate-50 dark:bg-slate-950/60 p-3.5 rounded-2xl border border-slate-100 dark:border-white/5 mb-5 text-[10px] font-bold text-slate-650 dark:text-slate-400">
+                        <div className="flex justify-between items-center">
+                          <span>PV self count:</span>
+                          <span className="text-purple-600 dark:text-purple-400 font-black font-mono">+{p.pv} PV</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span>Instant Coins:</span>
+                          <span className="text-amber-500 font-black font-mono">🪙 {p.coin} Coins</span>
+                        </div>
+                        <div className="flex justify-between items-center bg-indigo-50/50 dark:bg-indigo-950/20 px-1 py-0.5 rounded-md">
+                          <span>20-Level Income:</span>
+                          <span className="text-indigo-600 dark:text-indigo-400 font-black uppercase font-mono">Cascade Active</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <button 
+                      type="button"
+                      onClick={() => { if(onBuyPackage) { onBuyPackage(user.id, p.id); } }}
+                      className={cn(
+                        "w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-widest cursor-pointer active:scale-98 transition-all shadow-sm",
+                        isAffordable 
+                          ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black" 
+                          : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed border border-transparent"
+                      )}
+                    >
+                      {isAffordable ? "⚡ Buy with E-Wallet" : "🔒 Low E-Wallet"}
+                    </button>
+                  </motion.div>
+                );
+              })}
+            </div>
+          </div>
 
           {/* 4. Highly Polished "Quick Actions" Section */}
           <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800/60">
@@ -918,106 +1011,283 @@ const Dashboard: React.FC<DashboardProps> = ({
       {tab === 'transfer' && (
         <div className="max-w-md mx-auto space-y-8 text-left">
           <div className="text-center">
-            <h2 className="text-3xl font-black text-slate-850 dark:text-white tracking-tight">Peer Transfer</h2>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">Zero-fee instant peer transfer</p>
+            <h2 className="text-3xl font-black text-slate-850 dark:text-white tracking-tight">Wallet Operations</h2>
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2 font-mono">Convert balances or transfer peer-to-peer</p>
           </div>
 
           <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border shadow-sm space-y-6">
-            <div className="p-6 bg-[#003B73] rounded-3xl text-white shadow-lg">
-              <p className="text-[9px] font-black text-white/50 uppercase tracking-widest mb-1">Available Coin Wallet</p>
-              <p className="text-3xl font-black">₹{user.wallets.main.toFixed(2)}</p>
+            {/* Toggle buttons to switch transfer modes */}
+            <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-2xl border border-slate-200/50 dark:border-white/5">
+              <button 
+                type="button"
+                onClick={() => setTransferSubTab('main')}
+                className={cn(
+                  "flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer",
+                  transferSubTab === 'main'
+                    ? "bg-white dark:bg-slate-900 text-slate-850 dark:text-white shadow-xs font-black"
+                    : "text-slate-400 dark:text-slate-500 hover:text-slate-650"
+                )}
+              >
+                Royal Cash
+              </button>
+              <button 
+                type="button"
+                onClick={() => setTransferSubTab('ewallet')}
+                className={cn(
+                  "flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer",
+                  transferSubTab === 'ewallet'
+                    ? "bg-white dark:bg-slate-900 text-slate-850 dark:text-white shadow-xs font-black"
+                    : "text-slate-400 dark:text-slate-500 hover:text-slate-650"
+                )}
+              >
+                E-Wallet Peer
+              </button>
+              <button 
+                type="button"
+                onClick={() => setTransferSubTab('self_conversion')}
+                className={cn(
+                  "flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer",
+                  transferSubTab === 'self_conversion'
+                    ? "bg-white dark:bg-slate-900 text-slate-850 dark:text-white shadow-xs font-black"
+                    : "text-slate-400 dark:text-slate-500 hover:text-slate-650"
+                )}
+              >
+                Self Topup
+              </button>
             </div>
 
-            <form onSubmit={handleTransferSubmit} className="space-y-4">
-              <div className="space-y-1">
-                <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Beneficiary Member Email</label>
-                <input 
-                  type="email" 
-                  required 
-                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl font-bold text-sm"
-                  placeholder="name@spay.com"
-                  value={transferData.email}
-                  onChange={e => setTransferData({...transferData, email: e.target.value})}
-                />
+            {/* Display Wallet Balance Box dynamically */}
+            {transferSubTab === 'main' && (
+              <div className="p-6 bg-[#003B73] rounded-3xl text-white shadow-lg">
+                <p className="text-[9px] font-black text-white/50 uppercase tracking-widest mb-1">Source: Active Royal Cash (Main)</p>
+                <p className="text-3xl font-black">₹{user.wallets.main.toFixed(2)}</p>
               </div>
-              <div className="space-y-1">
-                <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Cash Value (₹)</label>
-                <input 
-                  type="number" 
-                  required 
-                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-705 rounded-2xl font-black text-xl"
-                  placeholder="0.00"
-                  value={transferData.amount}
-                  onChange={e => setTransferData({...transferData, amount: e.target.value})}
-                />
+            )}
+
+            {transferSubTab === 'ewallet' && (
+              <div className="p-6 bg-indigo-900 rounded-3xl text-white shadow-lg">
+                <p className="text-[9px] font-black text-white/50 uppercase tracking-widest mb-1">Source: E-Wallet Balance</p>
+                <p className="text-3xl font-black">₹{(user.wallets.ewallet || 0).toFixed(2)}</p>
               </div>
-              <div className="space-y-1">
-                <label className="block text-[10px] font-black text-slate-455 uppercase tracking-widest pl-1">Confirm Security PIN</label>
-                <input 
-                  type="password" 
-                  maxLength={4} 
-                  inputMode="numeric" 
-                  pattern="\d{4}" 
-                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-705 rounded-2xl font-black text-center tracking-[1em]"
-                  placeholder="0000"
-                  value={transferData.pin}
-                  onChange={e => setTransferData({...transferData, pin: e.target.value.replace(/\D/g, '').slice(0, 4)})}
-                  required 
-                />
+            )}
+
+            {transferSubTab === 'self_conversion' && (
+              <div className="p-6 bg-teal-900 rounded-3xl text-white shadow-lg">
+                <p className="text-[9px] font-black text-white/50 uppercase tracking-widest mb-1">Source: Royal Cash ➔ E-Wallet Conversion</p>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <span className="text-[8px] text-teal-300 font-bold uppercase tracking-widest">Main</span>
+                    <p className="text-lg font-black">₹{user.wallets.main.toFixed(2)}</p>
+                  </div>
+                  <span className="text-xl">➔</span>
+                  <div>
+                    <span className="text-[8px] text-teal-300 font-bold uppercase tracking-widest">E-Wallet</span>
+                    <p className="text-lg font-black">₹{(user.wallets.ewallet || 0).toFixed(2)}</p>
+                  </div>
+                </div>
               </div>
-              <button type="submit" className="w-full py-4 bg-gradient-to-r from-blue-700 to-indigo-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:scale-105 transition-transform">
-                Initiate Instant Share
-              </button>
-            </form>
+            )}
+
+            {/* Render selected form */}
+            {transferSubTab === 'main' && (
+              <form onSubmit={handleTransferSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Recipient Member Email</label>
+                  <input 
+                    type="email" 
+                    required 
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl font-bold text-sm text-slate-800 dark:text-slate-100"
+                    placeholder="name@spay.com"
+                    value={transferData.email}
+                    onChange={e => setTransferData({...transferData, email: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Transfer Amount (₹)</label>
+                  <input 
+                    type="number" 
+                    required 
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-705 rounded-2xl font-black text-xl text-slate-800 dark:text-slate-100"
+                    placeholder="0.00"
+                    value={transferData.amount}
+                    onChange={e => setTransferData({...transferData, amount: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black text-slate-455 uppercase tracking-widest pl-1">Security PIN</label>
+                  <input 
+                    type="password" 
+                    maxLength={4} 
+                    inputMode="numeric" 
+                    pattern="\d{4}" 
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-705 rounded-2xl font-black text-center tracking-[1em]"
+                    placeholder="0000"
+                    value={transferData.pin}
+                    onChange={e => setTransferData({...transferData, pin: e.target.value.replace(/\D/g, '').slice(0, 4)})}
+                    required 
+                  />
+                </div>
+                <button type="submit" className="w-full py-4 bg-gradient-to-r from-blue-700 to-indigo-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:scale-103 active:scale-98 transition-all cursor-pointer">
+                  Send Royal Cash
+                </button>
+              </form>
+            )}
+
+            {transferSubTab === 'ewallet' && (
+              <form onSubmit={handleEwalletTransferSubmit} className="space-y-4">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Beneficiary E-Wallet Email</label>
+                  <input 
+                    type="email" 
+                    required 
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl font-bold text-sm text-slate-800 dark:text-slate-100"
+                    placeholder="recipient@spay.com"
+                    value={ewalletTransfer.email}
+                    onChange={e => setEwalletTransfer({...ewalletTransfer, email: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Transfer Amount (₹)</label>
+                  <input 
+                    type="number" 
+                    required 
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-705 rounded-2xl font-black text-xl text-slate-800 dark:text-slate-100"
+                    placeholder="0.00"
+                    value={ewalletTransfer.amount}
+                    onChange={e => setEwalletTransfer({...ewalletTransfer, amount: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black text-slate-455 uppercase tracking-widest pl-1">Security PIN</label>
+                  <input 
+                    type="password" 
+                    maxLength={4} 
+                    inputMode="numeric" 
+                    pattern="\d{4}" 
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-705 rounded-2xl font-black text-center tracking-[1em]"
+                    placeholder="0000"
+                    value={ewalletTransfer.pin}
+                    onChange={e => setEwalletTransfer({...ewalletTransfer, pin: e.target.value.replace(/\D/g, '').slice(0, 4)})}
+                    required 
+                  />
+                </div>
+                <button type="submit" className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:scale-103 active:scale-98 transition-all cursor-pointer">
+                  Send E-Wallet Cash
+                </button>
+              </form>
+            )}
+
+            {transferSubTab === 'self_conversion' && (
+              <form onSubmit={handleSelfEwalletConversionSubmit} className="space-y-4">
+                <div className="p-4 bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/20 text-[10px] text-teal-800 dark:text-teal-300 font-bold uppercase rounded-2xl leading-relaxed">
+                  💡 main wallet se e-wallet me topup self ke liye instant zero charges block configuration node call.
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Amount to Transfer to E-Wallet (₹)</label>
+                  <input 
+                    type="number" 
+                    required 
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-705 rounded-2xl font-black text-xl text-slate-800 dark:text-slate-100"
+                    placeholder="0.00"
+                    value={selfEwalletConversion.amount}
+                    onChange={e => setSelfEwalletConversion({...selfEwalletConversion, amount: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black text-slate-455 uppercase tracking-widest pl-1">Security PIN</label>
+                  <input 
+                    type="password" 
+                    maxLength={4} 
+                    inputMode="numeric" 
+                    pattern="\d{4}" 
+                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-705 rounded-2xl font-black text-center tracking-[1em]"
+                    placeholder="0000"
+                    value={selfEwalletConversion.pin}
+                    onChange={e => setSelfEwalletConversion({...selfEwalletConversion, pin: e.target.value.replace(/\D/g, '').slice(0, 4)})}
+                    required 
+                  />
+                </div>
+                <button type="submit" className="w-full py-4 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:scale-103 active:scale-98 transition-all cursor-pointer">
+                  Activate Self Convert Topup
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}
 
       {/* Complete and Corrected 20-Level Matrix Referral Team View */}
-      {tab === 'mlm' && (
-        <div className="space-y-8 text-left">
-          <div className="text-center max-w-md mx-auto">
-            <h2 className="text-3xl font-black text-slate-850 dark:text-white tracking-tight">Active Matrix Team</h2>
-            <p className="text-xs text-[#0077C0] font-black uppercase tracking-widest mt-2">{activeDownlineCount} Active of {myDownline.length} Total Members</p>
-          </div>
+      {tab === 'mlm' && (() => {
+        // dynamic level calculation
+        const levelStats = [...Array(20)].map((_, i) => {
+          const levelNum = i + 1;
+          const cashEarned = transactions
+            .filter(t => t.userId === user.id && t.walletType === 'commission' && t.description.includes(`Level ${levelNum} `))
+            .reduce((sum, t) => sum + Math.max(0, t.amount), 0);
+          const coinsEarned = transactions
+            .filter(t => t.userId === user.id && t.walletType === 'coinwallet' && t.description.includes(`Level ${levelNum} `))
+            .reduce((sum, t) => sum + Math.max(0, t.amount), 0);
+          return { cashEarned, coinsEarned };
+        });
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[...Array(20)].map((_, i) => {
-              // Level details up to level 20 cascading
-              const levelMembers = myDownline.filter(u => u.level === (user.level + i + 1));
-              const activeCount = levelMembers.filter(u => u.isActivated).length;
-              return (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: Math.min(1.5, i * 0.04) }}
-                  key={i} 
-                  className="bg-white dark:bg-slate-900 p-6 rounded-[2rem] border border-slate-100 dark:border-slate-805 shadow-sm flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-indigo-50 dark:bg-indigo-950/20 rounded-2xl flex items-center justify-center font-black text-indigo-500 text-xs border border-indigo-200 dark:border-indigo-900">
-                      LVL {i+1}
+        return (
+          <div className="space-y-8 text-left border-0">
+            <div className="text-center max-w-md mx-auto">
+              <h2 className="text-3xl font-black text-slate-850 dark:text-white tracking-tight">Active Matrix Team</h2>
+              <p className="text-xs text-[#0077C0] font-black uppercase tracking-widest mt-2 font-mono">{activeDownlineCount} Active of {myDownline.length} Total Members</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(20)].map((_, i) => {
+                const levelMembers = myDownline.filter(u => u.level === (user.level + i + 1));
+                const activeCount = levelMembers.filter(u => u.isActivated).length;
+                const statsObj = levelStats[i] || { cashEarned: 0, coinsEarned: 0 };
+                return (
+                  <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ delay: Math.min(1.5, i * 0.04) }}
+                    key={i} 
+                    className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm flex flex-col justify-between gap-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-950/20 rounded-2xl flex items-center justify-center font-black text-indigo-500 text-xs border border-indigo-200 dark:border-indigo-900 font-mono shrink-0">
+                          LVL {i+1}
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Team Count</p>
+                          <p className="text-sm font-black text-slate-800 dark:text-slate-200 mt-1 block leading-none">{levelMembers.length} Members</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[9px] font-black text-green-600 uppercase tracking-wider block leading-none">{activeCount} Active</p>
+                        <div className="w-16 h-1 mt-1.5 bg-slate-150 dark:bg-slate-800 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-green-500 rounded-full" 
+                            style={{ width: `${levelMembers.length ? (activeCount / levelMembers.length) * 100 : 0}%` }}
+                          ></div>
+                        </div>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Level Structure</p>
-                      <p className="text-base font-black text-slate-800 dark:text-slate-200">{levelMembers.length} Members</p>
+
+                    <div className="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-950/50 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
+                      <div className="text-left">
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest font-mono">Commission</span>
+                        <p className="text-xs font-black text-emerald-500 mt-1 block leading-none">₹{statsObj.cashEarned.toFixed(2)}</p>
+                      </div>
+                      <div className="text-right border-l border-slate-200 dark:border-white/5 pl-2">
+                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest font-mono">Coins Reward</span>
+                        <p className="text-xs font-black text-amber-500 mt-1 block leading-none">🪙 {statsObj.coinsEarned.toLocaleString()}</p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] font-black text-green-600 uppercase tracking-wider">{activeCount} Activated</p>
-                    <div className="w-16 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full mt-1.5 overflow-hidden">
-                      <div 
-                        className="h-full bg-green-500 rounded-full" 
-                        style={{ width: `${levelMembers.length ? (activeCount / levelMembers.length) * 100 : 0}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
+                  </motion.div>
+                );
+              })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Support Chat Interface */}
       {tab === 'support' && (

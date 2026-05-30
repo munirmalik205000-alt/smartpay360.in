@@ -13,6 +13,8 @@ export interface Wallets {
   shopping: number;    // Shopping Wallet (used for store)
   reward: number;      // Loyalty/Reward Points
   vendor?: number;     // Earnings for Vendors
+  ewallet: number;     // E-Wallet for package purchase & transfer
+  coinwallet: number;  // Coin Wallet
 }
 
 export interface BankDetails {
@@ -87,9 +89,18 @@ export interface User {
   level: number;
   joinedAt: string;
   isActivated: boolean;
+  selfPV?: number; // Self package points value
   bankDetails?: BankDetails;
   kycDetails?: KYCDetails;
   rewards?: RewardTarget[];
+}
+
+export interface Package {
+  id: string;
+  name: string;
+  price: number; // bought from ewallet
+  pv: number;    // Point Value contribution
+  coin: number;  // Coin amount rewarded to buyer
 }
 
 export interface Product {
@@ -124,7 +135,7 @@ export interface Transaction {
   userId: string;
   amount: number;
   walletType: keyof Wallets;
-  type: 'recharge' | 'commission' | 'shopping' | 'withdrawal' | 'add_funds' | 'activation' | 'reward' | 'transfer';
+  type: 'recharge' | 'commission' | 'shopping' | 'withdrawal' | 'add_funds' | 'activation' | 'reward' | 'transfer' | 'coin_commission' | 'coin_reward' | 'package_buy';
   description: string;
   status: 'success' | 'pending' | 'failed';
   createdAt: string;

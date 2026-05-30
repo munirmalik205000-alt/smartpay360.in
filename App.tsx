@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, UserRole, Transaction, Product, Order, MLMConfig, Wallets, PaymentRequest, WithdrawalRequest, ChatMessage, KYCDetails, RewardTarget } from './types';
+import { User, UserRole, Transaction, Product, Order, MLMConfig, Wallets, PaymentRequest, WithdrawalRequest, ChatMessage, KYCDetails, RewardTarget, Package } from './types';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
 import AdminPanel from './components/AdminPanel';
@@ -81,6 +81,23 @@ const App: React.FC = () => {
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>(() => JSON.parse(safeLocalStorage.getItem('spay_payments', '[]')));
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>(() => JSON.parse(safeLocalStorage.getItem('spay_withdrawals', '[]')));
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => JSON.parse(safeLocalStorage.getItem('spay_chats', '[]')));
+  
+  const [packages, setPackages] = useState<Package[]>(() => {
+    try {
+      const saved = safeLocalStorage.getItem('spay_pkgs', '');
+      return saved ? JSON.parse(saved) : [
+        { id: 'pkg_starter', name: 'Starter Node Package', price: 999, pv: 100, coin: 250 },
+        { id: 'pkg_booster', name: 'Premium Royal Booster', price: 2999, pv: 400, coin: 800 },
+        { id: 'pkg_elite', name: 'Elite Global Franchise Node', price: 9999, pv: 1500, coin: 3000 }
+      ];
+    } catch {
+      return [
+        { id: 'pkg_starter', name: 'Starter Node Package', price: 999, pv: 100, coin: 250 },
+        { id: 'pkg_booster', name: 'Premium Royal Booster', price: 2999, pv: 400, coin: 800 },
+        { id: 'pkg_elite', name: 'Elite Global Franchise Node', price: 9999, pv: 1500, coin: 3000 }
+      ];
+    }
+  });
 
   // Theme support
   useEffect(() => {
@@ -120,12 +137,13 @@ const App: React.FC = () => {
         referralCode: 'SPAY001',
         referrerId: null,
         role: UserRole.ADMIN,
-        wallets: { main: 5000000, commission: 0, cashback: 0, recharge: 5000000, shopping: 5000000, reward: 1000000 },
+        wallets: { main: 5000000, commission: 0, cashback: 0, recharge: 5000000, shopping: 5000000, reward: 1000000, ewallet: 50000, coinwallet: 100000 },
         totalEarned: 0,
         status: 'active',
         level: 0,
         joinedAt: new Date().toISOString(),
         isActivated: true,
+        selfPV: 500,
         rewards: INITIAL_REWARDS.map(r => ({ ...r, currentSalesCount: 15000, status: 'achieved' }))
       };
 
@@ -155,13 +173,16 @@ const App: React.FC = () => {
             cashback: 120 * i, 
             recharge: 3000, 
             shopping: 1500, 
-            reward: 25 * i 
+            reward: 25 * i,
+            ewallet: 1500,
+            coinwallet: 100 * i
           },
           totalEarned: 240 * (21 - i),
           status: 'active',
           level: i,
           joinedAt: new Date(Date.now() - (i * 24 * 3600 * 1000)).toISOString(),
           isActivated: true,
+          selfPV: i * 10,
           rewards: INITIAL_REWARDS.map(r => ({
             ...r,
             currentSalesCount: Math.max(0, 10000 - (i * 450)),
@@ -197,7 +218,8 @@ const App: React.FC = () => {
     safeLocalStorage.setItem('spay_payments', JSON.stringify(paymentRequests));
     safeLocalStorage.setItem('spay_withdrawals', JSON.stringify(withdrawalRequests));
     safeLocalStorage.setItem('spay_chats', JSON.stringify(chatMessages));
-  }, [users, products, orders, transactions, mlmConfig, paymentRequests, withdrawalRequests, chatMessages]);
+    safeLocalStorage.setItem('spay_pkgs', JSON.stringify(packages));
+  }, [users, products, orders, transactions, mlmConfig, paymentRequests, withdrawalRequests, chatMessages, packages]);
 
   // Helper helper to distribute commissions up to 20 levels deep
   const distributeMLMCommissions = (startUserId: string, baseAmount: number, commissionType: 'package' | 'recharge' | 'product') => {
@@ -369,6 +391,142 @@ const App: React.FC = () => {
     alert('✅ UTR validated successfully. Recharge Wallet loaded!');
   };
 
+  const handleCreatePackage = (name: string, price: number, pv: number, coin: number) => {
+    const newPkg: Package = {
+      id: `pkg_${Date.now()}`,
+      name,
+      price,
+      pv,
+      coin
+    };
+    setPackages(prev => [...prev, newPkg]);
+    alert(`🎉 Package '${name}' created successfully with PV: ${pv} and Coins: ${coin}!`);
+  };
+
+  const handleDeletePackage = (id: string) => {
+    setPackages(prev => prev.filter(p => p.id !== id));
+    alert('✅ Custom package deleted successfully.');
+  };
+
+  const handleBuyPackage = (userId: string, packageId: string) => {
+    const user = users.find(u => u.id === userId);
+    const pkg = packages.find(p => p.id === packageId);
+    if (!user || !pkg) return alert('🚨 Subscriber or Package configuration mismatch.');
+
+    const price = pkg.price;
+    if ((user.wallets?.ewallet || 0) < price) {
+      alert(`🚨 Insufficient E-Wallet balance! Cost is ₹${price}, current balance is ₹${(user.wallets?.ewallet || 0)}.`);
+      return;
+    }
+
+    const transactionList: Transaction[] = [];
+    const updatedUsersMap = new Map<string, User>();
+    users.forEach(u => updatedUsersMap.set(u.id, { ...u }));
+
+    const buyer = updatedUsersMap.get(userId);
+    if (buyer) {
+      buyer.wallets.ewallet = parseFloat((buyer.wallets.ewallet - price).toFixed(2));
+      buyer.isActivated = true;
+      buyer.status = 'active';
+      buyer.selfPV = (buyer.selfPV || 0) + pkg.pv;
+      buyer.wallets.coinwallet = parseFloat(((buyer.wallets.coinwallet || 0) + pkg.coin).toFixed(2));
+
+      // 1. Cost Transaction
+      transactionList.push({
+        id: `PKGBUY-${Date.now()}`,
+        userId: buyer.id,
+        amount: -price,
+        walletType: 'ewallet',
+        type: 'package_buy',
+        description: `Purchased Upgrade: ${pkg.name} (PV +${pkg.pv})`,
+        status: 'success',
+        createdAt: new Date().toISOString()
+      });
+
+      // 2. Direct coin credit Transaction
+      transactionList.push({
+        id: `COINREWD-${Date.now()}`,
+        userId: buyer.id,
+        amount: pkg.coin,
+        walletType: 'coinwallet',
+        type: 'coin_reward',
+        description: `Staked Coin Reward from Upgrade Node ${pkg.name}`,
+        status: 'success',
+        createdAt: new Date().toISOString()
+      });
+    }
+
+    // Level-wise Cash and Level-wise Coin Dynamic Split cascade up to 20 levels deep
+    let currentReferrerId = buyer?.referrerId;
+    let currentLevel = 1;
+
+    while (currentReferrerId && currentLevel <= 20) {
+      const parentUser = updatedUsersMap.get(currentReferrerId);
+      if (!parentUser) break;
+
+      // level commission percentage rate
+      const rate = DEFAULT_LEVEL_PERCENTAGES_20[currentLevel - 1] || 0.005;
+
+      // Rupees Level Income (rate * price)
+      const rupeeEarning = parseFloat((price * rate).toFixed(2));
+      // Coin Level Reward (rate * pkg.coin)
+      const coinEarning = parseFloat((pkg.coin * rate).toFixed(2));
+
+      if (parentUser.isActivated) {
+        // Calculate TDS and administration fee deductions
+        const tds = parseFloat((rupeeEarning * mlmConfig.tdsRate).toFixed(2));
+        const service = parseFloat((rupeeEarning * mlmConfig.serviceCharge).toFixed(2));
+        const finalNetRupee = parseFloat((rupeeEarning - tds - service).toFixed(2));
+
+        // Credit parents wallets
+        parentUser.wallets.commission = parseFloat((parentUser.wallets.commission + finalNetRupee).toFixed(2));
+        parentUser.totalEarned = parseFloat((parentUser.totalEarned + finalNetRupee).toFixed(2));
+        parentUser.wallets.coinwallet = parseFloat(((parentUser.wallets.coinwallet || 0) + coinEarning).toFixed(2));
+
+        // Rupee transaction entry
+        transactionList.push({
+          id: `PKGM-${Date.now()}-${currentLevel}-${Math.random().toString(36).substr(2, 4)}`,
+          userId: parentUser.id,
+          amount: finalNetRupee,
+          walletType: 'commission',
+          type: 'commission',
+          description: `Level ${currentLevel} Package Income from node ${buyer?.name} (Base ₹${rupeeEarning.toFixed(2)}, TDS ₹${tds.toFixed(2)})`,
+          status: 'success',
+          createdAt: new Date().toISOString()
+        });
+
+        // Coin transaction entry
+        transactionList.push({
+          id: `PKGC-${Date.now()}-${currentLevel}-${Math.random().toString(36).substr(2, 4)}`,
+          userId: parentUser.id,
+          amount: coinEarning,
+          walletType: 'coinwallet',
+          type: 'coin_commission',
+          description: `Level ${currentLevel} Team Coin Reward from ${buyer?.name} (+${coinEarning} Coins)`,
+          status: 'success',
+          createdAt: new Date().toISOString()
+        });
+      }
+
+      currentReferrerId = parentUser.referrerId;
+      currentLevel++;
+    }
+
+    const nextUsers = Array.from(updatedUsersMap.values());
+    setUsers(nextUsers);
+    if (transactionList.length > 0) {
+      setTransactions(prev => [...transactionList, ...prev]);
+    }
+
+    // Sync active state update to local session if same as active user
+    if (currentUser && currentUser.id === userId) {
+      const liveUser = nextUsers.find(u => u.id === userId);
+      if (liveUser) setCurrentUser(liveUser);
+    }
+
+    alert(`🎉 Purchase completed successfully! Upgrade complete. You received ${pkg.coin} Coins & PV ${pkg.pv} counts towards your selfPV metrics! 20-Level Cascade split has been completed!`);
+  };
+
   const handleSignup = (data: any) => {
     const signupEmail = String(data.email || '').trim().toLowerCase();
     if (users.some(u => u && u.email && u.email.toLowerCase().trim() === signupEmail)) {
@@ -395,10 +553,11 @@ const App: React.FC = () => {
       referralCode: `SP360${Math.floor(1000 + Math.random() * 9000)}`,
       referrerId: ref.id, 
       level: ref.level + 1, 
-      wallets: { main: 0, commission: 0, cashback: 0, recharge: 0, shopping: 0, reward: 0 },
+      wallets: { main: 0, commission: 0, cashback: 0, recharge: 0, shopping: 0, reward: 0, ewallet: 2000, coinwallet: 0 },
       totalEarned: 0, 
       status: 'pending', 
       isActivated: false, 
+      selfPV: 0,
       joinedAt: new Date().toISOString(),
       rewards: initialRewardsList,
       kycDetails: { aadhaarNumber: '', panNumber: '', status: 'not_submitted' }
@@ -525,6 +684,114 @@ const App: React.FC = () => {
     handleTransaction(recipient.id, amount, 'main', 'transfer', `Fund transfer received from ${sender.name} (${sender.email})`);
     
     alert(`🎉 Fund transfer of ₹${amount} successful to ${recipient.name}!`);
+  };
+
+  // Transfer Main Wallet balance to E-Wallet self top-up
+  const handleMainToEWalletTransfer = (userId: string, amount: number) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+    if (user.wallets.main < amount) {
+      alert(`🚨 Balance Error: Insufficient main wallet balance! Requires ₹${amount.toFixed(2)}, available ₹${user.wallets.main.toFixed(2)}.`);
+      return;
+    }
+    setUsers(prev => prev.map(u => {
+      if (u.id === userId) {
+        const updatedWallets = {
+          ...u.wallets,
+          main: parseFloat((u.wallets.main - amount).toFixed(2)),
+          ewallet: parseFloat(((u.wallets.ewallet || 0) + amount).toFixed(2))
+        };
+        const updated = { ...u, wallets: updatedWallets };
+        if (currentUser && currentUser.id === userId) {
+          setCurrentUser(updated);
+        }
+        return updated;
+      }
+      return u;
+    }));
+
+    const tx: Transaction = {
+      id: `MEW-${Date.now()}`,
+      userId: userId,
+      amount: amount,
+      walletType: 'ewallet',
+      type: 'transfer',
+      description: `Transferred ₹${amount.toFixed(2)} from Main to E-Wallet`,
+      status: 'success',
+      createdAt: new Date().toISOString()
+    };
+    setTransactions(prev => [tx, ...prev]);
+    alert(`✅ ₹${amount} successfully transferred to your E-Wallet!`);
+  };
+
+  // Transfer E-Wallet to E-Wallet peer fund transfer
+  const handleEWalletToEWalletTransfer = (senderId: string, recipientEmail: string, amount: number) => {
+    const sender = users.find(u => u.id === senderId);
+    if (!sender) return;
+    const recipient = users.find(u => u.email.toLowerCase().trim() === recipientEmail.toLowerCase().trim());
+    if (!recipient) {
+      alert(`🚨 Error: Recipient with email '${recipientEmail}' not found.`);
+      return;
+    }
+    if (recipient.id === senderId) {
+      alert(`🚨 Error: Cannot transfer e-wallet to yourself.`);
+      return;
+    }
+    if ((sender.wallets.ewallet || 0) < amount) {
+      alert(`🚨 Balance Error: Insufficient E-Wallet balance! Requires ₹${amount.toFixed(2)}, available ₹${(sender.wallets.ewallet || 0).toFixed(2)}.`);
+      return;
+    }
+
+    setUsers(prev => prev.map(u => {
+      if (u.id === senderId) {
+        const updated = {
+          ...u,
+          wallets: {
+            ...u.wallets,
+            ewallet: parseFloat(((u.wallets.ewallet || 0) - amount).toFixed(2))
+          }
+        };
+        if (currentUser && currentUser.id === senderId) {
+          setCurrentUser(updated);
+        }
+        return updated;
+      }
+      if (u.id === recipient.id) {
+        return {
+          ...u,
+          wallets: {
+            ...u.wallets,
+            ewallet: parseFloat(((u.wallets.ewallet || 0) + amount).toFixed(2))
+          }
+        };
+      }
+      return u;
+    }));
+
+    const txSender: Transaction = {
+      id: `EWE-${Date.now()}-S`,
+      userId: senderId,
+      amount: -amount,
+      walletType: 'ewallet',
+      type: 'transfer',
+      description: `Transferred ₹${amount.toFixed(2)} to ${recipient.name}`,
+      status: 'success',
+      createdAt: new Date().toISOString()
+    };
+
+    const txRecipient: Transaction = {
+      id: `EWE-${Date.now()}-R`,
+      userId: recipient.id,
+      amount: amount,
+      walletType: 'ewallet',
+      type: 'transfer',
+      description: `Received ₹${amount.toFixed(2)} from ${sender.name}`,
+      status: 'success',
+      createdAt: new Date().toISOString()
+    };
+
+    setTransactions(prev => [txSender, txRecipient, ...prev]);
+    alert(`✅ ₹${amount} transferred successfully to ${recipient.name}'s E-Wallet!`);
   };
 
   // Complete MLM Activation with automatic level commission distribution
@@ -672,6 +939,9 @@ const App: React.FC = () => {
             onApproveReward={handleApproveReward}
             onToggleUserRole={handleToggleUserRole}
             onSwitchTab={setActiveTab}
+            packages={packages}
+            onCreatePackage={handleCreatePackage}
+            onDeletePackage={handleDeletePackage}
           />
         ) : activeUser.role === UserRole.VENDOR ? (
           <VendorPanel 
@@ -685,7 +955,7 @@ const App: React.FC = () => {
             user={activeUser} 
             users={users} 
             products={products.filter(p => p.isApproved !== false)}
-            transactions={transactions.filter(t => t.userId === activeUser.id)} 
+            transactions={transactions} 
             onRecharge={handleRecharge}
             onOrder={placeOrder}
             onTransfer={handleTransfer}
@@ -703,6 +973,10 @@ const App: React.FC = () => {
             setTab={setActiveTab}
             onSubmitKYC={handleSubmitKYC}
             onClaimReward={handleClaimReward}
+            packages={packages}
+            onBuyPackage={handleBuyPackage}
+            onMainToEWalletTransfer={handleMainToEWalletTransfer}
+            onEWalletToEWalletTransfer={handleEWalletToEWalletTransfer}
           />
         )}
       </Layout>
