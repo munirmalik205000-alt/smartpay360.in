@@ -10,8 +10,8 @@ interface DashboardProps {
   users: User[];
   products: Product[];
   transactions: Transaction[];
-  onRecharge: (userId: string, amt: number, service: string, pin: string, operator: string) => void;
-  onOrder: (userId: string, pId: string) => void;
+  onRecharge: (userId: string, amt: number, service: string, pin: string, operator: string, useCoins?: boolean) => void;
+  onOrder: (userId: string, pId: string, useCoins?: boolean) => void;
   onTransfer: (senderId: string, recipientEmail: string, amount: number, pin: string) => void;
   onActivate: (userId: string) => void;
   packagePrice: number;
@@ -116,6 +116,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [rechargeProvider, setRechargeProvider] = useState('Reliance Jio');
   const [customerNumber, setCustomerNumber] = useState('');
   const [rechargePin, setRechargePin] = useState('');
+  const [useCoinsForRecharge, setUseCoinsForRecharge] = useState(false);
 
   // KYC States
   const [kycAadhaar, setKycAadhaar] = useState(user.kycDetails?.aadhaarNumber || '');
@@ -140,12 +141,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [myDownline]);
 
   const stats = [
-    { label: 'E-Wallet Balance', val: `₹${(user.wallets.ewallet || 0).toFixed(2)}`, color: 'text-indigo-600 dark:text-indigo-400', icon: Wallet, desc: 'Used for package activation' },
-    { label: 'Coin Wallet', val: `${(user.wallets.coinwallet || 0).toLocaleString()} Coins`, color: 'text-amber-500', icon: Sparkles, desc: 'Level coin rewards' },
-    { label: 'Self P.V.', val: `${(user.selfPV || 0)} PV`, color: 'text-fuchsia-500', icon: Trophy, desc: 'Accumulated Point Value' },
-    { label: 'Royal Cash (Main)', val: `₹${user.wallets.main.toFixed(2)}`, color: 'text-violet-600 dark:text-violet-400', icon: TrendingUp, desc: 'Convert/invest/transfer' },
-    { label: 'MLM Income', val: `₹${user.wallets.commission.toFixed(2)}`, color: 'text-teal-600 dark:text-teal-400', icon: Trophy, desc: 'Commission balance' },
-    { label: 'Recharge Bal', val: `₹${user.wallets.recharge.toFixed(2)}`, color: 'text-emerald-500', icon: Wallet, desc: 'Utility bill funds' },
+    { label: 'E-Wallet Balance', val: `₹${(user.wallets.ewallet || 0).toFixed(2)}`, color: 'text-indigo-600 dark:text-indigo-400', icon: Wallet, desc: 'Used for package activation & utility' },
+    { label: 'Coin Wallet', val: `${(user.wallets.coinwallet || 0).toLocaleString()} Coins`, color: 'text-amber-500', icon: Sparkles, desc: 'Staked Coin rewards & discounts' },
+    { label: 'Self P.V.', val: `${(user.selfPV || 0)} PV`, color: 'text-fuchsia-500', icon: Trophy, desc: 'Accumulated Self Point Value' },
+    { label: 'Main Wallet', val: `₹${user.wallets.main.toFixed(2)}`, color: 'text-emerald-600 dark:text-emerald-400', icon: TrendingUp, desc: 'Direct bank withdraw & transfer' },
+    { label: 'MLM Income', val: `₹${user.wallets.commission.toFixed(2)}`, color: 'text-teal-600 dark:text-teal-400', icon: Trophy, desc: 'Genealogy commission balance' },
   ];
 
   const signupUrl = `${window.location.origin}?ref=${user.referralCode}`;
@@ -198,13 +198,14 @@ const Dashboard: React.FC<DashboardProps> = ({
     if (!customerNumber) return alert('🚨 Please provide your connection / mobile identity number.');
     if (rechargePin.length !== 4) return alert('🚨 Transaction authorization requires your 4 PIN digits.');
     
-    onRecharge(user.id, amt, `${selectedUtility.name} (${customerNumber})`, rechargePin, rechargeProvider);
+    onRecharge(user.id, amt, `${selectedUtility.name} (${customerNumber})`, rechargePin, rechargeProvider, useCoinsForRecharge);
     
     // reset
     setSelectedUtility(null);
     setRechargeAmt('');
     setCustomerNumber('');
     setRechargePin('');
+    setUseCoinsForRecharge(false);
   };
 
   const handleApplyCoupon = () => {
@@ -229,31 +230,28 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [products, shopCategory, shopSearch]);
 
   return (
-    <div className="space-y-6 md:pb-6 relative">
-      {/* Decorative Multi-Color Spectrum bar for White, Blue, Purple, Green, Red, Orange */}
-      <div className="h-1.5 w-full rounded-full flex overflow-hidden shadow-sm">
-        <div className="w-[16%] h-full bg-white dark:bg-slate-300"></div>
-        <div className="w-[17%] h-full bg-blue-500"></div>
-        <div className="w-[17%] h-full bg-purple-600"></div>
-        <div className="w-[17%] h-full bg-emerald-500"></div>
-        <div className="w-[17%] h-full bg-rose-500"></div>
-        <div className="w-[16%] h-full bg-orange-500"></div>
+    <div className="space-y-6 md:pb-6 relative text-black bg-white font-sans">
+      {/* Decorative spectrum bar */}
+      <div className="h-1.5 w-full rounded-full flex overflow-hidden shadow-sm animate-pulse">
+        <div className="w-[50%] h-full bg-blue-700"></div>
+        <div className="w-[50%] h-full bg-white border"></div>
       </div>
 
       {user.role === UserRole.ADMIN && (
-        <div className="bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-blue-950/40 backdrop-blur-md border border-indigo-500/30 p-4 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-lg text-left">
+        <div className="bg-blue-50 border-2 border-blue-400 p-4 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md text-left text-black">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-xl shrink-0 animate-pulse">
+            <div className="w-10 h-10 rounded-2xl bg-blue-100 border border-blue-300 flex items-center justify-center text-xl shrink-0">
               🛡️
             </div>
             <div>
-              <p className="text-[10px] uppercase font-black text-indigo-400 tracking-wider font-mono">ADMINISTRATOR CONTROL VIEW ACTIVATED</p>
-              <p className="text-xs text-slate-300 font-medium leading-relaxed">You are exploring the live <b>User Dashboard</b> of SmartPay 360 using your single unified ID.</p>
+              <p className="text-[10px] uppercase font-black text-red-700 tracking-wider font-mono">🛡️ ADMINISTRATOR CONTROL VIEW ACTIVATED</p>
+              <p className="text-xs text-black font-semibold leading-relaxed">You are exploring the live <b>User Dashboard</b> of SmartPay 360 using your single unified ID.</p>
             </div>
           </div>
           <button 
+            type="button"
             onClick={() => setTab('admin')}
-            className="px-5 py-2.5 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-black text-[10px] uppercase tracking-wider rounded-2xl border border-white/10 active:scale-95 transition-all shadow-md cursor-pointer shrink-0"
+            className="px-5 py-2.5 bg-blue-700 hover:bg-blue-800 text-white font-black text-[10px] uppercase tracking-wider rounded-2xl border-2 border-blue-400 active:scale-95 transition-all shadow-md cursor-pointer shrink-0"
           >
             🛡️ Go Back to Admin Panel
           </button>
@@ -264,115 +262,125 @@ const Dashboard: React.FC<DashboardProps> = ({
       {tab === 'home' && (
         <div className="space-y-6">
           {/* 1. Header Greetings in high UX design */}
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 py-2 border-b border-slate-100 dark:border-white/5 pb-4">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 py-2 border-b-2 border-blue-200 pb-4">
             <div className="text-left">
-              <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest pl-0.5 leading-none font-mono">
+              <p className="text-[10px] font-black text-blue-800 uppercase tracking-widest pl-0.5 leading-none font-mono">
                 ⚡ NODE ID SYSTEM ENABLED
               </p>
-              <h1 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight mt-1 flex items-center gap-1.5 leading-tight">
-                {user.name} <Sparkles size={18} className="text-amber-500 animate-spin duration-3000" />
+              <h1 className="text-3xl font-black text-black tracking-tight mt-1 flex items-center gap-1.5 leading-tight">
+                {user.name} <Sparkles size={18} className="text-amber-600 animate-spin" />
               </h1>
             </div>
             
-            <div className="bg-slate-100 dark:bg-slate-950/80 px-4 py-2.5 rounded-2xl border border-slate-200 dark:border-white/10 flex items-center gap-3 shadow-inner">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400 font-mono">
+            <div className="bg-blue-50 px-4 py-2.5 rounded-2xl border-2 border-blue-200 flex items-center gap-3 shadow-sm">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-600 animate-pulse"></span>
+              <p className="text-[9px] font-black uppercase tracking-widest text-black font-mono">
                 SECURE PLATFORM LIVE
               </p>
             </div>
           </div>
 
-          {/* 2. Unified Premium Gradient Balance Card - Elevated 3D Glass Layer */}
-          <div className="relative rounded-[3rem] bg-gradient-to-br from-[#1e1b4b] via-[#090b16] to-[#010204] p-8 text-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9),_inset_0_1px_3px_rgba(255,255,255,0.15)] overflow-hidden text-left transition-all duration-300 border border-white/10">
+          {/* 2. Unified Premium Balance Card - Crisp White and Blue */}
+          <div className="relative rounded-[2.5rem] bg-white p-8 text-black shadow-lg overflow-hidden text-left transition-all duration-300 border-4 border-blue-700">
             {/* Dynamic visual ambient lights inside card */}
-            <div className="absolute top-[-20%] right-[-10%] w-[180px] h-[180px] bg-purple-600/25 rounded-full blur-[60px] pointer-events-none animate-pulse"></div>
-            <div className="absolute bottom-[-20%] left-[10%] w-[180px] h-[180px] bg-blue-600/25 rounded-full blur-[60px] pointer-events-none animate-pulse duration-4000"></div>
+            <div className="absolute top-[-20%] right-[-10%] w-[180px] h-[180px] bg-blue-100 rounded-full blur-[60px] pointer-events-none animate-pulse"></div>
             
             <div className="relative z-10 flex flex-col gap-6">
               
               {/* Row 1: TOTAL BALANCE pill + Eye Toggle */}
               <div className="flex items-center justify-between">
-                <span className="px-3.5 py-1.5 bg-white/5 border border-white/10 rounded-full text-[9px] font-black uppercase tracking-widest text-blue-400 flex items-center gap-1.5 shadow-inner leading-none font-mono">
+                <span className="px-3.5 py-1.5 bg-blue-100 border-2 border-blue-300 rounded-full text-[10px] font-black uppercase tracking-widest text-blue-900 flex items-center gap-1.5 shadow-inner leading-none font-mono">
                   ✨ Combined Wallet Ledger
                 </span>
                 <button 
+                  type="button"
                   onClick={toggleShowBalances} 
-                  className="p-2.5 bg-slate-800/80 hover:bg-slate-700/80 active:scale-95 text-white rounded-2xl transition-all border border-white/5 shadow-[0_4px_10px_rgba(0,0,0,0.3)] cursor-pointer"
+                  className="p-2.5 bg-blue-50 hover:bg-blue-100 active:scale-95 text-blue-900 rounded-2xl transition-all border-2 border-blue-300 shadow-sm cursor-pointer"
                   title={showBalances ? "Hide details" : "Show details"}
                 >
-                  {showBalances ? <Eye size={18} className="text-purple-400" /> : <EyeOff size={18} className="text-slate-400" />}
+                  {showBalances ? <Eye size={18} className="text-blue-700" /> : <EyeOff size={18} className="text-slate-500" />}
                 </button>
               </div>
 
               {/* Row 2: Heavy visual balance amount with beveled shadow */}
-              <div>
-                <p className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-slate-400 tracking-tight flex items-center gap-0.5 leading-none drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                  ₹{showBalances ? (user.wallets.recharge + user.wallets.main + user.wallets.commission).toFixed(2) : "•••••"}
-                </p>
-                <p className="text-[9.5px] font-extrabold uppercase tracking-widest text-slate-400 mt-2 ml-1">AVAILABLE LIQUIDITY VALUE</p>
+              <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 border-b border-blue-100 pb-4">
+                <div>
+                  <p className="text-4xl md:text-5xl font-black text-black tracking-tight flex items-center gap-0.5 leading-none">
+                    ₹{showBalances ? user.wallets.main.toFixed(2) : "•••••"}
+                  </p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-905 mt-2 ml-1">MAIN WALLET BALANCE</p>
+                </div>
+                {/* Self PV shown next to Main Wallet */}
+                <div className="bg-purple-50 border-2 border-purple-200 px-4 py-2.5 rounded-2xl text-left shadow-inner shrink-0">
+                  <p className="text-lg font-black text-purple-950 leading-tight">✨ {user.selfPV || 0} PV</p>
+                  <p className="text-[8px] font-black uppercase tracking-widest text-purple-705 font-mono mt-0.5">SELF P.V. (MAIN ACCOUNT)</p>
+                </div>
               </div>
 
               {/* Row 3: Sub-balances Row styled in custom Blue, Purple, Green glass tags */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="bg-gradient-to-b from-blue-950/40 to-blue-900/10 border border-blue-500/20 p-4 flex flex-col justify-between shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] rounded-2xl relative overflow-hidden backdrop-blur-md">
-                  <span className="text-[8px] font-black text-blue-400 uppercase tracking-widest font-mono">RECHARGE WALLET</span>
-                  <span className="text-lg font-black tracking-tight mt-1 text-white">
-                    ₹{showBalances ? user.wallets.recharge.toFixed(2) : "•••••"}
+                <div className="bg-blue-50 border-2 border-blue-300 p-4 flex flex-col justify-between shadow-sm rounded-2xl relative overflow-hidden">
+                  <span className="text-[9px] font-black text-blue-900 uppercase tracking-widest font-mono font-black">E-WALLET BALANCE</span>
+                  <span className="text-xl font-black tracking-tight mt-1 text-black">
+                    ₹{showBalances ? (user.wallets.ewallet || 0).toFixed(2) : "•••••"}
                   </span>
-                  <div className="w-1.5 h-1.5 bg-blue-500 rounded-full absolute top-2 right-2 animate-ping"></div>
+                  <div className="w-1.5 h-1.5 bg-blue-600 rounded-full absolute top-2 right-2 animate-ping"></div>
                 </div>
 
-                <div className="bg-gradient-to-b from-purple-950/40 to-purple-900/10 border border-purple-500/20 p-4 flex flex-col justify-between shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] rounded-2xl relative overflow-hidden backdrop-blur-md">
-                  <span className="text-[8px] font-black text-purple-400 uppercase tracking-widest font-mono">ROYAL E-CASH</span>
-                  <span className="text-lg font-black tracking-tight mt-1 text-white">
+                <div className="bg-violet-50 border-2 border-violet-200 p-4 flex flex-col justify-between shadow-sm rounded-2xl relative overflow-hidden">
+                  <span className="text-[9px] font-black text-violet-900 uppercase tracking-widest font-mono font-black">MAIN INCOME WALLET</span>
+                  <span className="text-xl font-black tracking-tight mt-1 text-black font-black">
                     ₹{showBalances ? user.wallets.main.toFixed(2) : "•••••"}
                   </span>
-                  <div className="w-1.5 h-1.5 bg-purple-500 rounded-full absolute top-2 right-2 animate-ping"></div>
+                  <div className="w-1.5 h-1.5 bg-violet-500 rounded-full absolute top-2 right-2 animate-ping"></div>
                 </div>
 
-                <div className="bg-gradient-to-b from-emerald-950/40 to-emerald-900/10 border border-emerald-500/20 p-4 flex flex-col justify-between shadow-[inset_0_1px_2px_rgba(255,255,255,0.05)] rounded-2xl relative overflow-hidden backdrop-blur-md">
-                  <span className="text-[8px] font-black text-emerald-400 uppercase tracking-widest font-mono">COIN MLM BONUS</span>
-                  <span className="text-lg font-black tracking-tight mt-1 text-white">
-                    ₹{showBalances ? user.wallets.commission.toFixed(2) : "•••••"}
+                <div className="bg-green-50 border-2 border-green-300 p-4 flex flex-col justify-between shadow-sm rounded-2xl relative overflow-hidden">
+                  <span className="text-[9px] font-black text-green-800 uppercase tracking-widest font-mono font-black">COIN WALLET (🎯 {user.coinUsablePercent || 10}% Usable)</span>
+                  <span className="text-xl font-black tracking-tight mt-1 text-green-800 font-extrabold flex items-center gap-1">
+                    🪙 {showBalances ? (user.wallets.coinwallet || 0).toLocaleString() : "•••••"}
                   </span>
-                  <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full absolute top-2 right-2 animate-ping"></div>
+                  <div className="w-1.5 h-1.5 bg-green-600 rounded-full absolute top-2 right-2 animate-ping"></div>
                 </div>
               </div>
 
               {/* Row 4: Action helper navigation buttons (Added Money + Withdraw) */}
               <div className="grid grid-cols-2 gap-4 pt-1">
                 <button 
+                  type="button"
                   onClick={() => setTab('add_money')}
-                  className="py-4 bg-gradient-to-r from-blue-500 via-indigo-600 to-purple-600 hover:from-blue-400 hover:via-indigo-500 hover:to-purple-500 text-white font-black rounded-full text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all text-center border border-white/10 cursor-pointer"
+                  className="py-4 bg-blue-700 hover:bg-blue-800 text-white font-black rounded-full text-xs uppercase tracking-widest shadow-md active:scale-95 transition-all text-center border border-blue-600 cursor-pointer animate-pulse"
                 >
                   ➕ Add Money
                 </button>
                 <button 
+                  type="button"
                   onClick={() => setTab('withdraw')}
-                  className="py-4 bg-white/5 hover:bg-white/10 text-white font-black rounded-full text-xs uppercase tracking-widest border border-white/15 hover:border-white/30 active:scale-95 transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="py-4 bg-white hover:bg-blue-50 text-blue-900 font-bold rounded-full text-xs uppercase tracking-widest border-2 border-blue-700 active:scale-95 transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   🏦 Pay Out
                 </button>
               </div>
 
               {/* Row 5: Referral sponsor portfolio bar */}
-              <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 flex items-center justify-between border border-white/10 mt-1 shadow-inner">
+              <div className="bg-blue-50 rounded-2xl p-4 flex items-center justify-between border-2 border-blue-300 mt-1 shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-purple-950/55 rounded-xl flex items-center justify-center text-purple-400 border border-purple-500/35">
+                  <div className="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center text-blue-700 border border-blue-300">
                     👥
                   </div>
                   <div>
-                    <span className="text-[7.5px] font-black text-slate-400 uppercase tracking-widest block leading-none">Your Sponsor Code</span>
-                    <span className="font-mono font-black text-sm tracking-widest mt-1 block leading-none text-sky-400">{user.referralCode}</span>
+                    <span className="text-[8px] font-black text-black uppercase tracking-widest block leading-none">Your Sponsor Code</span>
+                    <span className="font-mono font-black text-sm tracking-widest mt-1 block leading-none text-blue-800">{user.referralCode}</span>
                   </div>
                 </div>
                 <button 
+                  type="button"
                   onClick={() => {
                     const signupUrl = `${window.location.origin}?ref=${user.referralCode}`;
                     navigator.clipboard.writeText(signupUrl); 
                     alert('Referral Sign-up Link Copied Successfully!');
                   }} 
-                  className="p-2.5 bg-white/10 hover:bg-white/20 rounded-xl transition-all border border-white/5 hover:border-white/20 active:scale-90 text-white cursor-pointer"
+                  className="p-2.5 bg-blue-100 hover:bg-blue-200 rounded-xl transition-all border border-blue-300 active:scale-90 text-blue-900 cursor-pointer"
                   title="Copy Refer Link"
                 >
                   <Copy size={13} />
@@ -388,14 +396,14 @@ const Dashboard: React.FC<DashboardProps> = ({
               <motion.div 
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-amber-500/10 border border-amber-500/30 p-5 rounded-2xl flex items-center gap-3.5 text-left bg-amber-50/5 dark:bg-amber-955/20"
+                className="bg-red-50 border-2 border-red-300 p-5 rounded-2xl flex items-center gap-3.5 text-left"
               >
-                <div className="w-10 h-10 bg-amber-100 dark:bg-amber-900/30 rounded-xl flex items-center justify-center text-amber-600 shrink-0">
+                <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center text-red-700 shrink-0">
                   <ShieldAlert size={20} />
                 </div>
                 <div>
-                  <h3 className="text-amber-805 dark:text-amber-305 font-extrabold text-sm tracking-tight">ID Activation Required</h3>
-                  <p className="text-slate-550 dark:text-slate-400 text-[10px] font-bold uppercase tracking-wider mt-0.5 leading-relaxed">
+                  <h3 className="text-red-700 font-extrabold text-sm tracking-tight">ID Activation Required</h3>
+                  <p className="text-black text-[10px] font-bold uppercase tracking-wider mt-0.5 leading-relaxed">
                     Aapka account active nahi hai. Please buy any Franchise Package below using your <b>E-Wallet balance</b> to activate your ID for recharges and other services!
                   </p>
                 </div>
@@ -410,37 +418,37 @@ const Dashboard: React.FC<DashboardProps> = ({
                     whileHover={{ scale: 1.02 }}
                     key={p.id}
                     className={cn(
-                      "p-6 rounded-3xl border flex flex-col justify-between relative overflow-hidden transition-all bg-white dark:bg-slate-900/40 shadow-sm",
+                      "p-6 rounded-3xl border-2 bg-white shadow-md flex flex-col justify-between relative overflow-hidden transition-all",
                       !user.isActivated && p.price === 999 
-                        ? "border-amber-500/60 ring-2 ring-amber-550/15" 
-                        : "border-slate-150 dark:border-white/5"
+                        ? "border-red-500 ring-2 ring-red-500/10" 
+                        : "border-blue-200"
                     )}
                   >
                     {!user.isActivated && p.price === 999 && (
-                      <span className="absolute top-4 right-4 px-2.5 py-1 bg-amber-500 text-white rounded-lg text-[8px] font-black uppercase tracking-widest leading-none">
+                      <span className="absolute top-4 right-4 px-2.5 py-1 bg-red-650 text-white rounded-lg text-[8px] font-black uppercase tracking-widest leading-none">
                         Recommended
                       </span>
                     )}
                     
                     <div>
-                      <h4 className="text-xs font-black text-slate-805 dark:text-slate-200 mb-2">{p.name}</h4>
+                      <h4 className="text-xs font-black text-black mb-2">{p.name}</h4>
                       <div className="flex items-baseline gap-1 mb-4">
-                        <span className="text-2xl font-black text-slate-900 dark:text-white">₹{p.price}</span>
-                        <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider font-mono">E-Wallet</span>
+                        <span className="text-2xl font-black text-blue-800">₹{p.price}</span>
+                        <span className="text-[10px] text-red-750 font-bold uppercase tracking-wider font-mono">E-Wallet</span>
                       </div>
                       
-                      <div className="space-y-2 bg-slate-50 dark:bg-slate-950/60 p-3.5 rounded-2xl border border-slate-100 dark:border-white/5 mb-5 text-[10px] font-bold text-slate-650 dark:text-slate-400">
+                      <div className="space-y-2 bg-blue-50 p-3.5 rounded-2xl border-2 border-blue-200 mb-5 text-[10px] font-bold text-black">
                         <div className="flex justify-between items-center">
                           <span>PV self count:</span>
-                          <span className="text-purple-600 dark:text-purple-400 font-black font-mono">+{p.pv} PV</span>
+                          <span className="text-blue-900 font-black font-mono">+{p.pv} PV</span>
                         </div>
                         <div className="flex justify-between items-center">
                           <span>Instant Coins:</span>
-                          <span className="text-amber-500 font-black font-mono">🪙 {p.coin} Coins</span>
+                          <span className="text-amber-600 font-black font-mono">🪙 {p.coin} Coins</span>
                         </div>
-                        <div className="flex justify-between items-center bg-indigo-50/50 dark:bg-indigo-950/20 px-1 py-0.5 rounded-md">
+                        <div className="flex justify-between items-center bg-blue-105 px-1 py-0.5 rounded-md text-blue-900">
                           <span>20-Level Income:</span>
-                          <span className="text-indigo-600 dark:text-indigo-400 font-black uppercase font-mono">Cascade Active</span>
+                          <span className="text-blue-900 font-black uppercase font-mono">Cascade Active</span>
                         </div>
                       </div>
                     </div>
@@ -451,8 +459,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                       className={cn(
                         "w-full py-3 rounded-xl text-[9px] font-black uppercase tracking-widest cursor-pointer active:scale-98 transition-all shadow-sm",
                         isAffordable 
-                          ? "bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black" 
-                          : "bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500 cursor-not-allowed border border-transparent"
+                          ? "bg-blue-700 hover:bg-blue-850 text-white font-black" 
+                          : "bg-blue-50 text-slate-500 cursor-not-allowed border-2 border-blue-200"
                       )}
                     >
                       {isAffordable ? "⚡ Buy with E-Wallet" : "🔒 Low E-Wallet"}
@@ -464,19 +472,20 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* 4. Highly Polished "Quick Actions" Section */}
-          <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800/60">
-            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500 mb-6 text-left flex items-center gap-2">
-              <span className="w-1.5 h-3 bg-violet-600 rounded-full inline-block"></span>
+          <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border-2 border-blue-200">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-black mb-6 text-left flex items-center gap-2">
+              <span className="w-1.5 h-3 bg-blue-700 rounded-full inline-block"></span>
               Quick Actions
             </h3>
             <div className="grid grid-cols-4 gap-3 md:gap-4">
               {[
-                { id: 'utility', icon: Wallet, label: 'Utility Pay', color: 'from-violet-500 to-purple-600 shadow-violet-500/10' },
-                { id: 'add_money', icon: Landmark, label: 'Add Cash', color: 'from-emerald-500 to-green-600 shadow-emerald-500/10' },
-                { id: 'transfer', icon: Share2, label: 'Send Cash', color: 'from-purple-500 to-indigo-600 shadow-purple-500/10' },
-                { id: 'withdraw', icon: ShieldCheck, label: 'Payout', color: 'from-emerald-600 to-teal-500 shadow-emerald-600/10' },
+                { id: 'utility', icon: Wallet, label: 'Utility Pay', color: 'from-blue-600 to-indigo-600 shadow-blue-500/10' },
+                { id: 'add_money', icon: Landmark, label: 'Add Cash', color: 'from-blue-600 to-cyan-600 shadow-blue-500/10' },
+                { id: 'transfer', icon: Share2, label: 'Send Cash', color: 'from-blue-700 to-indigo-700 shadow-blue-500/10' },
+                { id: 'withdraw', icon: ShieldCheck, label: 'Payout', color: 'from-red-650 to-rose-650 shadow-red-500/10' },
               ].map((action) => (
                 <button
+                  type="button"
                   key={action.id}
                   onClick={() => setTab(action.id)}
                   className="flex flex-col items-center gap-2 group cursor-pointer"
@@ -484,7 +493,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <div className={cn("w-14 h-14 md:w-16 md:h-16 rounded-[1.8rem] flex items-center justify-center text-white shadow-lg transition-all group-hover:scale-105 group-active:scale-95 bg-gradient-to-br", action.color)}>
                     <action.icon size={22} className="md:size-[26px]" />
                   </div>
-                  <span className="text-[9px] md:text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider text-center">{action.label}</span>
+                  <span className="text-[9px] md:text-[10px] font-black text-black uppercase tracking-wider text-center">{action.label}</span>
                 </button>
               ))}
             </div>
@@ -495,24 +504,24 @@ const Dashboard: React.FC<DashboardProps> = ({
               
               {/* Promotion / Ads banners Grid to complement combination layout */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="p-6 bg-gradient-to-br from-violet-950 to-purple-900 rounded-[2rem] border border-white/5 text-white flex flex-col justify-between">
+                <div className="p-6 bg-gradient-to-br from-blue-700 to-indigo-800 rounded-[2rem] border-2 border-blue-400 text-white flex flex-col justify-between shadow-md">
                   <div>
-                    <span className="text-[8px] font-black bg-purple-500 text-white px-2 py-0.5 rounded-full uppercase tracking-widest">ECOMMERCE BENEFIT</span>
-                    <h4 className="font-extrabold text-lg mt-2">Repurchase Scheme</h4>
-                    <p className="text-slate-300 text-xs mt-1">Get MLM Points (BV) on every purchase and earn level commissions deep in your genealogy.</p>
+                    <span className="text-[8px] font-black bg-blue-500 text-white px-2 py-0.5 rounded-full uppercase tracking-widest">ECOMMERCE BENEFIT</span>
+                    <h4 className="font-extrabold text-lg mt-2 text-white">Repurchase Scheme</h4>
+                    <p className="text-blue-50 text-xs mt-1">Get MLM Points (BV) on every purchase and earn level commissions deep in your genealogy.</p>
                   </div>
-                  <button onClick={() => setTab('shop')} className="text-purple-300 text-xs font-black uppercase tracking-widest flex items-center gap-1.5 mt-4 text-left hover:underline">
+                  <button type="button" onClick={() => setTab('shop')} className="text-white text-xs font-black uppercase tracking-widest flex items-center gap-1.5 mt-4 text-left hover:underline">
                     Shop Marketplace <ArrowRight size={14} />
                   </button>
                 </div>
 
-                <div className="p-6 bg-gradient-to-br from-emerald-950 to-teal-900 rounded-[2rem] border border-white/5 text-white flex flex-col justify-between">
+                <div className="p-6 bg-gradient-to-br from-indigo-700 to-slate-900 rounded-[2rem] border-2 border-blue-400 text-white flex flex-col justify-between shadow-md">
                   <div>
-                    <span className="text-[8px] font-black bg-emerald-500 text-white px-2 py-0.5 rounded-full uppercase tracking-widest">REWARDS CLASH</span>
-                    <h4 className="font-extrabold text-lg mt-2">Achiever Rewards</h4>
-                    <p className="text-slate-300 text-xs mt-1">Claim laptops, bikes and luxury sports BMW cars as downlines activate contracts.</p>
+                    <span className="text-[8px] font-black bg-green-600 text-white px-2 py-0.5 rounded-full uppercase tracking-widest">REWARDS CLASH</span>
+                    <h4 className="font-extrabold text-lg mt-2 text-white">Achiever Rewards</h4>
+                    <p className="text-blue-50 text-xs mt-1">Claim laptops, bikes and luxury sports BMW cars as downlines activate contracts.</p>
                   </div>
-                  <button onClick={() => setTab('rewards')} className="text-emerald-400 text-xs font-black uppercase tracking-widest flex items-center gap-1.5 mt-4 text-left hover:underline">
+                  <button type="button" onClick={() => setTab('rewards')} className="text-blue-200 text-xs font-black uppercase tracking-widest flex items-center gap-1.5 mt-4 text-left hover:underline">
                     Track Rewards <ArrowRight size={14} />
                   </button>
                 </div>
@@ -520,46 +529,46 @@ const Dashboard: React.FC<DashboardProps> = ({
 
               {/* Transactions list */}
               <div className="flex items-center justify-between px-2">
-                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Security Audit Logs</h3>
-                <button onClick={() => setTab('activity')} className="text-[10px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-widest">Full Ledger</button>
+                <h3 className="text-xs font-black uppercase tracking-[0.2em] text-black">Security Audit Logs</h3>
+                <button type="button" onClick={() => setTab('activity')} className="text-[10px] font-black text-blue-700 uppercase tracking-widest">Full Ledger</button>
               </div>
-              <div className="bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-sm border border-slate-100 dark:border-slate-800/80 overflow-hidden">
-                <div className="divide-y divide-slate-50 dark:divide-slate-800">
+              <div className="bg-white rounded-[2.5rem] shadow-sm border-2 border-blue-200 overflow-hidden">
+                <div className="divide-y divide-blue-105">
                   {transactions.slice(0, 6).map(tx => (
                     <motion.div 
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       key={tx.id} 
-                      className="flex items-center justify-between p-6 hover:bg-slate-55/30 transition-colors"
+                      className="flex items-center justify-between p-6 hover:bg-blue-50 transition-colors"
                     >
                       <div className="flex items-center gap-4">
                         <div className={cn(
                           "w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-inner",
-                          tx.amount > 0 ? 'bg-green-50 text-green-600 dark:bg-green-950/20' : 'bg-red-50 text-red-600 dark:bg-red-950/20'
+                          tx.amount > 0 ? 'bg-green-50 text-green-800 border-2 border-green-200' : 'bg-red-50 text-red-700 border-2 border-red-200'
                         )}>
                           {tx.type === 'recharge' ? '📱' : tx.type === 'add_funds' ? '💰' : tx.type === 'activation' ? '⚡' : '💸'}
                         </div>
                         <div>
-                          <p className="text-sm font-black text-slate-850 dark:text-slate-200">{tx.description}</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+                          <p className="text-sm font-black text-black">{tx.description}</p>
+                          <p className="text-[10px] text-black font-bold uppercase tracking-widest mt-0.5">
                             {new Date(tx.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })} • {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className={cn("text-base font-black tracking-tight", tx.amount > 0 ? 'text-green-600' : 'text-red-600')}>
+                        <p className={cn("text-base font-black tracking-tight", tx.amount > 0 ? 'text-green-800 font-extrabold' : 'text-red-705 font-extrabold')}>
                           {tx.amount > 0 ? '+' : ''}₹{Math.abs(tx.amount).toFixed(2)}
                         </p>
-                        <p className="text-[8px] font-black text-slate-300 dark:text-slate-600 uppercase tracking-[0.2em] mt-0.5">{tx.walletType}</p>
+                        <p className="text-[8px] font-black text-black uppercase tracking-[0.2em] mt-0.5">{tx.walletType}</p>
                       </div>
                     </motion.div>
                   ))}
                   {transactions.length === 0 && (
-                    <div className="py-20 text-center">
-                      <div className="w-20 h-20 bg-slate-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-slate-200 dark:border-slate-700">
-                        <Wallet className="text-slate-200" size={32} />
+                    <div className="py-20 text-center bg-white">
+                      <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-blue-200">
+                        <Wallet className="text-blue-500" size={32} />
                       </div>
-                      <p className="text-slate-400 text-[10px] font-black uppercase tracking-[0.2em]">No transactions logged</p>
+                      <p className="text-black text-[10px] font-black uppercase tracking-[0.2em]">No transactions logged</p>
                     </div>
                   )}
                 </div>
@@ -568,17 +577,17 @@ const Dashboard: React.FC<DashboardProps> = ({
 
             <div className="space-y-6">
               {/* Complete KYC Details Status Card inside Dashboard */}
-              <div className="bg-white dark:bg-slate-900 p-8 rounded-[3rem] shadow-sm border border-slate-100 dark:border-slate-800">
+              <div className="bg-white p-8 rounded-[3rem] shadow-sm border-2 border-blue-200 text-left">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-950/20 rounded-2xl flex items-center justify-center text-indigo-500">
+                  <div className="w-10 h-10 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-700 font-extrabold border border-blue-200">
                     <FileText size={20} />
                   </div>
                   <div>
-                    <h4 className="font-extrabold text-slate-800 dark:text-slate-200">KYC Status Audit</h4>
+                    <h4 className="font-extrabold text-black">KYC Status Audit</h4>
                     <span className={cn(
-                      "px-2 py-0.5 text-[8px] font-black rounded-full uppercase tracking-wider inline-block mt-0.5",
-                      user.kycDetails?.status === 'approved' ? 'bg-green-100 text-green-700' :
-                      user.kycDetails?.status === 'pending' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
+                      "px-2.5 py-0.5 text-[8px] font-black rounded-full uppercase tracking-wider inline-block mt-0.5",
+                      user.kycDetails?.status === 'approved' ? 'bg-green-100 text-green-850 border border-green-300' :
+                      user.kycDetails?.status === 'pending' ? 'bg-amber-100 text-amber-850 border border-amber-300' : 'bg-red-100 text-red-800 border border-red-300'
                     )}>
                       {user.kycDetails?.status || "NOT SUBMITTED"}
                     </span>
@@ -587,54 +596,55 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                 {(!user.kycDetails || user.kycDetails.status === 'not_submitted') ? (
                   <form onSubmit={(e) => { e.preventDefault(); if (onSubmitKYC) onSubmitKYC(kycAadhaar, kycPan, kycGst); }} className="space-y-3">
-                    <p className="text-[10px] text-slate-400 font-medium">Verify your citizenship details to allow heavy cash withdrawals.</p>
-                    <input type="text" placeholder="Aadhaar Card (12 Digits)" pattern="\d{12}" required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold dark:bg-slate-800 dark:border-slate-700" value={kycAadhaar} onChange={e => setKycAadhaar(e.target.value.replace(/\D/g, ''))} />
-                    <input type="text" placeholder="PAN Number (10 Alphanumeric)" required className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold uppercase dark:bg-slate-800 dark:border-slate-700" value={kycPan} onChange={e => setKycPan(e.target.value)} />
-                    <input type="text" placeholder="GST Registration (Optional)" className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold uppercase dark:bg-slate-800 dark:border-slate-700" value={kycGst} onChange={e => setKycGst(e.target.value)} />
-                    <button type="submit" className="w-full py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all">Submit Documents</button>
+                    <p className="text-[10px] text-black font-semibold">Verify your citizenship details immediately to allow unlimited, heavy instant cash withdrawals.</p>
+                    <input type="text" placeholder="Aadhaar Card (12 Digits)" pattern="\d{12}" required className="w-full px-4 py-3 bg-slate-50 border-2 border-blue-150 rounded-xl text-xs font-bold text-black placeholder-slate-400 focus:border-blue-500 outline-none" value={kycAadhaar} onChange={e => setKycAadhaar(e.target.value.replace(/\D/g, ''))} />
+                    <input type="text" placeholder="PAN Number (10 Alphanumeric)" required className="w-full px-4 py-3 bg-slate-50 border-2 border-blue-150 rounded-xl text-xs font-bold uppercase text-black placeholder-slate-400 focus:border-blue-500 outline-none" value={kycPan} onChange={e => setKycPan(e.target.value)} />
+                    <input type="text" placeholder="GST Registration (Optional)" className="w-full px-4 py-3 bg-slate-50 border-2 border-blue-150 rounded-xl text-xs font-bold uppercase text-black placeholder-slate-400 focus:border-blue-500 outline-none" value={kycGst} onChange={e => setKycGst(e.target.value)} />
+                    <button type="submit" className="w-full py-3 bg-blue-700 hover:bg-blue-800 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all active:scale-95 shadow-md cursor-pointer">Submit Documents</button>
                   </form>
                 ) : user.kycDetails.status === 'pending' ? (
-                  <div className="bg-slate-50 dark:bg-slate-850 p-4 rounded-2xl text-center border">
-                    <p className="text-xs font-bold text-slate-600 dark:text-slate-300">📄 KYC Verification Active</p>
-                    <p className="text-[10px] text-slate-400 mt-1">Audit team is checking Aadhaar & PAN details. Expect verification shortly.</p>
+                  <div className="bg-blue-50 p-4 rounded-2xl text-center border-2 border-blue-200">
+                    <p className="text-xs font-black text-blue-900">📄 KYC Verification Active</p>
+                    <p className="text-[10px] text-black font-semibold mt-1">Audit team is checking Aadhaar & PAN details. Expect verification shortly.</p>
                   </div>
                 ) : (
-                  <div className="bg-green-50 dark:bg-green-950/20 p-4 rounded-2xl text-center border border-green-200">
-                    <p className="text-xs font-bold text-green-700 dark:text-green-400">✅ Merchant Account Verified</p>
-                    <p className="text-[9px] text-slate-400 mt-1 uppercase font-bold">Standard commission withdrawal enabled</p>
+                  <div className="bg-green-50 p-4 rounded-2xl text-center border border-green-200">
+                    <p className="text-xs font-bold text-green-800">✅ Merchant Account Verified</p>
+                    <p className="text-[9px] text-black mt-1 uppercase font-bold">Standard commission withdrawal enabled</p>
                   </div>
                 )}
               </div>
 
               {/* Referral Code Box */}
-              <div className="bg-violet-500/10 border border-violet-500/20 p-8 rounded-[3rem] text-slate-900 dark:text-white relative overflow-hidden">
-                <div className="absolute -top-12 -right-12 w-40 h-40 bg-violet-500/20 rounded-full blur-3xl"></div>
+              <div className="bg-blue-50/95 dark:bg-blue-900/10 border-4 border-blue-400 p-8 rounded-[3rem] text-black relative overflow-hidden text-left shadow-md">
+                <div className="absolute -top-12 -right-12 w-40 h-40 bg-blue-100 rounded-full blur-3xl"></div>
                 <div className="relative z-10">
-                  <h4 className="font-extrabold text-xl mb-1 flex items-center gap-2 text-violet-900 dark:text-violet-200">Referrals Portfolio</h4>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mb-6 font-medium">Build business cascades and earn passive direct & matrix commissions.</p>
+                  <h4 className="font-extrabold text-xl mb-1 flex items-center gap-2 text-black dark:text-white uppercase tracking-tight">Referrals Portfolio</h4>
+                  <p className="text-xs text-neutral-800 dark:text-neutral-200 mb-6 font-semibold">Build business cascades and earn passive direct & matrix commissions daily.</p>
                   
-                  <div className="bg-white/80 dark:bg-slate-805 backdrop-blur-xl p-5 rounded-3xl border border-violet-500/10 mb-4 flex items-center justify-between">
+                  <div className="bg-white/95 p-5 rounded-3xl border-2 border-blue-200 mb-4 flex items-center justify-between shadow-sm">
                     <div>
-                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sponsor Code</p>
-                      <p className="font-mono font-black text-xl tracking-[0.1em] text-violet-700 dark:text-violet-300">{user.referralCode}</p>
+                      <p className="text-[8px] font-black text-black uppercase tracking-widest">Sponsor Code</p>
+                      <p className="font-mono font-black text-xl tracking-[0.1em] text-green-700">{user.referralCode}</p>
                     </div>
                     <button 
+                      type="button"
                       onClick={() => {
                         const signupUrl = `${window.location.origin}?ref=${user.referralCode}`;
                         navigator.clipboard.writeText(signupUrl); 
                         alert('Sponsor Referral Sign-up Link Copied!');
                       }} 
-                      className="p-3 bg-violet-600 hover:bg-violet-700 text-white rounded-2xl transition-all"
+                      className="p-3 bg-blue-700 hover:bg-blue-800 text-white rounded-2xl transition-all active:scale-90 cursor-pointer"
                       title="Copy Refer Link"
                     >
                       <Copy size={16} />
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-2">
-                    <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(shareText)}`, '_blank')} className="py-3 bg-[#25D366] text-white rounded-xl flex items-center justify-center text-xs font-black shadow-sm uppercase tracking-wider">WhatsApp</button>
-                    <button onClick={() => window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(shareText)}`, '_blank')} className="py-3 bg-[#0088cc] text-white rounded-xl flex items-center justify-center text-xs font-black shadow-sm uppercase tracking-wider">Telegram</button>
-                    <button onClick={() => setTab('mlm')} className="py-3 bg-slate-900 text-white rounded-xl flex items-center justify-center text-xs font-black shadow-sm uppercase tracking-wider dark:bg-slate-800">My Team</button>
+                  <div className="grid grid-cols-3 gap-2 font-black">
+                    <button type="button" onClick={() => window.open(`https://wa.me/?text=${shareText}`, '_blank')} className="py-3 bg-[#25D366] text-white rounded-xl flex items-center justify-center text-xs font-black shadow-sm uppercase tracking-wider cursor-pointer">WhatsApp</button>
+                    <button type="button" onClick={() => window.open(`https://t.me/share/url?url=${encodeURIComponent(window.location.origin)}&text=${encodeURIComponent(shareText)}`, '_blank')} className="py-3 bg-[#0088cc] text-white rounded-xl flex items-center justify-center text-xs font-black shadow-sm uppercase tracking-wider cursor-pointer">Telegram</button>
+                    <button type="button" onClick={() => setTab('mlm')} className="py-3 bg-blue-800 text-white rounded-xl flex items-center justify-center text-xs font-black shadow-sm uppercase tracking-wider cursor-pointer">My Team</button>
                   </div>
                 </div>
               </div>
@@ -683,14 +693,14 @@ const Dashboard: React.FC<DashboardProps> = ({
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
-              { name: 'Prepaid Recharge', icon: '📱', color: 'bg-blue-50 dark:bg-blue-950/20 border-blue-105' },
-              { name: 'Postpaid Bill', icon: '🧾', color: 'bg-orange-50 dark:bg-orange-950/20 border-orange-105' },
-              { name: 'DTH TV Recharge', icon: '📡', color: 'bg-yellow-50 dark:bg-yellow-950/20 border-yellow-105' },
-              { name: 'Electricity Bill', icon: '⚡', color: 'bg-cyan-50 dark:bg-cyan-950/20 border-cyan-105' },
-              { name: 'Water Pipe Bill', icon: '💧', color: 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-105' },
-              { name: 'Broadband Wifi', icon: '🌐', color: 'bg-indigo-50 dark:bg-indigo-950/20 border-indigo-105' },
-              { name: 'FASTag RFID', icon: '🚗', color: 'bg-pink-50 dark:bg-pink-950/20 border-pink-105' },
-              { name: 'LPG Cooking Gas', icon: '🔥', color: 'bg-rose-50 dark:bg-rose-950/20 border-rose-105' },
+              { name: 'Prepaid Recharge', icon: '📱' },
+              { name: 'Postpaid Bill', icon: '🧾' },
+              { name: 'DTH TV Recharge', icon: '📡' },
+              { name: 'Electricity Bill', icon: '⚡' },
+              { name: 'Water Pipe Bill', icon: '💧' },
+              { name: 'Broadband Wifi', icon: '🌐' },
+              { name: 'FASTag RFID', icon: '🚗' },
+              { name: 'LPG Cooking Gas', icon: '🔥' },
             ].map(u => {
               const handleSelect = () => {
                 if (!user.isActivated) {
@@ -706,13 +716,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                   key={u.name} 
                   onClick={handleSelect}
                   className={cn(
-                    "bg-white dark:bg-slate-900 p-6 rounded-[2rem] border shadow-sm text-center transition-all cursor-pointer",
-                    !user.isActivated ? 'border-amber-500/10 hover:border-amber-500/35 bg-amber-50/5 dark:bg-amber-950/5' : 'hover:border-blue-400'
+                    "bg-blue-50/95 dark:bg-blue-900/20 p-6 rounded-[2rem] border border-blue-200 shadow-sm text-center transition-all cursor-pointer hover:border-blue-450"
                   )}
                 >
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl bg-slate-50 dark:bg-slate-800">{u.icon}</div>
-                  <p className="text-xs font-black text-slate-800 dark:text-slate-200 mt-1 uppercase tracking-wider">{u.name}</p>
-                  <p className="text-[9px] font-black text-emerald-500 uppercase mt-0.5">2% CASHBACK + 20-L MLM</p>
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl bg-white dark:bg-slate-800 border border-blue-150 shadow-inner">{u.icon}</div>
+                  <p className="text-xs font-black text-black dark:text-white mt-1 uppercase tracking-wider">{u.name}</p>
+                  <p className="text-[9px] font-black text-green-600 dark:text-green-400 uppercase mt-0.5">2% CASHBACK + 20-L MLM</p>
                   {!user.isActivated && (
                     <span className="inline-block mt-2 px-1.5 py-0.5 bg-amber-500/15 border border-amber-500/20 text-[7px] text-amber-500 font-extrabold uppercase rounded-full tracking-wider">
                       🔒 Locked
@@ -825,45 +834,45 @@ const Dashboard: React.FC<DashboardProps> = ({
       {tab === 'add_money' && (
         <div className="max-w-2xl mx-auto space-y-8 text-left">
           <div className="text-center">
-            <h2 className="text-3xl font-black text-slate-850 dark:text-white tracking-tight">Load Cash Wallet</h2>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2">Instant loading via UPI QR scanner verification</p>
+            <h2 className="text-3xl font-black text-black tracking-tight font-sans">Load Cash Wallet</h2>
+            <p className="text-xs text-blue-700 font-extrabold uppercase tracking-widest mt-2 font-mono">Instant loading via UPI QR scanner verification</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border border-slate-100 dark:border-slate-805 space-y-8 shadow-md">
-            <div className="flex flex-col items-center gap-4 p-6 bg-slate-50 dark:bg-slate-850 rounded-[2rem] border-2 border-dashed border-slate-200 dark:border-slate-700">
-              <span className="px-3 py-1 bg-violet-100 dark:bg-violet-950/40 text-brand-primary text-[8px] font-black rounded-full uppercase tracking-wider">SECURE INSTANT PAY</span>
-              <div className="w-48 h-48 bg-white p-3 rounded-2xl shadow-inner flex items-center justify-center border">
+          <div className="bg-white p-8 rounded-[2.5rem] border-2 border-blue-200 space-y-8 shadow-md">
+            <div className="flex flex-col items-center gap-4 p-6 bg-blue-50 rounded-[2rem] border-2 border-dashed border-blue-300">
+              <span className="px-3 py-1.5 bg-blue-100 border border-blue-300 text-blue-900 text-[8px] font-black rounded-full uppercase tracking-wider font-mono">SECURE INSTANT PAY</span>
+              <div className="w-48 h-48 bg-white p-3 rounded-2xl shadow-inner flex items-center justify-center border-2 border-blue-200">
                 {qrCode ? (
                   <img src={qrCode} alt="Admin QR" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
                 ) : (
-                  <div className="text-slate-300 flex flex-col items-center gap-2">
+                  <div className="text-slate-400 flex flex-col items-center gap-2">
                     <ShieldCheck size={48} strokeWidth={1} />
                     <span className="text-[10px] font-bold uppercase tracking-widest">QR UNCONFIGURED</span>
                   </div>
                 )}
               </div>
-              <p className="text-xs font-bold text-slate-600 dark:text-slate-300">Scan to pay with Paytm, PhonePe, Bhim or GPay</p>
+              <p className="text-xs font-black text-black">Scan to pay with Paytm, PhonePe, BHIM or GPay</p>
             </div>
 
             <form onSubmit={handleAddMoneySubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Top-Up Amount (₹)</label>
+                <div className="space-y-2 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest ml-1">Top-Up Amount (₹)</label>
                   <input 
                     type="number" 
                     required 
-                    className="w-full px-6 py-4 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-brand-secondary/10 focus:border-brand-secondary focus:outline-none transition-all font-black text-lg"
+                    className="w-full px-6 py-4 bg-white border-2 border-blue-150 rounded-2xl focus:border-blue-500 focus:outline-none transition-all font-black text-lg text-black placeholder-slate-450"
                     placeholder="0.00"
                     value={addMoneyData.amount}
                     onChange={e => setAddMoneyData({...addMoneyData, amount: e.target.value})}
                   />
                 </div>
-                <div className="space-y-2">
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">12-Digit Reference/UTR ID</label>
+                <div className="space-y-2 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest ml-1">12-Digit Reference/UTR ID</label>
                   <input 
                     type="text" 
                     required 
-                    className="w-full px-6 py-4 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 focus:outline-none transition-all font-bold text-sm"
+                    className="w-full px-6 py-4 bg-white border-2 border-blue-150 rounded-2xl focus:border-blue-500 focus:outline-none transition-all font-bold text-sm text-black placeholder-slate-455"
                     placeholder="Enter Payment UPI UTR"
                     value={addMoneyData.utr}
                     onChange={e => setAddMoneyData({...addMoneyData, utr: e.target.value})}
@@ -871,8 +880,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Attach Transfer Screenshot</label>
+              <div className="space-y-2 text-left">
+                <label className="block text-[10px] font-black text-black uppercase tracking-widest ml-1">Attach Transfer Screenshot</label>
                 <div className="relative group">
                   <input 
                     type="file" 
@@ -880,25 +889,25 @@ const Dashboard: React.FC<DashboardProps> = ({
                     onChange={handleScreenshotChange}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
-                  <div className="w-full px-6 py-8 bg-slate-50 border-2 border-dashed border-slate-200 dark:bg-slate-80 y-8 border-slate-700 rounded-3xl flex flex-col items-center justify-center gap-2 group-hover:bg-slate-100 dark:group-hover:bg-slate-800 transition-colors">
+                  <div className="w-full px-6 py-8 bg-blue-50 border-2 border-dashed border-blue-300 rounded-3xl flex flex-col items-center justify-center gap-2 group-hover:bg-blue-100 transition-colors">
                     {addMoneyData.screenshot ? (
                       <div className="text-center">
                         <img src={addMoneyData.screenshot} alt="Preview" className="h-24 rounded-lg shadow-md mx-auto" referrerPolicy="no-referrer" />
-                        <p className="text-[9px] text-green-500 font-semibold mt-1 uppercase">Screenshot loaded successfully</p>
+                        <p className="text-[9px] text-green-700 font-extrabold mt-1">✓ Screenshot loaded successfully</p>
                       </div>
                     ) : (
                       <>
-                        <div className="w-12 h-12 bg-white dark:bg-slate-800 rounded-full flex items-center justify-center shadow-sm text-slate-400">
+                        <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm text-blue-600 border border-blue-200">
                           <Compass size={24} />
                         </div>
-                        <p className="text-xs font-bold text-slate-500">Tap here to choose transfer image proof</p>
+                        <p className="text-xs font-black text-black">Tap here to choose transfer image proof</p>
                       </>
                     )}
                   </div>
                 </div>
               </div>
 
-              <button type="submit" className="w-full py-5 bg-gradient-to-r from-blue-700 to-[#0077C0] text-white font-black rounded-2xl shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all uppercase tracking-widest text-xs">
+              <button type="submit" className="w-full py-5 bg-blue-700 hover:bg-blue-800 text-white font-black rounded-2xl shadow-md active:scale-[0.99] transition-all uppercase tracking-widest text-xs cursor-pointer">
                 Submit Deposit proof
               </button>
             </form>
@@ -910,95 +919,95 @@ const Dashboard: React.FC<DashboardProps> = ({
       {tab === 'withdraw' && (
         <div className="max-w-5xl mx-auto space-y-8 text-left">
           <div className="text-center">
-            <h2 className="text-3xl font-black text-slate-850 dark:text-white tracking-tight">Payout & Bank Settlements</h2>
-            <p className="text-xs text-[#0077C0] font-bold uppercase tracking-widest mt-2">Durable settlement and payout engine</p>
+            <h2 className="text-3xl font-black text-black tracking-tight font-sans">Payout & Bank Settlements</h2>
+            <p className="text-xs text-blue-800 font-extrabold uppercase tracking-widest mt-2 font-mono">Durable settlement and payout engine</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border shadow-sm space-y-6">
+            <div className="bg-white p-8 rounded-[2.5rem] border-2 border-blue-200 shadow-md space-y-6">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-[#0077C0]/10 rounded-2xl flex items-center justify-center text-[#0077C0]">
+                <div className="w-10 h-10 bg-blue-55 rounded-2xl flex items-center justify-center text-blue-700 border border-blue-200">
                   <Landmark size={20} />
                 </div>
-                <h3 className="text-lg font-black text-slate-850 dark:text-white uppercase tracking-wider">Settlement Node</h3>
+                <h3 className="text-lg font-black text-black uppercase tracking-wider">Settlement Node</h3>
               </div>
               
               <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onUpdateBankDetails(bankForm); }}>
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">A/C Legal Holder Name</label>
-                  <input type="text" className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl font-bold text-sm" value={bankForm.holderName} onChange={e => setBankForm({...bankForm, holderName: e.target.value})} required />
+                <div className="space-y-1 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">A/C Legal Holder Name</label>
+                  <input type="text" className="w-full px-5 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-bold text-sm text-black outline-none focus:border-blue-500" value={bankForm.holderName} onChange={e => setBankForm({...bankForm, holderName: e.target.value})} required />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Bank Name</label>
-                  <input type="text" className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl font-bold text-sm" value={bankForm.bankName} onChange={e => setBankForm({...bankForm, bankName: e.target.value})} required />
+                <div className="space-y-1 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">Bank Name</label>
+                  <input type="text" className="w-full px-5 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-bold text-sm text-black outline-none focus:border-blue-500" value={bankForm.bankName} onChange={e => setBankForm({...bankForm, bankName: e.target.value})} required />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Account Number</label>
-                    <input type="text" className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl font-bold text-sm" value={bankForm.accountNumber} onChange={e => setBankForm({...bankForm, accountNumber: e.target.value})} required />
+                  <div className="space-y-1 text-left">
+                    <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">Account Number</label>
+                    <input type="text" className="w-full px-5 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-bold text-sm text-black outline-none focus:border-blue-500" value={bankForm.accountNumber} onChange={e => setBankForm({...bankForm, accountNumber: e.target.value})} required />
                   </div>
-                  <div className="space-y-1">
-                    <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">IFSC SWIFT Code</label>
-                    <input type="text" className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl font-bold text-sm" value={bankForm.ifscCode} onChange={e => setBankForm({...bankForm, ifscCode: e.target.value})} required />
+                  <div className="space-y-1 text-left">
+                    <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">IFSC SWIFT Code</label>
+                    <input type="text" className="w-full px-5 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-bold text-sm text-black outline-none focus:border-blue-500" value={bankForm.ifscCode} onChange={e => setBankForm({...bankForm, ifscCode: e.target.value})} required />
                   </div>
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">UPI ID for settlements (Paytm/BHIM)</label>
-                  <input type="text" className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl font-bold text-sm" placeholder="username@upi" value={bankForm.upiId || ''} onChange={e => setBankForm({...bankForm, upiId: e.target.value})} />
+                <div className="space-y-1 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">UPI ID for settlements (Paytm/BHIM)</label>
+                  <input type="text" className="w-full px-5 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-bold text-sm text-black outline-none focus:border-blue-500" placeholder="username@upi" value={bankForm.upiId || ''} onChange={e => setBankForm({...bankForm, upiId: e.target.value})} />
                 </div>
-                <button type="submit" className="w-full py-4 bg-slate-800 hover:bg-black text-white text-xs font-black rounded-xl uppercase tracking-widest transition-all">
+                <button type="submit" className="w-full py-4 bg-blue-700 hover:bg-blue-800 text-white text-xs font-black rounded-2xl uppercase tracking-widest transition-all shadow-md cursor-pointer">
                   Apply Bank Details
                 </button>
               </form>
             </div>
 
-            <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border shadow-sm space-y-6">
+            <div className="bg-white p-8 rounded-[2.5rem] border-2 border-blue-200 shadow-md space-y-6">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-500">
+                <div className="w-10 h-10 bg-green-50 rounded-2xl flex items-center justify-center text-green-700 border border-green-200">
                   <Trophy size={20} />
                 </div>
-                <h3 className="text-lg font-black text-slate-850 dark:text-white uppercase tracking-wider">Settlement Request</h3>
+                <h3 className="text-lg font-black text-black uppercase tracking-wider">Settlement Request</h3>
               </div>
 
-              <div className="p-5 bg-amber-500/10 rounded-[2rem] flex items-center justify-between border border-amber-500/20">
+              <div className="p-5 bg-blue-50 rounded-[2rem] flex items-center justify-between border-2 border-blue-250">
                 <div>
-                  <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest">Commission Wallet Ledger</p>
-                  <p className="text-3xl font-black text-amber-500">₹{user.wallets.commission.toFixed(2)}</p>
+                  <p className="text-[9px] font-black text-blue-900 uppercase tracking-widest">Main Wallet Balance</p>
+                  <p className="text-3xl font-black text-green-800">₹{user.wallets.main.toFixed(2)}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[9px] font-bold text-slate-400 uppercase">Limit minimum</p>
-                  <p className="text-xs font-black text-slate-600">₹50.00</p>
+                  <p className="text-[9px] font-black text-red-700 uppercase">Limit minimum</p>
+                  <p className="text-sm font-black text-black">₹50.00</p>
                 </div>
               </div>
 
               <form onSubmit={handleWithdrawalSubmit} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Settlement Pay (₹)</label>
+                <div className="space-y-1 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">Settlement Pay (₹)</label>
                   <input 
                     type="number" 
                     min="50" 
-                    className="w-full px-6 py-4 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl font-black text-2xl"
+                    className="w-full px-6 py-4 bg-white border-2 border-blue-150 rounded-2xl font-black text-2xl text-black outline-none focus:border-blue-500"
                     placeholder="0.00"
                     value={withdrawalAmount}
                     onChange={e => setWithdrawalAmount(e.target.value)}
                     required 
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Type 4-Digit Security PIN</label>
+                <div className="space-y-1 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">Type 4-Digit Security PIN</label>
                   <input 
                     type="password" 
                     maxLength={4} 
                     inputMode="numeric" 
                     pattern="\d{4}" 
-                    className="w-full px-6 py-4 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl font-black text-center tracking-[1em]"
+                    className="w-full px-6 py-4 bg-white border-2 border-blue-150 rounded-2xl font-black text-center tracking-[1em] text-black outline-none focus:border-blue-500"
                     placeholder="0000"
                     value={withdrawalPin}
                     onChange={e => setWithdrawalPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
                     required 
                   />
                 </div>
-                <button type="submit" className="w-full py-4 bg-[#0077C0] hover:bg-[#003B73] text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-lg transition-all">
+                <button type="submit" className="w-full py-4 bg-blue-700 hover:bg-blue-800 text-white font-black rounded-2xl text-xs uppercase tracking-widest shadow-md transition-all cursor-pointer">
                   Confirm TDS Settlement
                 </button>
               </form>
@@ -1011,24 +1020,24 @@ const Dashboard: React.FC<DashboardProps> = ({
       {tab === 'transfer' && (
         <div className="max-w-md mx-auto space-y-8 text-left">
           <div className="text-center">
-            <h2 className="text-3xl font-black text-slate-850 dark:text-white tracking-tight">Wallet Operations</h2>
-            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-2 font-mono">Convert balances or transfer peer-to-peer</p>
+            <h2 className="text-3xl font-black text-black tracking-tight font-sans">Wallet Operations</h2>
+            <p className="text-xs text-blue-700 font-extrabold uppercase tracking-widest mt-2 font-mono">Convert balances or transfer peer-to-peer</p>
           </div>
 
-          <div className="bg-white dark:bg-slate-900 p-8 rounded-[2.5rem] border shadow-sm space-y-6">
+          <div className="bg-white p-8 rounded-[2.5rem] border-2 border-blue-200 space-y-6 shadow-md">
             {/* Toggle buttons to switch transfer modes */}
-            <div className="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-2xl border border-slate-200/50 dark:border-white/5">
+            <div className="flex bg-blue-50 p-1 rounded-2xl border border-blue-150">
               <button 
                 type="button"
                 onClick={() => setTransferSubTab('main')}
                 className={cn(
                   "flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer",
                   transferSubTab === 'main'
-                    ? "bg-white dark:bg-slate-900 text-slate-850 dark:text-white shadow-xs font-black"
-                    : "text-slate-400 dark:text-slate-500 hover:text-slate-650"
+                    ? "bg-blue-700 text-white shadow-md font-black"
+                    : "text-blue-900 hover:text-blue-755"
                 )}
               >
-                Royal Cash
+                Main Wallet
               </button>
               <button 
                 type="button"
@@ -1036,8 +1045,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                 className={cn(
                   "flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer",
                   transferSubTab === 'ewallet'
-                    ? "bg-white dark:bg-slate-900 text-slate-850 dark:text-white shadow-xs font-black"
-                    : "text-slate-400 dark:text-slate-500 hover:text-slate-650"
+                    ? "bg-blue-700 text-white shadow-md font-black"
+                    : "text-blue-900 hover:text-blue-755"
                 )}
               >
                 E-Wallet Peer
@@ -1048,8 +1057,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                 className={cn(
                   "flex-1 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer",
                   transferSubTab === 'self_conversion'
-                    ? "bg-white dark:bg-slate-900 text-slate-850 dark:text-white shadow-xs font-black"
-                    : "text-slate-400 dark:text-slate-500 hover:text-slate-650"
+                    ? "bg-blue-700 text-white shadow-md font-black"
+                    : "text-blue-900 hover:text-blue-755"
                 )}
               >
                 Self Topup
@@ -1058,30 +1067,30 @@ const Dashboard: React.FC<DashboardProps> = ({
 
             {/* Display Wallet Balance Box dynamically */}
             {transferSubTab === 'main' && (
-              <div className="p-6 bg-[#003B73] rounded-3xl text-white shadow-lg">
-                <p className="text-[9px] font-black text-white/50 uppercase tracking-widest mb-1">Source: Active Royal Cash (Main)</p>
+              <div className="p-6 bg-blue-700 rounded-3xl text-white shadow-md">
+                <p className="text-[9px] font-black text-blue-105 uppercase tracking-widest mb-1">Source: Active Main Wallet</p>
                 <p className="text-3xl font-black">₹{user.wallets.main.toFixed(2)}</p>
               </div>
             )}
 
             {transferSubTab === 'ewallet' && (
-              <div className="p-6 bg-indigo-900 rounded-3xl text-white shadow-lg">
-                <p className="text-[9px] font-black text-white/50 uppercase tracking-widest mb-1">Source: E-Wallet Balance</p>
+              <div className="p-6 bg-blue-900 rounded-3xl text-white shadow-md">
+                <p className="text-[9px] font-black text-blue-105 uppercase tracking-widest mb-1">Source: E-Wallet Balance</p>
                 <p className="text-3xl font-black">₹{(user.wallets.ewallet || 0).toFixed(2)}</p>
               </div>
             )}
 
             {transferSubTab === 'self_conversion' && (
-              <div className="p-6 bg-teal-900 rounded-3xl text-white shadow-lg">
-                <p className="text-[9px] font-black text-white/50 uppercase tracking-widest mb-1">Source: Royal Cash ➔ E-Wallet Conversion</p>
+              <div className="p-6 bg-blue-955 rounded-3xl text-white shadow-md">
+                <p className="text-[9px] font-black text-blue-105 uppercase tracking-widest mb-1">Source: Main Wallet ➔ E-Wallet Conversion</p>
                 <div className="flex justify-between items-center">
                   <div>
-                    <span className="text-[8px] text-teal-300 font-bold uppercase tracking-widest">Main</span>
+                    <span className="text-[8px] text-blue-200 font-bold uppercase tracking-widest">Main</span>
                     <p className="text-lg font-black">₹{user.wallets.main.toFixed(2)}</p>
                   </div>
                   <span className="text-xl">➔</span>
                   <div>
-                    <span className="text-[8px] text-teal-300 font-bold uppercase tracking-widest">E-Wallet</span>
+                    <span className="text-[8px] text-blue-200 font-bold uppercase tracking-widest">E-Wallet</span>
                     <p className="text-lg font-black">₹{(user.wallets.ewallet || 0).toFixed(2)}</p>
                   </div>
                 </div>
@@ -1091,87 +1100,87 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* Render selected form */}
             {transferSubTab === 'main' && (
               <form onSubmit={handleTransferSubmit} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Recipient Member Email</label>
+                <div className="space-y-1 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">Recipient Member Email</label>
                   <input 
                     type="email" 
                     required 
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl font-bold text-sm text-slate-800 dark:text-slate-100"
+                    className="w-full px-5 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-bold text-sm text-black outline-none focus:border-blue-500"
                     placeholder="name@spay.com"
                     value={transferData.email}
                     onChange={e => setTransferData({...transferData, email: e.target.value})}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Transfer Amount (₹)</label>
+                <div className="space-y-1 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">Transfer Amount (₹)</label>
                   <input 
                     type="number" 
                     required 
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-705 rounded-2xl font-black text-xl text-slate-800 dark:text-slate-100"
+                    className="w-full px-5 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-black text-xl text-black outline-none focus:border-blue-500"
                     placeholder="0.00"
                     value={transferData.amount}
                     onChange={e => setTransferData({...transferData, amount: e.target.value})}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-455 uppercase tracking-widest pl-1">Security PIN</label>
+                <div className="space-y-1 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">Security PIN</label>
                   <input 
                     type="password" 
                     maxLength={4} 
                     inputMode="numeric" 
                     pattern="\d{4}" 
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-705 rounded-2xl font-black text-center tracking-[1em]"
+                    className="w-full px-5 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-black text-center tracking-[1em] text-black outline-none focus:border-blue-500"
                     placeholder="0000"
                     value={transferData.pin}
                     onChange={e => setTransferData({...transferData, pin: e.target.value.replace(/\D/g, '').slice(0, 4)})}
                     required 
                   />
                 </div>
-                <button type="submit" className="w-full py-4 bg-gradient-to-r from-blue-700 to-indigo-700 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:scale-103 active:scale-98 transition-all cursor-pointer">
-                  Send Royal Cash
+                <button type="submit" className="w-full py-4 bg-blue-700 hover:bg-blue-800 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-md transition-all cursor-pointer">
+                  Send Main Wallet Funds
                 </button>
               </form>
             )}
 
             {transferSubTab === 'ewallet' && (
               <form onSubmit={handleEwalletTransferSubmit} className="space-y-4">
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Beneficiary E-Wallet Email</label>
+                <div className="space-y-1 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">Beneficiary E-Wallet Email</label>
                   <input 
                     type="email" 
                     required 
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 rounded-2xl font-bold text-sm text-slate-800 dark:text-slate-100"
+                    className="w-full px-5 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-bold text-sm text-black outline-none focus:border-blue-500"
                     placeholder="recipient@spay.com"
                     value={ewalletTransfer.email}
                     onChange={e => setEwalletTransfer({...ewalletTransfer, email: e.target.value})}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Transfer Amount (₹)</label>
+                <div className="space-y-1 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">Transfer Amount (₹)</label>
                   <input 
                     type="number" 
                     required 
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-705 rounded-2xl font-black text-xl text-slate-800 dark:text-slate-100"
+                    className="w-full px-5 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-black text-xl text-black outline-none focus:border-blue-500"
                     placeholder="0.00"
                     value={ewalletTransfer.amount}
                     onChange={e => setEwalletTransfer({...ewalletTransfer, amount: e.target.value})}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-455 uppercase tracking-widest pl-1">Security PIN</label>
+                <div className="space-y-1 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">Security PIN</label>
                   <input 
                     type="password" 
                     maxLength={4} 
                     inputMode="numeric" 
                     pattern="\d{4}" 
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-705 rounded-2xl font-black text-center tracking-[1em]"
+                    className="w-full px-5 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-black text-center tracking-[1em] text-black outline-none focus:border-blue-500"
                     placeholder="0000"
                     value={ewalletTransfer.pin}
                     onChange={e => setEwalletTransfer({...ewalletTransfer, pin: e.target.value.replace(/\D/g, '').slice(0, 4)})}
                     required 
                   />
                 </div>
-                <button type="submit" className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:scale-103 active:scale-98 transition-all cursor-pointer">
+                <button type="submit" className="w-full py-4 bg-blue-700 hover:bg-blue-800 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-md transition-all cursor-pointer font-sans">
                   Send E-Wallet Cash
                 </button>
               </form>
@@ -1179,35 +1188,35 @@ const Dashboard: React.FC<DashboardProps> = ({
 
             {transferSubTab === 'self_conversion' && (
               <form onSubmit={handleSelfEwalletConversionSubmit} className="space-y-4">
-                <div className="p-4 bg-teal-50 dark:bg-teal-500/10 border border-teal-200 dark:border-teal-500/20 text-[10px] text-teal-800 dark:text-teal-300 font-bold uppercase rounded-2xl leading-relaxed">
+                <div className="p-4 bg-blue-50 border border-blue-200 text-[10px] text-blue-900 font-bold uppercase rounded-2xl leading-relaxed">
                   💡 main wallet se e-wallet me topup self ke liye instant zero charges block configuration node call.
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Amount to Transfer to E-Wallet (₹)</label>
+                <div className="space-y-1 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">Amount to Transfer to E-Wallet (₹)</label>
                   <input 
                     type="number" 
                     required 
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-705 rounded-2xl font-black text-xl text-slate-800 dark:text-slate-100"
+                    className="w-full px-5 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-black text-xl text-black outline-none focus:border-blue-500"
                     placeholder="0.00"
                     value={selfEwalletConversion.amount}
                     onChange={e => setSelfEwalletConversion({...selfEwalletConversion, amount: e.target.value})}
                   />
                 </div>
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-455 uppercase tracking-widest pl-1">Security PIN</label>
+                <div className="space-y-1 text-left">
+                  <label className="block text-[10px] font-black text-black uppercase tracking-widest pl-1">Security PIN</label>
                   <input 
                     type="password" 
                     maxLength={4} 
                     inputMode="numeric" 
                     pattern="\d{4}" 
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 dark:bg-slate-800 dark:border-slate-705 rounded-2xl font-black text-center tracking-[1em]"
+                    className="w-full px-5 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-black text-center tracking-[1em] text-black outline-none focus:border-blue-500"
                     placeholder="0000"
                     value={selfEwalletConversion.pin}
                     onChange={e => setSelfEwalletConversion({...selfEwalletConversion, pin: e.target.value.replace(/\D/g, '').slice(0, 4)})}
                     required 
                   />
                 </div>
-                <button type="submit" className="w-full py-4 bg-gradient-to-r from-teal-600 to-emerald-600 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl hover:scale-103 active:scale-98 transition-all cursor-pointer">
+                <button type="submit" className="w-full py-4 bg-blue-800 hover:bg-blue-900 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-md transition-all cursor-pointer font-sans">
                   Activate Self Convert Topup
                 </button>
               </form>
@@ -1233,7 +1242,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         return (
           <div className="space-y-8 text-left border-0">
             <div className="text-center max-w-md mx-auto">
-              <h2 className="text-3xl font-black text-slate-850 dark:text-white tracking-tight">Active Matrix Team</h2>
+              <h2 className="text-3xl font-black text-black dark:text-white tracking-tight">Active Matrix Team</h2>
               <p className="text-xs text-[#0077C0] font-black uppercase tracking-widest mt-2 font-mono">{activeDownlineCount} Active of {myDownline.length} Total Members</p>
             </div>
 
@@ -1248,37 +1257,37 @@ const Dashboard: React.FC<DashboardProps> = ({
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: Math.min(1.5, i * 0.04) }}
                     key={i} 
-                    className="bg-white dark:bg-slate-900 p-6 rounded-3xl border border-slate-100 dark:border-white/5 shadow-sm flex flex-col justify-between gap-4"
+                    className="bg-blue-50/95 dark:bg-blue-900/10 p-6 rounded-3xl border-2 border-blue-200 shadow-sm flex flex-col justify-between gap-4"
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-indigo-50 dark:bg-indigo-950/20 rounded-2xl flex items-center justify-center font-black text-indigo-500 text-xs border border-indigo-200 dark:border-indigo-900 font-mono shrink-0">
+                        <div className="w-10 h-10 bg-white dark:bg-slate-800 text-green-700 font-extrabold border-2 border-green-200 rounded-2xl flex items-center justify-center font-mono shrink-0">
                           LVL {i+1}
                         </div>
                         <div>
-                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest block leading-none">Team Count</p>
-                          <p className="text-sm font-black text-slate-800 dark:text-slate-200 mt-1 block leading-none">{levelMembers.length} Members</p>
+                          <p className="text-[10px] font-black text-black uppercase tracking-widest block leading-none">Team Count</p>
+                          <p className="text-sm font-black text-black dark:text-white mt-1 block leading-none">{levelMembers.length} Members</p>
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="text-[9px] font-black text-green-600 uppercase tracking-wider block leading-none">{activeCount} Active</p>
-                        <div className="w-16 h-1 mt-1.5 bg-slate-150 dark:bg-slate-800 rounded-full overflow-hidden">
+                        <p className="text-[9px] font-black text-green-700 dark:text-green-400 uppercase tracking-wider block leading-none">{activeCount} Active</p>
+                        <div className="w-16 h-1 mt-1.5 bg-blue-100 dark:bg-slate-800 rounded-full overflow-hidden">
                           <div 
-                            className="h-full bg-green-500 rounded-full" 
+                            className="h-full bg-green-600 rounded-full" 
                             style={{ width: `${levelMembers.length ? (activeCount / levelMembers.length) * 100 : 0}%` }}
                           ></div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2 bg-slate-50 dark:bg-slate-950/50 p-3 rounded-2xl border border-slate-100 dark:border-white/5">
+                    <div className="grid grid-cols-2 gap-2 bg-white/80 dark:bg-slate-950/50 p-3 rounded-2xl border-2 border-blue-150">
                       <div className="text-left">
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest font-mono">Commission</span>
-                        <p className="text-xs font-black text-emerald-500 mt-1 block leading-none">₹{statsObj.cashEarned.toFixed(2)}</p>
+                        <span className="text-[8px] font-black text-black uppercase tracking-widest font-mono">Commission</span>
+                        <p className="text-xs font-black text-green-600 dark:text-green-400 mt-1 block leading-none">₹{statsObj.cashEarned.toFixed(2)}</p>
                       </div>
-                      <div className="text-right border-l border-slate-200 dark:border-white/5 pl-2">
-                        <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest font-mono">Coins Reward</span>
-                        <p className="text-xs font-black text-amber-500 mt-1 block leading-none">🪙 {statsObj.coinsEarned.toLocaleString()}</p>
+                      <div className="text-right border-l border-blue-150 pl-2">
+                        <span className="text-[8px] font-black text-black uppercase tracking-widest font-mono">Coins Reward</span>
+                        <p className="text-xs font-black text-green-750 dark:text-green-400 mt-1 block leading-none">🪙 {statsObj.coinsEarned.toLocaleString()}</p>
                       </div>
                     </div>
                   </motion.div>
@@ -1469,38 +1478,38 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <motion.div 
                   whileHover={{ y: -5 }}
                   key={p.id} 
-                  className="bg-white dark:bg-slate-900 rounded-[2rem] border shadow-sm overflow-hidden flex flex-col justify-between"
+                  className="bg-blue-50/95 dark:bg-blue-900/20 rounded-[2rem] border-2 border-blue-200 overflow-hidden flex flex-col justify-between"
                 >
-                  <div className="h-44 bg-slate-50 dark:bg-slate-800 flex items-center justify-center text-6xl relative">
+                  <div className="h-44 bg-white dark:bg-slate-800 flex items-center justify-center text-6xl relative border-b border-blue-100">
                     {p.image}
-                    <div className="absolute top-4 right-4 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md px-3 py-1 rounded-full border border-white/20 shadow-sm">
-                      <p className="text-[10px] font-black text-brand-secondary uppercase tracking-widest">{p.category}</p>
+                    <div className="absolute top-4 right-4 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md px-3 py-1 rounded-full border border-blue-150 shadow-sm">
+                      <p className="text-[10px] font-black text-blue-900 uppercase tracking-widest">{p.category}</p>
                     </div>
                   </div>
                   <div className="p-5 flex-1 flex flex-col justify-between">
                     <div>
-                      <h4 className="font-extrabold text-slate-800 dark:text-slate-205 mb-1 text-sm line-clamp-1">{p.name}</h4>
-                      <p className="text-[10px] text-slate-400 font-medium line-clamp-2 leading-tight">{p.description}</p>
+                      <h4 className="font-extrabold text-black dark:text-white mb-1 text-sm line-clamp-1">{p.name}</h4>
+                      <p className="text-[10px] text-neutral-800 dark:text-neutral-200 font-bold line-clamp-2 leading-tight">{p.description}</p>
                       
                       {p.vendorName && (
-                        <span className="text-[8px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-wider block mt-2">🏪 {p.vendorName}</span>
+                        <span className="text-[8px] font-black text-green-700 dark:text-green-400 uppercase tracking-wider block mt-2">🏪 {p.vendorName}</span>
                       )}
                     </div>
                     
                     <div className="space-y-3 mt-4">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-base font-black text-slate-900 dark:text-slate-100">₹{adjustedPrice.toFixed(0)}</p>
-                          <p className="text-[10px] text-slate-400 line-through font-bold">MRP ₹{p.mrp}</p>
+                          <p className="text-base font-black text-green-700 dark:text-green-400">₹{adjustedPrice.toFixed(0)}</p>
+                          <p className="text-[10px] text-black line-through font-extrabold">MRP ₹{p.mrp}</p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[9px] font-black text-emerald-500 uppercase tracking-wider">{p.mlmPoints} BV</p>
-                          <p className="text-[8px] font-bold text-slate-400 uppercase">MLM points</p>
+                          <p className="text-[9px] font-black text-green-600 dark:text-green-400 uppercase tracking-wider">{p.mlmPoints} BV</p>
+                          <p className="text-[8px] font-black text-black uppercase">MLM points</p>
                         </div>
                       </div>
                       <button 
                         onClick={() => { onOrder(user.id, p.id); }}
-                        className="w-full py-2.5 bg-slate-900 hover:bg-black text-white text-[10px] font-black rounded-lg uppercase tracking-wider transition-all"
+                        className="w-full py-2.5 bg-blue-700 hover:bg-blue-800 text-white text-[10px] font-black rounded-lg uppercase tracking-wider transition-all cursor-pointer"
                       >
                         Checkout Order
                       </button>

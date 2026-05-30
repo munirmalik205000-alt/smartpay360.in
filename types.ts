@@ -90,6 +90,7 @@ export interface User {
   joinedAt: string;
   isActivated: boolean;
   selfPV?: number; // Self package points value
+  coinUsablePercent?: number; // % of Coin usable for services
   bankDetails?: BankDetails;
   kycDetails?: KYCDetails;
   rewards?: RewardTarget[];
@@ -101,6 +102,7 @@ export interface Package {
   price: number; // bought from ewallet
   pv: number;    // Point Value contribution
   coin: number;  // Coin amount rewarded to buyer
+  coinUsablePercent?: number; // % of Coin usable for Recharge & Shopping
 }
 
 export interface Product {

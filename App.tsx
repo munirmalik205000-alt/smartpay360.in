@@ -86,15 +86,15 @@ const App: React.FC = () => {
     try {
       const saved = safeLocalStorage.getItem('spay_pkgs', '');
       return saved ? JSON.parse(saved) : [
-        { id: 'pkg_starter', name: 'Starter Node Package', price: 999, pv: 100, coin: 250 },
-        { id: 'pkg_booster', name: 'Premium Royal Booster', price: 2999, pv: 400, coin: 800 },
-        { id: 'pkg_elite', name: 'Elite Global Franchise Node', price: 9999, pv: 1500, coin: 3000 }
+        { id: 'pkg_starter', name: 'Starter Node Package', price: 999, pv: 100, coin: 250, coinUsablePercent: 10 },
+        { id: 'pkg_booster', name: 'Premium Royal Booster', price: 2999, pv: 400, coin: 800, coinUsablePercent: 15 },
+        { id: 'pkg_elite', name: 'Elite Global Franchise Node', price: 9999, pv: 1500, coin: 3000, coinUsablePercent: 20 }
       ];
     } catch {
       return [
-        { id: 'pkg_starter', name: 'Starter Node Package', price: 999, pv: 100, coin: 250 },
-        { id: 'pkg_booster', name: 'Premium Royal Booster', price: 2999, pv: 400, coin: 800 },
-        { id: 'pkg_elite', name: 'Elite Global Franchise Node', price: 9999, pv: 1500, coin: 3000 }
+        { id: 'pkg_starter', name: 'Starter Node Package', price: 999, pv: 100, coin: 250, coinUsablePercent: 10 },
+        { id: 'pkg_booster', name: 'Premium Royal Booster', price: 2999, pv: 400, coin: 800, coinUsablePercent: 15 },
+        { id: 'pkg_elite', name: 'Elite Global Franchise Node', price: 9999, pv: 1500, coin: 3000, coinUsablePercent: 20 }
       ];
     }
   });
@@ -335,7 +335,7 @@ const App: React.FC = () => {
     if (!user) return;
     if (user.transactionPin !== pin) return alert('🚨 Security Error: Invalid 4-Digit Security PIN');
     if (!user.bankDetails) return alert('🚨 Bank Details not found. Please complete bank update first.');
-    if (user.wallets.commission < amount) return alert('🚨 Insufficient Earnings Balance');
+    if (user.wallets.main < amount) return alert('🚨 Insufficient Main Wallet Balance');
 
     const newRequest: WithdrawalRequest = {
       id: `WITH${Date.now()}`,
@@ -347,7 +347,7 @@ const App: React.FC = () => {
       createdAt: new Date().toISOString()
     };
     
-    handleTransaction(user.id, -amount, 'commission', 'withdrawal', `TDS-deducted bank payout request filed for ₹${amount}`);
+    handleTransaction(user.id, -amount, 'main', 'withdrawal', `TDS-deducted bank payout request filed for ₹${amount}`);
     setWithdrawalRequests(prev => [newRequest, ...prev]);
     alert('✅ Payout Request Submitted Successfully! Approved by SmartPay Admin under TDS scheme.');
   };
@@ -380,27 +380,28 @@ const App: React.FC = () => {
       createdAt: new Date().toISOString()
     };
     setPaymentRequests(prev => [newRequest, ...prev]);
-    alert('✅ Payment proof submitted to core admin logs. Main/Recharge Wallet is topped up as soon as UTR is verified!');
+    alert('✅ Payment proof submitted to core admin logs. E-Wallet/Main Wallet is topped up as soon as UTR is verified!');
   };
 
   const handleApprovePayment = (requestId: string) => {
     const req = paymentRequests.find(r => r.id === requestId);
     if (!req || req.status !== 'pending') return;
-    handleTransaction(req.userId, req.amount, 'recharge', 'add_funds', `Funds Loaded: UTR Verification ${req.utr}`);
+    handleTransaction(req.userId, req.amount, 'ewallet', 'add_funds', `Funds Loaded: UTR Verification ${req.utr}`);
     setPaymentRequests(prev => prev.map(r => r.id === requestId ? { ...r, status: 'approved' } : r));
-    alert('✅ UTR validated successfully. Recharge Wallet loaded!');
+    alert('✅ UTR validated successfully. E-Wallet loaded!');
   };
 
-  const handleCreatePackage = (name: string, price: number, pv: number, coin: number) => {
+  const handleCreatePackage = (name: string, price: number, pv: number, coin: number, coinUsablePercent: number = 10) => {
     const newPkg: Package = {
       id: `pkg_${Date.now()}`,
       name,
       price,
       pv,
-      coin
+      coin,
+      coinUsablePercent
     };
     setPackages(prev => [...prev, newPkg]);
-    alert(`🎉 Package '${name}' created successfully with PV: ${pv} and Coins: ${coin}!`);
+    alert(`🎉 Package '${name}' created successfully with PV: ${pv}, Coins: ${coin}, and Coins Usable limit: ${coinUsablePercent}%!`);
   };
 
   const handleDeletePackage = (id: string) => {
@@ -430,6 +431,7 @@ const App: React.FC = () => {
       buyer.status = 'active';
       buyer.selfPV = (buyer.selfPV || 0) + pkg.pv;
       buyer.wallets.coinwallet = parseFloat(((buyer.wallets.coinwallet || 0) + pkg.coin).toFixed(2));
+      buyer.coinUsablePercent = pkg.coinUsablePercent || 10;
 
       // 1. Cost Transaction
       transactionList.push({
@@ -471,6 +473,8 @@ const App: React.FC = () => {
       const rupeeEarning = parseFloat((price * rate).toFixed(2));
       // Coin Level Reward (rate * pkg.coin)
       const coinEarning = parseFloat((pkg.coin * rate).toFixed(2));
+      // PV Level Reward (rate * pkg.pv)
+      const pvEarning = parseFloat((pkg.pv * rate).toFixed(2));
 
       if (parentUser.isActivated) {
         // Calculate TDS and administration fee deductions
@@ -482,6 +486,7 @@ const App: React.FC = () => {
         parentUser.wallets.commission = parseFloat((parentUser.wallets.commission + finalNetRupee).toFixed(2));
         parentUser.totalEarned = parseFloat((parentUser.totalEarned + finalNetRupee).toFixed(2));
         parentUser.wallets.coinwallet = parseFloat(((parentUser.wallets.coinwallet || 0) + coinEarning).toFixed(2));
+        parentUser.selfPV = parseFloat(((parentUser.selfPV || 0) + pvEarning).toFixed(2));
 
         // Rupee transaction entry
         transactionList.push({
@@ -597,23 +602,37 @@ const App: React.FC = () => {
   };
 
   // Upgraded Mobile / Bill Utility Recharge with 20 levels commission
-  const handleRecharge = (userId: string, amount: number, service: string, pin: string, operator: string) => {
+  const handleRecharge = (userId: string, amount: number, service: string, pin: string, operator: string, useCoins: boolean = false) => {
     const user = users.find(u => u.id === userId);
     if (!user || !user.isActivated) return alert('🚨 MLM Warning: Please activate your account first with the active package to start earning cashback.');
     if (user.transactionPin !== pin) return alert('🚨 Security Error: Transaction PIN incorrect.');
     
-    // Choose wallets: deduct from recharge wallet first, or fallback to main wallet
-    let walletToDebit: 'recharge' | 'main' = 'recharge';
-    if (user.wallets.recharge >= amount) {
-      walletToDebit = 'recharge';
-    } else if (user.wallets.main >= amount) {
+    let coinsToDeduct = 0;
+    if (useCoins && user.wallets.coinwallet > 0) {
+      const percentageLimit = user.coinUsablePercent || 10;
+      const maxCoins = parseFloat((amount * (percentageLimit / 100)).toFixed(2));
+      coinsToDeduct = parseFloat(Math.min(maxCoins, user.wallets.coinwallet).toFixed(2));
+    }
+
+    const netAmountToDebit = parseFloat((amount - coinsToDeduct).toFixed(2));
+
+    // Choose wallets: deduct from ewallet first, or fallback to main wallet
+    let walletToDebit: 'ewallet' | 'main' = 'ewallet';
+    if ((user.wallets.ewallet || 0) >= netAmountToDebit) {
+      walletToDebit = 'ewallet';
+    } else if (user.wallets.main >= netAmountToDebit) {
       walletToDebit = 'main';
     } else {
-      return alert(`🚨 Wallet Error: Insufficient funds. Payment requires ₹${amount.toFixed(2)}. Your Recharge Wallet has ₹${user.wallets.recharge.toFixed(2)} and Main Wallet has ₹${user.wallets.main.toFixed(2)}.`);
+      return alert(`🚨 Wallet Error: Insufficient funds. Payment requires ₹${netAmountToDebit.toFixed(2)} (after utilizing ${coinsToDeduct} Coins for ₹${coinsToDeduct} discount). Your E-Wallet has ₹${(user.wallets.ewallet || 0).toFixed(2)} and Main Wallet has ₹${user.wallets.main.toFixed(2)}.`);
+    }
+
+    // Deduct coins if used
+    if (coinsToDeduct > 0) {
+      handleTransaction(userId, -coinsToDeduct, 'coinwallet', 'recharge', `Used ${coinsToDeduct} Coins in Utility Recharge`);
     }
 
     // Process recharge
-    handleTransaction(userId, -amount, walletToDebit, 'recharge', `${operator} ${service} Recharge of ₹${amount}`);
+    handleTransaction(userId, -netAmountToDebit, walletToDebit, 'recharge', `${operator} ${service} Recharge of ₹${amount} (${coinsToDeduct} Coins utilized)`);
     
     // Instant 2% cashback
     const cashback = parseFloat((amount * 0.02).toFixed(2));
@@ -621,25 +640,39 @@ const App: React.FC = () => {
 
     // Distribute 20 Level commissions!
     distributeMLMCommissions(userId, amount, 'recharge');
-    alert(`🎉 ${operator} ${service} payment of ₹${amount} successful! Cashback of ₹${cashback} credited. Debited from your ${walletToDebit === 'recharge' ? 'Recharge' : 'Main'} Wallet.`);
+    alert(`🎉 ${operator} ${service} payment of ₹${amount} successful! ₹${coinsToDeduct} discount applied from Coins. Cashback of ₹${cashback} credited. Debited from your ${walletToDebit === 'ewallet' ? 'E-Wallet' : 'Main Wallet'}.`);
   };
 
   // Upgraded Place Order with shopping cashback + rewards logic and 20 level BV (BV distribution)
-  const placeOrder = (userId: string, productId: string) => {
+  const placeOrder = (userId: string, productId: string, useCoins: boolean = false) => {
     const user = users.find(u => u.id === userId);
     const product = products.find(p => p.id === productId);
     if (!user || !user.isActivated) return alert('🚨 MLM Warning: Activate your package first.');
     if (!product) return;
     
+    let coinsToDeduct = 0;
+    if (useCoins && user.wallets.coinwallet > 0) {
+      const percentageLimit = user.coinUsablePercent || 10;
+      const maxCoins = parseFloat((product.price * (percentageLimit / 100)).toFixed(2));
+      coinsToDeduct = parseFloat(Math.min(maxCoins, user.wallets.coinwallet).toFixed(2));
+    }
+
+    const netAmountToDebit = parseFloat((product.price - coinsToDeduct).toFixed(2));
+
     // Choose wallets (user can buy from Main Wallet OR Shopping Wallet)
     const availableFund = user.wallets.main + user.wallets.shopping;
-    if (availableFund < product.price) return alert('🚨 Insufficient balance in both Cash & Shopping Wallets');
+    if (availableFund < netAmountToDebit) return alert(`🚨 Insufficient balance in both Cash & Shopping Wallets. Net required: ₹${netAmountToDebit} (discounted by ${coinsToDeduct} Coins)`);
 
-    // Deduct
-    if (user.wallets.shopping >= product.price) {
-      handleTransaction(userId, -product.price, 'shopping', 'shopping', `E-commerce checkout: ${product.name}`);
+    // Deduct coins if used
+    if (coinsToDeduct > 0) {
+      handleTransaction(userId, -coinsToDeduct, 'coinwallet', 'shopping', `Used ${coinsToDeduct} Coins in Store purchase of ${product.name}`);
+    }
+
+    // Deduct cash
+    if (user.wallets.shopping >= netAmountToDebit) {
+      handleTransaction(userId, -netAmountToDebit, 'shopping', 'shopping', `E-commerce checkout: ${product.name}`);
     } else {
-      const rem = product.price - user.wallets.shopping;
+      const rem = netAmountToDebit - user.wallets.shopping;
       if (user.wallets.shopping > 0) {
         handleTransaction(userId, -user.wallets.shopping, 'shopping', 'shopping', `Partial part: ${product.name}`);
       }
@@ -665,7 +698,7 @@ const App: React.FC = () => {
 
     // Distribute Brand commissions up to 20 levels deep on BV (mlmPoints * Level commission multiplier)
     distributeMLMCommissions(userId, product.mlmPoints, 'product');
-    alert(`🛒 Order placed! ${product.mlmPoints} BV Added to Genealogy.`);
+    alert(`🛒 Order placed! ₹${coinsToDeduct} discount applied from Coins. ${product.mlmPoints} BV Added to Genealogy.`);
   };
 
   // Fund Peer-to-Peer Transfer handler

@@ -42,12 +42,12 @@ export const Layout: React.FC<LayoutProps> = ({
   return (
     <div className={cn(
       "h-[100dvh] flex flex-col overflow-hidden transition-colors duration-200",
-      darkMode ? "bg-[#0c0d1b] text-slate-100" : "bg-slate-50 text-slate-900"
+      darkMode ? "bg-slate-900 text-white animate-fade-in" : "bg-blue-50/50 text-black animate-fade-in"
     )}>
-      {/* Desktop & Mobile Header */}
+      {/* Desktop & Mobile Header with white/blue scheme */}
       <header className={cn(
         "shrink-0 backdrop-blur-md border-b z-40 relative transition-colors duration-200",
-        darkMode ? "bg-[#101229]/90 border-indigo-500/10" : "bg-white/90 border-slate-200"
+        darkMode ? "bg-slate-950/90 border-blue-900/45" : "bg-white/95 border-blue-200 shadow-sm"
       )}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -60,13 +60,13 @@ export const Layout: React.FC<LayoutProps> = ({
               <Logo size="md" lightText={darkMode} />
             </motion.div>
             {user.role === UserRole.ADMIN && (
-              <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 dark:bg-green-950 dark:text-green-300 text-[8px] font-black rounded-full uppercase tracking-widest border border-green-200 dark:border-green-800 flex items-center gap-1">
-                <ShieldCheck size={8} /> ADMIN
+              <span className="ml-2 px-2.5 py-1 bg-green-50 text-green-800 text-[9px] font-black rounded-full uppercase tracking-widest border border-green-300 flex items-center gap-1 shadow-sm">
+                <ShieldCheck size={10} className="text-green-700" /> ADMIN
               </span>
             )}
             {user.role === UserRole.VENDOR && (
-              <span className="ml-2 px-2 py-0.5 bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 text-[8px] font-black rounded-full uppercase tracking-widest border border-indigo-200 dark:border-indigo-800 flex items-center gap-1">
-                <Store size={8} /> VENDOR
+              <span className="ml-2 px-2.5 py-1 bg-blue-50 text-blue-800 text-[9px] font-black rounded-full uppercase tracking-widest border border-blue-300 flex items-center gap-1 shadow-sm">
+                <Store size={10} className="text-blue-700" /> VENDOR
               </span>
             )}
           </div>
@@ -76,29 +76,29 @@ export const Layout: React.FC<LayoutProps> = ({
             <button 
               onClick={() => setDarkMode(!darkMode)}
               className={cn(
-                "p-2 rounded-xl transition-all",
-                darkMode ? "text-amber-400 hover:bg-slate-800" : "text-slate-400 hover:bg-slate-100"
+                "p-2 rounded-xl transition-all cursor-pointer hover:scale-105 active:scale-95",
+                darkMode ? "text-amber-400 hover:bg-slate-800" : "text-blue-700 hover:bg-blue-100/50"
               )}
               title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
             >
               {darkMode ? <Sun size={20} /> : <Moon size={20} />}
             </button>
 
-            <button className="p-2 text-slate-400 hover:text-brand-primary transition-colors relative">
+            <button className="p-2 text-blue-700 hover:text-blue-950 transition-colors relative cursor-pointer">
               <Bell size={20} />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+              <span className="absolute top-2 right-2 w-2 h-2 bg-red-600 rounded-full border-2 border-white"></span>
             </button>
             
-            <div className={cn("h-8 w-px mx-1 hidden sm:block", darkMode ? "bg-slate-800" : "bg-slate-200")}></div>
+            <div className={cn("h-8 w-px mx-1 hidden sm:block", darkMode ? "bg-slate-800" : "bg-blue-200")}></div>
 
-            <div className="text-right hidden sm:block">
-              <p className="text-xs font-black leading-tight uppercase tracking-wider">{user.name}</p>
-              <p className="text-[9px] text-slate-400 font-bold uppercase">{user.email}</p>
+            <div className="text-right hidden sm:block text-slate-900">
+              <p className="text-xs font-black leading-tight uppercase tracking-wider text-slate-950">{user.name}</p>
+              <p className="text-[10px] text-blue-800 font-extrabold uppercase">{user.email}</p>
             </div>
 
             <button
               onClick={onLogout}
-              className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-xl transition-all"
+              className="p-2.5 text-red-600 hover:text-white hover:bg-red-600 rounded-xl transition-all cursor-pointer"
               title="Logout"
             >
               <LogOut size={20} />
@@ -111,33 +111,33 @@ export const Layout: React.FC<LayoutProps> = ({
         {children}
       </main>
 
-      {/* Mobile Bottom Navigation */}
+      {/* Mobile Bottom Navigation style modifications */}
       <nav className={cn(
         "shrink-0 backdrop-blur-xl border-t px-4 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] flex justify-around items-center z-50 md:hidden relative transition-colors duration-200",
-        darkMode ? "bg-[#101229]/95 border-indigo-500/10" : "bg-white/95 border-slate-200"
+        darkMode ? "bg-slate-950/95 border-blue-900/40" : "bg-white/95 border-blue-200"
       )}>
         {navItems.map((item) => (
           <button
             key={item.id}
             onClick={() => onTabChange(item.id)}
             className={cn(
-              "flex flex-col items-center gap-1 transition-all relative",
+              "flex flex-col items-center gap-1 transition-all relative cursor-pointer",
               activeTab === item.id 
-                ? "text-[#8b5cf6]" 
-                : "text-slate-400 hover:text-slate-300"
+                ? "text-blue-800" 
+                : "text-slate-500 hover:text-blue-700"
             )}
           >
             <div className={cn(
               "p-2 rounded-xl transition-all",
-              activeTab === item.id ? (darkMode ? "bg-[#8b5cf6]/20" : "bg-[#8b5cf6]/10") : ""
+              activeTab === item.id ? "bg-blue-100 text-blue-805" : ""
             )}>
               <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 2} />
             </div>
-            <span className="text-[8px] font-black uppercase tracking-tighter">{item.label}</span>
+            <span className="text-[9px] font-black uppercase tracking-wider">{item.label}</span>
             {activeTab === item.id && (
               <motion.div 
                 layoutId="activeTabDot"
-                className="absolute -top-1 w-1 h-1 bg-[#8b5cf6] rounded-full"
+                className="absolute -top-1 w-1.5 h-1.5 bg-blue-700 rounded-full"
               />
             )}
           </button>
@@ -145,11 +145,11 @@ export const Layout: React.FC<LayoutProps> = ({
       </nav>
 
       <footer className={cn(
-        "shrink-0 border-t py-8 hidden md:block transition-colors duration-200",
-        darkMode ? "bg-slate-900 border-slate-800 text-slate-500" : "bg-white border-slate-200 text-slate-400"
+        "shrink-0 border-t py-6 hidden md:block transition-colors duration-200",
+        darkMode ? "bg-slate-950 border-blue-900/40 text-slate-500" : "bg-white border-blue-100 text-blue-900"
       )}>
-        <div className="max-w-7xl mx-auto px-4 text-center text-[10px] font-black uppercase tracking-[0.3em]">
-          &copy; {new Date().getFullYear()} SmartPay 360 Ecosystem. All Rights Reserved.
+        <div className="max-w-7xl mx-auto px-4 text-center text-[10px] font-black uppercase tracking-[0.25em]">
+          &copy; {new Date().getFullYear()} SmartPay 360 Ecosystem. All Rights Reserved. Used with White & Blue Theme.
         </div>
       </footer>
     </div>
