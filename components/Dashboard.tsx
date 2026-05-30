@@ -479,10 +479,10 @@ const Dashboard: React.FC<DashboardProps> = ({
             </h3>
             <div className="grid grid-cols-4 gap-3 md:gap-4">
               {[
-                { id: 'utility', icon: Wallet, label: 'Utility Pay', color: 'from-blue-600 to-indigo-600 shadow-blue-500/10' },
-                { id: 'add_money', icon: Landmark, label: 'Add Cash', color: 'from-blue-600 to-cyan-600 shadow-blue-500/10' },
-                { id: 'transfer', icon: Share2, label: 'Send Cash', color: 'from-blue-700 to-indigo-700 shadow-blue-500/10' },
-                { id: 'withdraw', icon: ShieldCheck, label: 'Payout', color: 'from-red-650 to-rose-650 shadow-red-500/10' },
+                { id: 'utility', icon: Wallet, label: 'Utility Pay', color: 'from-emerald-500 to-green-600 shadow-green-500/10' },
+                { id: 'add_money', icon: Landmark, label: 'Add Cash', color: 'from-green-600 to-teal-600 shadow-emerald-500/10' },
+                { id: 'transfer', icon: Share2, label: 'Send Cash', color: 'from-teal-600 to-emerald-600 shadow-teal-500/10' },
+                { id: 'withdraw', icon: ShieldCheck, label: 'Payout', color: 'from-green-500 to-emerald-500 shadow-green-500/10' },
               ].map((action) => (
                 <button
                   type="button"
