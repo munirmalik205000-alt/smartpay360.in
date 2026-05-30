@@ -358,7 +358,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   onClick={() => setTab('withdraw')}
                   className="py-4 bg-white hover:bg-blue-50 text-blue-900 font-bold rounded-full text-xs uppercase tracking-widest border-2 border-blue-700 active:scale-95 transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  🏦 Pay Out
+                  🏦 Bank Withdrawal 
                 </button>
               </div>
 
