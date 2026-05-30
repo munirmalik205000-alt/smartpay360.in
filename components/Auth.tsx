@@ -65,17 +65,13 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
 
   useEffect(() => {
     const code = String(formData.referralCode || '').trim().toUpperCase();
-    if (!code) return;
+    if (code.length < 2) return;
     
     // Check if the sponsor code already exists in users
     const exists = users.some(u => u && u.referralCode && String(u.referralCode).trim().toUpperCase() === code);
     
     if (!exists && onEnsureSponsor) {
-      // Validate pattern first
-      const isValidPattern = /^(SP|SPAY|LVL|SP360)[A-Z0-9]{2,10}$/i.test(code);
-      if (isValidPattern) {
-        onEnsureSponsor(code);
-      }
+      onEnsureSponsor(code);
     }
   }, [formData.referralCode, users, onEnsureSponsor]);
 
