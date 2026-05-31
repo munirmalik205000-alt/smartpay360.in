@@ -134,6 +134,7 @@ const App: React.FC = () => {
       } else {
         safeLocalStorage.removeItem('spay_current_user');
       }
+      window.dispatchEvent(new Event('spay-logo-updated'));
     } catch {}
   }, [currentUser]);
 
@@ -236,6 +237,36 @@ const App: React.FC = () => {
     safeLocalStorage.setItem('spay_chats', JSON.stringify(chatMessages));
     safeLocalStorage.setItem('spay_pkgs', JSON.stringify(packages));
   }, [users, products, orders, transactions, mlmConfig, paymentRequests, withdrawalRequests, chatMessages, packages]);
+
+  // Sync state when direct logo uploaded
+  useEffect(() => {
+    const handleLogoStateUpdate = () => {
+      try {
+        const saved = safeLocalStorage.getItem('spay_config', '');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (parsed && parsed.customLogo !== mlmConfig.customLogo) {
+            setMlmConfig(prev => ({
+              ...prev,
+              customLogo: parsed.customLogo
+            }));
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+
+    window.addEventListener('spay-logo-updated', handleLogoStateUpdate);
+    return () => {
+      window.removeEventListener('spay-logo-updated', handleLogoStateUpdate);
+    };
+  }, [mlmConfig.customLogo]);
+
+  // Dispatch logo-updated event to update all visible Logo components on customLogo or systemName change
+  useEffect(() => {
+    window.dispatchEvent(new Event('spay-logo-updated'));
+  }, [mlmConfig.customLogo, mlmConfig.systemName]);
 
   // Helper helper to distribute commissions up to 20 levels deep
   const distributeMLMCommissions = (startUserId: string, baseAmount: number, commissionType: 'package' | 'recharge' | 'product') => {

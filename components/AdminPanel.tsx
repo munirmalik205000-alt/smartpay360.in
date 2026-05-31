@@ -4,6 +4,7 @@ import { User, Transaction, MLMConfig, UserRole, PaymentRequest, WithdrawalReque
 import { TrendingUp, Users, Wallet, ShieldCheck, MessageSquare, Settings, CheckCircle2, XCircle, Clock, Search, Filter, FileText, Gift, Award, Check, Trash2, Landmark, Smartphone } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../services/utils';
+import { safeLocalStorage } from '../services/storage';
 
 interface AdminProps {
   users: User[];
@@ -37,6 +38,14 @@ const AdminPanel: React.FC<AdminProps> = ({
   const [selectedChatUser, setSelectedChatUser] = useState<string | null>(null);
   const [adminReply, setAdminReply] = useState('');
   const [rateTab, setRateTab] = useState<'rupee' | 'coin'>('rupee');
+
+  const [tempLogo, setTempLogo] = useState<string | undefined>(config.customLogo);
+  const [tempSystemName, setTempSystemName] = useState<string>(config.systemName || '');
+
+  React.useEffect(() => {
+    setTempLogo(config.customLogo);
+    setTempSystemName(config.systemName || '');
+  }, [config.customLogo, config.systemName]);
 
   // Manage members states
   const [memberSearch, setMemberSearch] = useState('');
@@ -91,16 +100,36 @@ const AdminPanel: React.FC<AdminProps> = ({
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        onUpdateConfig({ ...config, customLogo: reader.result as string });
-        alert('Platform custom logo uploaded and updated successfully!');
+        setTempLogo(reader.result as string);
       };
       reader.readAsDataURL(file);
     }
   };
 
+  const handleSaveBranding = () => {
+    const updated = {
+      ...config,
+      customLogo: tempLogo,
+      systemName: tempSystemName ? tempSystemName.trim().toUpperCase() : undefined
+    };
+    onUpdateConfig(updated);
+    safeLocalStorage.setItem('spay_config', JSON.stringify(updated));
+    window.dispatchEvent(new Event('spay-logo-updated'));
+    alert('🎨 Platform Logo & branding config has been updated successfully across both the Login Page and User Dashboard! Click OK to view changes.');
+  };
+
   const handleLogoReset = () => {
-    onUpdateConfig({ ...config, customLogo: undefined });
-    alert('Platform custom logo reset to default SVG logo.');
+    setTempLogo(undefined);
+    setTempSystemName('');
+    const updated = {
+      ...config,
+      customLogo: undefined,
+      systemName: undefined
+    };
+    onUpdateConfig(updated);
+    safeLocalStorage.setItem('spay_config', JSON.stringify(updated));
+    window.dispatchEvent(new Event('spay-logo-updated'));
+    alert('Platform custom branding has been reset to default.');
   };
 
   const DEFAULT_LEVEL_PERCENTAGES = [
@@ -842,57 +871,90 @@ const AdminPanel: React.FC<AdminProps> = ({
               Platform Admin settings Setup
             </h3>
             <div className="space-y-6 text-xs font-black text-black">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-blue-50/20 p-6 rounded-3xl border border-blue-100">
-                <div>
-                  <label className="block text-[10px] font-black text-blue-900 uppercase tracking-widest pl-1 mb-2">Configure UPI Gateway QR image</label>
-                  <div className="aspect-square max-w-[200px] border-2 border-dashed border-blue-200 rounded-[2rem] flex items-center justify-center relative overflow-hidden group mx-auto p-4 bg-white shadow-sm">
-                    {config.qrCode ? (
-                      <img src={config.qrCode} alt="QR Code" className="w-full h-full object-contain" />
-                    ) : (
-                      <p className="text-blue-900 text-center font-bold">No QR uploaded</p>
-                    )}
-                    <div className="absolute inset-0 bg-blue-900/80 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer">
-                      <label htmlFor="qr-file" className="px-4 py-2 bg-white text-blue-900 text-[10px] font-black uppercase tracking-wider rounded-xl cursor-pointer">Choose Photo</label>
-                    </div>
+              <div className="bg-blue-50/20 p-6 rounded-3xl border border-blue-100">
+                <label className="block text-[10px] font-black text-blue-900 uppercase tracking-widest pl-1 mb-2">Configure UPI Gateway QR image</label>
+                <div className="aspect-square max-w-[200px] border-2 border-dashed border-blue-200 rounded-[2rem] flex items-center justify-center relative overflow-hidden group mx-auto p-4 bg-white shadow-sm">
+                  {config.qrCode ? (
+                    <img src={config.qrCode} alt="QR Code" className="w-full h-full object-contain" />
+                  ) : (
+                    <p className="text-blue-900 text-center font-bold">No QR uploaded</p>
+                  )}
+                  <div className="absolute inset-0 bg-blue-900/80 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer">
+                    <label htmlFor="qr-file" className="px-4 py-2 bg-white text-blue-900 text-[10px] font-black uppercase tracking-wider rounded-xl cursor-pointer">Choose Photo</label>
                   </div>
-                  <input type="file" accept="image/*" id="qr-file" className="hidden" onChange={handleQRUpload} />
                 </div>
-
-                <div>
-                  <label className="block text-[10px] font-black text-blue-900 uppercase tracking-widest pl-1 mb-2">Configure Custom Platform Logo</label>
-                  <div className="aspect-square max-w-[200px] border-2 border-dashed border-blue-200 rounded-[2rem] flex flex-col items-center justify-center relative overflow-hidden group mx-auto p-4 bg-white shadow-sm">
-                    {config.customLogo ? (
-                      <div className="w-full h-full flex flex-col items-center justify-center gap-2">
-                        <img src={config.customLogo} alt="Custom Logo" className="w-20 h-20 object-contain rounded-xl p-1" />
-                        <button type="button" onClick={handleLogoReset} className="text-[10px] text-red-600 hover:underline font-black mt-2">Reset to Default</button>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center text-center p-2">
-                        <div className="w-10 h-10 bg-blue-105 rounded-2xl flex items-center justify-center text-blue-900 text-lg mb-1.5">🖼️</div>
-                        <p className="text-blue-900 text-[10px] uppercase font-black leading-tight">Default Isometric Logo</p>
-                        <p className="text-neutral-500 text-[8px] mt-0.5 leading-tight font-black uppercase tracking-wide">Hover to upload custom</p>
-                      </div>
-                    )}
-                    <div className="absolute inset-0 bg-blue-900/80 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all cursor-pointer">
-                      <label htmlFor="logo-file" className="px-4 py-2 bg-white text-blue-900 text-[10px] font-black uppercase tracking-wider rounded-xl cursor-pointer">Choose Logo</label>
-                    </div>
-                  </div>
-                  <input type="file" accept="image/*" id="logo-file" className="hidden" onChange={handleLogoUpload} />
-                </div>
+                <input type="file" accept="image/*" id="qr-file" className="hidden" onChange={handleQRUpload} />
               </div>
 
-              {/* Dynamic Platform System Custom Name Input */}
-              <div className="bg-blue-50/20 p-5 rounded-3xl border border-blue-100 space-y-1">
-                <label className="block text-[10px] font-black text-blue-900 uppercase tracking-widest pl-1">Custom Brand/Platform Name (SmartPay Replacement)</label>
-                <input 
-                  type="text" 
-                  className="w-full px-4 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-black text-xs text-black uppercase tracking-widest focus:border-blue-650 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all shadow-sm"
-                  placeholder="e.g. SMARTPAY 360" 
-                  value={config.systemName || ''}
-                  onChange={(e) => onUpdateConfig({ ...config, systemName: e.target.value.toUpperCase() })}
-                />
-                <p className="text-[9px] text-slate-500 leading-tight font-black uppercase tracking-wider pl-1 pt-1">
-                  💡 Type your platform's name here to live-rebrand all text headers, greetings, links, and system notifications instantly!
+              {/* Dedicated Visual Branding & Custom Logo Hub */}
+              <div className="bg-purple-50/30 p-6 rounded-[2.5rem] border-2 border-purple-200/50 space-y-6">
+                <div className="flex items-center gap-3 border-b border-purple-100 pb-3">
+                  <div className="w-8 h-8 bg-purple-900 rounded-xl flex items-center justify-center text-white text-sm">🎨</div>
+                  <h4 className="text-xs font-black text-purple-950 uppercase tracking-widest">Platform Custom Branding & Logo Hub</h4>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                  <div>
+                    <label className="block text-[10px] font-black text-purple-905 uppercase tracking-widest pl-1 mb-2">Platform Custom Logo Preview</label>
+                    <div className="aspect-square max-w-[150px] border-4 border-double border-purple-300 rounded-3xl flex flex-col items-center justify-center relative overflow-hidden bg-white shadow-md mx-auto">
+                      {tempLogo ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center p-3">
+                          <img src={tempLogo} alt="Custom Logo Preview" className="w-full h-full object-contain rounded-xl" />
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-center p-2">
+                          <span className="text-2xl mb-1">🛡️</span>
+                          <p className="text-purple-950 text-[9px] uppercase font-black">Default SVG Logo</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[10px] font-black text-purple-905 uppercase tracking-widest pl-1 mb-2">Select new logo file</label>
+                      <label 
+                        htmlFor="logo-file-dedicated" 
+                        className="block w-full py-3 px-4 border-2 border-dashed border-purple-300 hover:border-purple-650 rounded-2xl text-[10px] font-black uppercase tracking-wider text-purple-700 hover:text-purple-900 hover:bg-purple-100/50 text-center transition-all cursor-pointer bg-white"
+                      >
+                        📂 Choose Image File
+                      </label>
+                      <input type="file" accept="image/*" id="logo-file-dedicated" className="hidden" onChange={handleLogoUpload} />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-black text-purple-905 uppercase tracking-widest pl-1 mb-1.5">Custom Brand / Platform Title</label>
+                      <input 
+                        type="text" 
+                        className="w-full px-4 py-3 bg-white border-2 border-purple-200 rounded-2xl font-black text-xs text-black uppercase tracking-widest focus:border-purple-705 focus:outline-none focus:ring-4 focus:ring-purple-100 transition-all shadow-sm"
+                        placeholder="e.g. SMARTPAY 360" 
+                        value={tempSystemName}
+                        onChange={(e) => setTempSystemName(e.target.value.toUpperCase())}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveBranding}
+                    className="w-full py-4 bg-purple-900 hover:bg-purple-950 text-white font-black rounded-2xl uppercase tracking-[0.12em] text-[10px] shadow-lg shadow-purple-900/30 hover:scale-[1.02] transition-all active:scale-[0.98] border-2 border-purple-705 cursor-pointer text-center"
+                  >
+                    💾 Save & Apply Branding
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleLogoReset}
+                    className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold rounded-2xl uppercase tracking-widest text-[9px] hover:scale-[1.02] transition-all active:scale-[0.98] border border-slate-300/65 cursor-pointer text-center"
+                  >
+                    🔄 Reset as Default
+                  </button>
+                </div>
+                
+                <p className="text-[8px] text-zinc-500 leading-tight font-black uppercase tracking-wider pl-1">
+                  💡 Note: Saving custom branding instantly replaces logos and titles on both Login Page & Dashboard in real-time.
                 </p>
               </div>
 
