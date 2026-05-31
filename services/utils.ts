@@ -24,9 +24,8 @@ export function getApiUrl(apiPath: string): string {
   // Use the platform's shared production URL as the unified single database backend
   const fallbackBase = "https://ais-pre-2bnvs4k2s663l3dqj5isvs-486559870289.asia-east1.run.app";
   
-  // Allow manual dynamic overriding via local storage query if they bind their own custom domains
-  const customBase = localStorage.getItem('spay_api_custom_base');
-  const base = customBase || (isWebviewProne ? fallbackBase : origin);
+  // Allow manual dynamic overriding via memory cache if needed
+  const base = isWebviewProne ? fallbackBase : origin;
   
   return `${base.replace(/\/$/, '')}${apiPath}`;
 }

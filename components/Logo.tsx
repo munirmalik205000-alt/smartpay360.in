@@ -50,11 +50,11 @@ export const Logo: React.FC<LogoProps> = ({
     return bannerClasses[size];
   };
 
-  const loadFromLocalStorage = () => {
+  const loadFromLocalStorage = async () => {
     try {
-      const configStr = safeLocalStorage.getItem('spay_config', '{}');
-      if (configStr && configStr !== '{}') {
-        const parsed = JSON.parse(configStr);
+      const res = await fetch(getApiUrl('/api/config'));
+      if (res.ok) {
+        const parsed = await res.json();
         if (parsed) {
           if (parsed.customLogo) {
             setCurrentLogo(parsed.customLogo);
@@ -67,12 +67,9 @@ export const Logo: React.FC<LogoProps> = ({
             setSystemName('');
           }
         }
-      } else {
-        setCurrentLogo(undefined);
-        setSystemName('');
       }
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error('Error loading brand config dynamically:', err);
     }
   };
 
@@ -113,10 +110,7 @@ export const Logo: React.FC<LogoProps> = ({
             return;
           }
 
-          const configStr = safeLocalStorage.getItem('spay_config', '{}');
-          const config = JSON.parse(configStr);
-          config.customLogo = base64Data;
-          safeLocalStorage.setItem('spay_config', JSON.stringify(config));
+          const config = { customLogo: base64Data };
           
           // Save to server-side persistent system configuration
           fetch(getApiUrl('/api/config'), {

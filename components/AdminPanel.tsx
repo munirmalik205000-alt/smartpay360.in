@@ -119,7 +119,6 @@ const AdminPanel: React.FC<AdminProps> = ({
       systemName: tempSystemName ? tempSystemName.trim().toUpperCase() : undefined
     };
     onUpdateConfig(updated);
-    safeLocalStorage.setItem('spay_config', JSON.stringify(updated));
     
     // Save to server-side persistent system configuration
     fetch(getApiUrl('/api/config'), {
@@ -143,7 +142,6 @@ const AdminPanel: React.FC<AdminProps> = ({
       systemName: undefined
     };
     onUpdateConfig(updated);
-    safeLocalStorage.setItem('spay_config', JSON.stringify(updated));
     
     // Save to server-side persistent system configuration
     fetch(getApiUrl('/api/config'), {

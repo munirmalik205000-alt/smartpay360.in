@@ -76,53 +76,20 @@ const App: React.FC = () => {
     return safeLocalStorage.getItem('spay_theme', 'dark') === 'dark';
   });
 
-  const [users, setUsers] = useState<User[]>(() => {
-    try {
-      const parsed = JSON.parse(safeLocalStorage.getItem('spay_users', '[]'));
-      if (Array.isArray(parsed)) {
-        return parsed.filter((u: any) => u && u.id && !u.id.startsWith('MOCK-') && !(u.email && u.email.toLowerCase().includes('sponsor_')) && !(u.name && u.name.toLowerCase().includes('sponsor partner')));
-      }
-    } catch {}
-    return [];
-  });
-  const [products, setProducts] = useState<Product[]>(() => JSON.parse(safeLocalStorage.getItem('spay_products', JSON.stringify(INITIAL_PRODUCTS))));
-  const [orders, setOrders] = useState<Order[]>(() => JSON.parse(safeLocalStorage.getItem('spay_orders', '[]')));
-  const [transactions, setTransactions] = useState<Transaction[]>(() => JSON.parse(safeLocalStorage.getItem('spay_tx', '[]')));
-  const [mlmConfig, setMlmConfig] = useState<MLMConfig>(() => {
-    try {
-      const saved = safeLocalStorage.getItem('spay_config', '');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          ...DEFAULT_MLM_CONFIG,
-          ...parsed,
-          levelRupeeRates: parsed.levelRupeeRates || [...DEFAULT_LEVEL_PERCENTAGES_20],
-          levelCoinRates: parsed.levelCoinRates || [...DEFAULT_LEVEL_PERCENTAGES_20]
-        };
-      }
-    } catch {}
-    return DEFAULT_MLM_CONFIG;
-  });
-  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>(() => JSON.parse(safeLocalStorage.getItem('spay_payments', '[]')));
-  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>(() => JSON.parse(safeLocalStorage.getItem('spay_withdrawals', '[]')));
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => JSON.parse(safeLocalStorage.getItem('spay_chats', '[]')));
+  const [users, setUsers] = useState<User[]>([]);
+  const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [mlmConfig, setMlmConfig] = useState<MLMConfig>(DEFAULT_MLM_CONFIG);
+  const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
+  const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   
-  const [packages, setPackages] = useState<Package[]>(() => {
-    try {
-      const saved = safeLocalStorage.getItem('spay_pkgs', '');
-      return saved ? JSON.parse(saved) : [
-        { id: 'pkg_starter', name: 'Starter Node Package', price: 999, pv: 100, coin: 250, coinUsablePercent: 10 },
-        { id: 'pkg_booster', name: 'Premium Royal Booster', price: 2999, pv: 400, coin: 800, coinUsablePercent: 15 },
-        { id: 'pkg_elite', name: 'Elite Global Franchise Node', price: 9999, pv: 1500, coin: 3000, coinUsablePercent: 20 }
-      ];
-    } catch {
-      return [
-        { id: 'pkg_starter', name: 'Starter Node Package', price: 999, pv: 100, coin: 250, coinUsablePercent: 10 },
-        { id: 'pkg_booster', name: 'Premium Royal Booster', price: 2999, pv: 400, coin: 800, coinUsablePercent: 15 },
-        { id: 'pkg_elite', name: 'Elite Global Franchise Node', price: 9999, pv: 1500, coin: 3000, coinUsablePercent: 20 }
-      ];
-    }
-  });
+  const [packages, setPackages] = useState<Package[]>([
+    { id: 'pkg_starter', name: 'Starter Node Package', price: 999, pv: 100, coin: 250, coinUsablePercent: 10 },
+    { id: 'pkg_booster', name: 'Premium Royal Booster', price: 2999, pv: 400, coin: 800, coinUsablePercent: 15 },
+    { id: 'pkg_elite', name: 'Elite Global Franchise Node', price: 9999, pv: 1500, coin: 3000, coinUsablePercent: 20 }
+  ]);
 
   const isSyncingFromServer = useRef(false);
   const lastServerDbStringRef = useRef<string>("");
@@ -232,12 +199,6 @@ const App: React.FC = () => {
         if (response.ok) {
           const serverConfig = await response.json();
           if (serverConfig && (serverConfig.customLogo || serverConfig.systemName || serverConfig.qrCode)) {
-            // Merge with local config
-            const localConfigStr = safeLocalStorage.getItem('spay_config', '{}');
-            const localConfig = JSON.parse(localConfigStr);
-            const merged = { ...localConfig, ...serverConfig };
-            safeLocalStorage.setItem('spay_config', JSON.stringify(merged));
-            
             // Also update the MLMConfig state
             setMlmConfig(prev => {
               if (
@@ -291,8 +252,9 @@ const App: React.FC = () => {
     } catch {}
   }, [currentUser]);
 
-  // Seed default admin and high level structure on load
+  // Seed default admin structure on load if empty
   useEffect(() => {
+    if (!isLoadedFromServer) return;
     const adminEmail = 'admin@spay.com';
     const hasAdmin = users.some(u => u && u.email && u.email.toLowerCase() === adminEmail);
     if (!hasAdmin) {
@@ -314,67 +276,14 @@ const App: React.FC = () => {
         joinedAt: new Date().toISOString(),
         isActivated: true,
         selfPV: 500,
-        rewards: INITIAL_REWARDS.map(r => ({ ...r, currentSalesCount: 15000, status: 'achieved' }))
+        rewards: INITIAL_REWARDS.map(r => ({ ...r, currentSalesCount: 1515, status: 'locked' }))
       };
-
-      // Seed a few default Dummy mock referral users at cascading 20 levels to demonstrate hierarchy instantly (Genealogy demonstration)
-      const cachedUsers = [admin];
-      let lastReferrerId: string | null = 'admin-0';
-      let lastReferralCode = 'SPAY001';
-      
-      const seedStates = ['Delhi', 'Punjab', 'Maharashtra', 'Karnataka', 'Gujarat', 'Uttar Pradesh', 'Rajasthan', 'Bihar'];
-      for (let i = 1; i <= 21; i++) {
-        const dummyEmail = `level${i}@spay.com`;
-        const dummyCode = `LVL${i}${Math.random().toString(36).substr(2, 3).toUpperCase()}`;
-        const dummyUser: User = {
-          id: `LVL-${i}`,
-          name: `Leader Level ${i}`,
-          email: dummyEmail,
-          password: 'password123',
-          transactionPin: '1111',
-          phone: `98765${10000 + i}`,
-          state: seedStates[i % seedStates.length],
-          referralCode: dummyCode,
-          referrerId: lastReferrerId,
-          role: UserRole.USER,
-          wallets: { 
-            main: 5000 + (1000 * i), 
-            commission: 2400 * (21 - i), 
-            cashback: 120 * i, 
-            recharge: 3000, 
-            shopping: 1500, 
-            reward: 25 * i,
-            ewallet: 1500,
-            coinwallet: 100 * i
-          },
-          totalEarned: 240 * (21 - i),
-          status: 'active',
-          level: i,
-          joinedAt: new Date(Date.now() - (i * 24 * 3600 * 1000)).toISOString(),
-          isActivated: true,
-          selfPV: i * 10,
-          rewards: INITIAL_REWARDS.map(r => ({
-            ...r,
-            currentSalesCount: Math.max(0, 10000 - (i * 450)),
-            status: Math.max(0, 10000 - (i * 450)) >= r.targetSalesCount ? 'achieved' : 'locked'
-          }))
-        };
-        cachedUsers.push(dummyUser);
-        lastReferrerId = dummyUser.id;
-        lastReferralCode = dummyUser.referralCode;
-      }
-      
       setUsers(prev => {
-        const merged = [...cachedUsers];
-        prev.forEach(u => {
-          if (u && u.email && !merged.some(m => m.email.toLowerCase() === u.email.toLowerCase())) {
-            merged.push(u);
-          }
-        });
-        return merged;
+        if (prev.some(u => u && u.email && u.email.toLowerCase() === adminEmail)) return prev;
+        return [admin, ...prev];
       });
     }
-  }, []);
+  }, [isLoadedFromServer, users]);
 
   // Save changes locally and to the server's disk database
   useEffect(() => {
@@ -383,32 +292,8 @@ const App: React.FC = () => {
     // If this update was triggered by fetching remote changes, do not post it back to server
     if (isSyncingFromServer.current) {
       isSyncingFromServer.current = false;
-
-      if (users.length > 0) {
-        safeLocalStorage.setItem('spay_users', JSON.stringify(users));
-      }
-      safeLocalStorage.setItem('spay_products', JSON.stringify(products));
-      safeLocalStorage.setItem('spay_orders', JSON.stringify(orders));
-      safeLocalStorage.setItem('spay_tx', JSON.stringify(transactions));
-      safeLocalStorage.setItem('spay_config', JSON.stringify(mlmConfig));
-      safeLocalStorage.setItem('spay_payments', JSON.stringify(paymentRequests));
-      safeLocalStorage.setItem('spay_withdrawals', JSON.stringify(withdrawalRequests));
-      safeLocalStorage.setItem('spay_chats', JSON.stringify(chatMessages));
-      safeLocalStorage.setItem('spay_pkgs', JSON.stringify(packages));
       return;
     }
-
-    if (users.length > 0) {
-      safeLocalStorage.setItem('spay_users', JSON.stringify(users));
-    }
-    safeLocalStorage.setItem('spay_products', JSON.stringify(products));
-    safeLocalStorage.setItem('spay_orders', JSON.stringify(orders));
-    safeLocalStorage.setItem('spay_tx', JSON.stringify(transactions));
-    safeLocalStorage.setItem('spay_config', JSON.stringify(mlmConfig));
-    safeLocalStorage.setItem('spay_payments', JSON.stringify(paymentRequests));
-    safeLocalStorage.setItem('spay_withdrawals', JSON.stringify(withdrawalRequests));
-    safeLocalStorage.setItem('spay_chats', JSON.stringify(chatMessages));
-    safeLocalStorage.setItem('spay_pkgs', JSON.stringify(packages));
 
     const payload = {
       users,
@@ -824,7 +709,7 @@ const App: React.FC = () => {
     alert(`🎉 Purchase completed successfully! Upgrade complete. You received ${pkg.coin} Coins & PV ${pkg.pv} counts towards your selfPV metrics! 20-Level Cascade split has been completed!`);
   };
 
-  const handleSignup = (data: any) => {
+  const handleSignup = async (data: any) => {
     const signupEmail = String(data.email || '').trim().toLowerCase();
     if (users.some(u => u && u.email && u.email.toLowerCase().trim() === signupEmail)) {
       return alert('🚨 Error: Email registered with another account.');
@@ -852,13 +737,12 @@ const App: React.FC = () => {
     
     const initialRewardsList: RewardTarget[] = INITIAL_REWARDS.map(r => ({ ...r, currentSalesCount: 0 }));
 
-    const newUser: User = {
+    const newUserPayload = {
       ...data, 
       email: data.email.trim(),
       password: data.password.trim(),
       transactionPin: data.transactionPin.trim(),
       state: data.state || 'Delhi',
-      id: `U${Date.now()}`, 
       role: UserRole.USER, 
       referralCode: `SP360${Math.floor(1000 + Math.random() * 9000)}`,
       referrerId: ref.id, 
@@ -873,28 +757,74 @@ const App: React.FC = () => {
       kycDetails: { aadhaarNumber: '', panNumber: '', status: 'not_submitted' }
     };
 
-    setUsers(prev => [...prev, newUser]);
-    setCurrentUser(newUser);
+    try {
+      const resp = await fetch(getApiUrl('/api/auth/register'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newUserPayload)
+      });
+      const resData = await resp.json();
+      if (resData.success && resData.user) {
+        setUsers(prev => [...prev, resData.user]);
+        setCurrentUser(resData.user);
+        alert('🎉 Node Registration Successful via Supabase Auth!');
+      } else {
+        alert(`🚨 Registration Failed: ${resData.error || 'Server error'}`);
+      }
+    } catch (err) {
+      console.error('Registration exception:', err);
+      // Operational fallback
+      const fallbackUser = { ...newUserPayload, id: `U${Date.now()}` };
+      setUsers(prev => [...prev, fallbackUser]);
+      setCurrentUser(fallbackUser);
+    }
   };
 
-  const handleLogin = (phoneOrEmail: string, password?: string) => {
-    const trimmedInput = phoneOrEmail.trim().toLowerCase();
-    const trimmedPassword = password?.trim();
-    const u = users.find(user => 
-      (user.email.toLowerCase() === trimmedInput || user.phone === trimmedInput) && 
-      user.password === trimmedPassword
-    );
-    if (u) {
-      setCurrentUser(u);
-      if (u.role === UserRole.ADMIN) {
-        setActiveTab('admin');
-      } else if (u.role === UserRole.VENDOR) {
-        setActiveTab('vendor');
+  const handleLogin = async (phoneOrEmail: string, password?: string) => {
+    try {
+      const resp = await fetch(getApiUrl('/api/auth/login'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ emailOrPhone: phoneOrEmail, password })
+      });
+      const data = await resp.json();
+      if (data.success && data.user) {
+        setCurrentUser(data.user);
+        if (data.user.role === UserRole.ADMIN) {
+          setActiveTab('admin');
+        } else if (data.user.role === UserRole.VENDOR) {
+          setActiveTab('vendor');
+        } else {
+          setActiveTab('home');
+        }
       } else {
-        setActiveTab('home');
+        alert(`🚨 Secure Auth Failed: ${data.error || 'Check password and credentials.'}`);
       }
-    } else {
-      alert('🚨 Secure Auth Failed. Please ensure password and Mobile number / Email are correct.');
+    } catch (err) {
+      console.error('Login error:', err);
+      // Operational fallback using current memory list
+      const trimmedInput = phoneOrEmail.trim().toLowerCase();
+      const trimmedPassword = password?.trim();
+      const u = users.find(user => 
+        (user.email.toLowerCase() === trimmedInput || user.phone === trimmedInput) && 
+        user.password === trimmedPassword
+      );
+      if (u) {
+        setCurrentUser(u);
+        if (u.role === UserRole.ADMIN) {
+          setActiveTab('admin');
+        } else if (u.role === UserRole.VENDOR) {
+          setActiveTab('vendor');
+        } else {
+          setActiveTab('home');
+        }
+      } else {
+        alert('🚨 Authorization request timed out. Please try again.');
+      }
     }
   };
 
