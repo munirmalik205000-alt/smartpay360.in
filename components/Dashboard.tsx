@@ -272,16 +272,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* 0. Top Navigation & Smart Menu Header */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-blue-50/70 dark:bg-purple-950/40 p-4 rounded-3xl border-2 border-blue-200 dark:border-purple-900/40">
         <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setIsSidebarOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer hover:shadow-purple-300"
-            id="spay-left-menu-drawer-btn"
-          >
-            <MenuIcon size={16} className="animate-pulse" />
-            <span className="text-white">Smart Menu</span>
-          </button>
-          <div className="h-6 w-px bg-blue-200 dark:bg-blue-900"></div>
           <span className="text-[9.5px] font-black uppercase text-blue-900 dark:text-blue-300 tracking-wider bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-900/40 shadow-sm">
             Current Section: {
               tab === 'home' ? '🏠 Overview' :

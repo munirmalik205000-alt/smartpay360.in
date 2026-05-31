@@ -70,11 +70,10 @@ export const Layout: React.FC<LayoutProps> = ({
                 onClick={() => {
                   window.dispatchEvent(new Event('spay-open-menu'));
                 }}
-                className="group flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-all active:scale-95 cursor-pointer border border-purple-500/30 shrink-0"
+                className="flex items-center justify-center w-9 h-9 bg-purple-600 hover:bg-purple-700 text-white rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer border border-purple-500/30 shrink-0"
                 title="Open Smart Menu"
               >
-                <MenuIcon size={12} className="group-hover:rotate-180 transition-transform duration-300" />
-                <span>Menu</span>
+                <MenuIcon size={18} className="transition-transform duration-300" />
               </button>
 
               <motion.div 
