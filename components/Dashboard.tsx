@@ -1209,7 +1209,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     className="w-full px-6 py-4 bg-white border-2 border-blue-150 rounded-2xl focus:border-blue-500 focus:outline-none transition-all font-bold text-sm text-black placeholder-slate-400"
                     placeholder="Enter Payment UPI UTR"
                     value={addMoneyData.utr}
-                    onChange={e => setAddMoneyData({...addMoneyData, utr: e.target.value})}
+                    onChange={e => setAddMoneyData({...addMoneyData, utr: e.target.value.replace(/\D/g, '')})}
                   />
                 </div>
               </div>
