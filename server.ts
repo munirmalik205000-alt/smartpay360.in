@@ -17,6 +17,7 @@ async function startServer() {
     fs.mkdirSync(dataDir, { recursive: true });
   }
   const configPath = path.join(dataDir, "system-config.json");
+  const dbPath = path.join(dataDir, "spay-db.json");
 
   // Read config endpoint
   app.get("/api/config", (req, res) => {
@@ -39,6 +40,31 @@ async function startServer() {
       return res.json({ success: true, config });
     } catch (err: any) {
       console.error("Error saving system config:", err);
+      return res.status(500).json({ success: false, error: err.message });
+    }
+  });
+
+  // Read full synchronized database endpoint
+  app.get("/api/db", (req, res) => {
+    try {
+      if (fs.existsSync(dbPath)) {
+        const data = fs.readFileSync(dbPath, "utf-8");
+        return res.json(JSON.parse(data));
+      }
+    } catch (err) {
+      console.error("Error reading system database:", err);
+    }
+    return res.json({});
+  });
+
+  // Save/Synchronize database endpoint
+  app.post("/api/db", (req, res) => {
+    try {
+      const dbData = req.body;
+      fs.writeFileSync(dbPath, JSON.stringify(dbData, null, 2), "utf-8");
+      return res.json({ success: true });
+    } catch (err: any) {
+      console.error("Error saving system database:", err);
       return res.status(500).json({ success: false, error: err.message });
     }
   });

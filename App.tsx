@@ -123,6 +123,45 @@ const App: React.FC = () => {
     }
   });
 
+  const [isLoadedFromServer, setIsLoadedFromServer] = useState(false);
+
+  // Sync state from server on component mount
+  useEffect(() => {
+    const fetchDb = async () => {
+      try {
+        const response = await fetch('/api/db');
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.users && data.users.length > 0) {
+            setUsers(data.users);
+            if (data.products) setProducts(data.products);
+            if (data.orders) setOrders(data.orders);
+            if (data.transactions) setTransactions(data.transactions);
+            if (data.paymentRequests) setPaymentRequests(data.paymentRequests);
+            if (data.withdrawalRequests) setWithdrawalRequests(data.withdrawalRequests);
+            if (data.chatMessages) setChatMessages(data.chatMessages);
+            if (data.packages) setPackages(data.packages);
+
+            // Sync current session state with updated credentials from server
+            const localSaved = safeLocalStorage.getItem('spay_current_user', '');
+            if (localSaved) {
+              const u = JSON.parse(localSaved);
+              const freshUser = (data.users as User[]).find(f => f.id === u.id);
+              if (freshUser) {
+                setCurrentUser(freshUser);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching system database:', err);
+      } finally {
+        setIsLoadedFromServer(true);
+      }
+    };
+    fetchDb();
+  }, []);
+
   // Synchronous config-updating pipeline to maintain full robustness
   const handleUpdateConfig = (newConfig: MLMConfig) => {
     setMlmConfig(newConfig);
@@ -311,8 +350,10 @@ const App: React.FC = () => {
     }
   }, []);
 
-  // Save changes locally
+  // Save changes locally and to the server's disk database
   useEffect(() => {
+    if (!isLoadedFromServer) return; // Prevent overwriting database with empty states on initial load
+
     if (users.length > 0) {
       safeLocalStorage.setItem('spay_users', JSON.stringify(users));
     }
@@ -324,7 +365,25 @@ const App: React.FC = () => {
     safeLocalStorage.setItem('spay_withdrawals', JSON.stringify(withdrawalRequests));
     safeLocalStorage.setItem('spay_chats', JSON.stringify(chatMessages));
     safeLocalStorage.setItem('spay_pkgs', JSON.stringify(packages));
-  }, [users, products, orders, transactions, mlmConfig, paymentRequests, withdrawalRequests, chatMessages, packages]);
+
+    // Synchronize to unified backend JSON database
+    fetch('/api/db', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        users,
+        products,
+        orders,
+        transactions,
+        paymentRequests,
+        withdrawalRequests,
+        chatMessages,
+        packages
+      })
+    }).catch(err => console.error('Failed to sync changes with backend:', err));
+  }, [users, products, orders, transactions, mlmConfig, paymentRequests, withdrawalRequests, chatMessages, packages, isLoadedFromServer]);
 
   // Sync state when direct logo uploaded
   useEffect(() => {
