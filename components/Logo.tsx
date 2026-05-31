@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { cn } from '../services/utils';
+import { cn, compressImage } from '../services/utils';
 import { Camera } from 'lucide-react';
 import { safeLocalStorage } from '../services/storage';
 
@@ -102,14 +102,31 @@ export const Logo: React.FC<LogoProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64Data = reader.result as string;
+      reader.onloadend = async () => {
+        const base64Raw = reader.result as string;
         try {
+          const base64Data = await compressImage(base64Raw);
+          
+          // Use synchronous React state updater if registered to guarantee no race conditions
+          if (typeof (window as any).spay_update_logo === 'function') {
+            (window as any).spay_update_logo(base64Data);
+            return;
+          }
+
           const configStr = safeLocalStorage.getItem('spay_config', '{}');
           const config = JSON.parse(configStr);
           config.customLogo = base64Data;
           safeLocalStorage.setItem('spay_config', JSON.stringify(config));
           
+          // Save to server-side persistent system configuration
+          fetch('/api/config', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(config)
+          }).catch(err => console.error('Failed to save configuration permanently:', err));
+
           // Dispatch global reactive event to update all Logo components instantly
           window.dispatchEvent(new Event('spay-logo-updated'));
         } catch (err) {

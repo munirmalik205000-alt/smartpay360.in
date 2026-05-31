@@ -115,6 +115,53 @@ const App: React.FC = () => {
     }
   });
 
+  // Synchronous config-updating pipeline to maintain full robustness
+  const handleUpdateConfig = (newConfig: MLMConfig) => {
+    setMlmConfig(newConfig);
+    safeLocalStorage.setItem('spay_config', JSON.stringify(newConfig));
+    
+    // Direct server persistent save
+    fetch('/api/config', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(newConfig)
+    }).catch(err => console.error('Failed to save configuration permanently:', err));
+
+    setTimeout(() => {
+      window.dispatchEvent(new Event('spay-logo-updated'));
+    }, 50);
+  };
+
+  // Register global direct logo update endpoint to resolve async race-conditions
+  useEffect(() => {
+    (window as any).spay_update_logo = (logoBase64: string | undefined) => {
+      setMlmConfig(prev => {
+        const updated = { ...prev, customLogo: logoBase64 };
+        safeLocalStorage.setItem('spay_config', JSON.stringify(updated));
+        
+        fetch('/api/config', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(updated)
+        }).catch(err => console.error('Failed to save configuration permanently:', err));
+
+        return updated;
+      });
+
+      setTimeout(() => {
+        window.dispatchEvent(new Event('spay-logo-updated'));
+      }, 50);
+    };
+
+    return () => {
+      delete (window as any).spay_update_logo;
+    };
+  }, []);
+
   // Load and sync configuration from the full-stack server
   useEffect(() => {
     const fetchConfig = async () => {
@@ -1136,7 +1183,7 @@ const App: React.FC = () => {
             users={users} 
             transactions={transactions} 
             config={mlmConfig} 
-            onUpdateConfig={setMlmConfig}
+            onUpdateConfig={handleUpdateConfig}
             paymentRequests={paymentRequests}
             onApprovePayment={handleApprovePayment}
             withdrawalRequests={withdrawalRequests}

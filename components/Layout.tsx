@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { User, UserRole } from '../types';
-import { LogOut, Home, Wallet, Users, MessageSquare, Bell, ShieldCheck, ShoppingBag, Store, Sun, Moon } from 'lucide-react';
+import { LogOut, Home, Wallet, Users, MessageSquare, Bell, ShieldCheck, ShoppingBag, Store, Sun, Moon, Menu as MenuIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../services/utils';
 import { Logo } from './Logo';
@@ -50,7 +50,20 @@ export const Layout: React.FC<LayoutProps> = ({
         darkMode ? "bg-slate-950/90 border-blue-900/45" : "bg-white/95 border-blue-200 shadow-sm"
       )}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Quick Smart Menu Trigger Button */}
+            <button
+              type="button"
+              onClick={() => {
+                window.dispatchEvent(new Event('spay-open-menu'));
+              }}
+              className="group flex items-center gap-1.5 px-3 py-2 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm transition-all active:scale-95 cursor-pointer border border-purple-500/30 shrink-0"
+              title="Open Smart Menu"
+            >
+              <MenuIcon size={13} className="group-hover:rotate-180 transition-transform duration-300" />
+              <span>Menu</span>
+            </button>
+
             <motion.div 
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}

@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { User, Transaction, MLMConfig, UserRole, PaymentRequest, WithdrawalRequest, ChatMessage, Product, Package } from '../types';
 import { TrendingUp, Users, Wallet, ShieldCheck, MessageSquare, Settings, CheckCircle2, XCircle, Clock, Search, Filter, FileText, Gift, Award, Check, Trash2, Landmark, Smartphone } from 'lucide-react';
 import { motion } from 'motion/react';
-import { cn } from '../services/utils';
+import { cn, compressImage } from '../services/utils';
 import { safeLocalStorage } from '../services/storage';
 
 interface AdminProps {
@@ -99,8 +99,14 @@ const AdminPanel: React.FC<AdminProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
-        setTempLogo(reader.result as string);
+      reader.onloadend = async () => {
+        try {
+          const compressed = await compressImage(reader.result as string);
+          setTempLogo(compressed);
+        } catch (err) {
+          console.error('Failed to compress branding logo:', err);
+          setTempLogo(reader.result as string);
+        }
       };
       reader.readAsDataURL(file);
     }

@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { User, Transaction, Product, PaymentRequest, WithdrawalRequest, ChatMessage, BankDetails, RewardTarget, UserRole, Package } from '../types';
 import { Wallet, Bell, LogOut, ShieldCheck, MessageSquare, Share2, Copy, CheckCircle2, AlertCircle, TrendingUp, Users, ShoppingBag, ArrowRight, UserCheck, HelpCircle, Trophy, Sparkles, Landmark, FileText, Compass, Search, Tag, Eye, EyeOff, Heart, Check, Trash2, ShieldAlert, User as UserIcon, Menu as MenuIcon, X as XIcon, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -140,6 +140,17 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [kycPan, setKycPan] = useState(user.kycDetails?.panNumber || '');
   const [kycGst, setKycGst] = useState(user.kycDetails?.gstNumber || '');
 
+  // Slide-out menu event listener
+  useEffect(() => {
+    const handleOpenMenu = () => {
+      setIsSidebarOpen(true);
+    };
+    window.addEventListener('spay-open-menu', handleOpenMenu);
+    return () => {
+      window.removeEventListener('spay-open-menu', handleOpenMenu);
+    };
+  }, []);
+
   // Calculate my downlines recursively up to 20 levels deep!
   const myDownline = useMemo(() => {
     const findDownline = (uId: string): User[] => {
@@ -259,12 +270,12 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* 0. Top Navigation & Smart Menu Header */}
-      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-blue-50/70 dark:bg-slate-950 p-4 rounded-3xl border-2 border-blue-200 dark:border-blue-900/35">
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-blue-50/70 dark:bg-purple-950/40 p-4 rounded-3xl border-2 border-blue-200 dark:border-purple-900/40">
         <div className="flex flex-wrap items-center gap-3">
           <button
             type="button"
             onClick={() => setIsSidebarOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer hover:shadow-blue-300"
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-805 text-white rounded-2xl text-[10px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer hover:shadow-purple-300"
             id="spay-left-menu-drawer-btn"
           >
             <MenuIcon size={16} className="animate-pulse" />
@@ -310,7 +321,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsSidebarOpen(false)}
-              className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
+              className="absolute inset-0 bg-purple-950/70 backdrop-blur-sm transition-opacity"
             />
             
             {/* Drawer body */}
@@ -320,10 +331,10 @@ const Dashboard: React.FC<DashboardProps> = ({
                 animate={{ x: 0 }}
                 exit={{ x: '-100%' }}
                 transition={{ type: 'spring', duration: 0.45, bounce: 0.05 }}
-                className="w-screen max-w-xs md:max-w-sm bg-white dark:bg-slate-950 flex flex-col shadow-2xl border-r-4 border-blue-600"
+                className="w-screen max-w-xs md:max-w-sm bg-white dark:bg-purple-950 flex flex-col shadow-2xl border-r-4 border-purple-600"
               >
                 {/* Header of Drawer */}
-                <div className="px-6 py-5 bg-gradient-to-br from-blue-900 to-indigo-950 border-b border-indigo-900 flex items-center justify-between">
+                <div className="px-6 py-5 bg-gradient-to-br from-purple-800 to-purple-950 border-b border-purple-900 flex items-center justify-between">
                   <div className="flex items-center gap-2.5 text-left text-white">
                     <span className="text-xl">⚡</span>
                     <div>
@@ -813,28 +824,28 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* 4. Highly Polished "Quick Actions" Section */}
-          <div className="bg-white p-6 md:p-8 rounded-[2.5rem] shadow-sm border-2 border-blue-200">
-            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-black mb-6 text-left flex items-center gap-2">
-              <span className="w-1.5 h-3 bg-blue-700 rounded-full inline-block"></span>
+          <div className="bg-white dark:bg-purple-950/20 p-6 md:p-8 rounded-[2.5rem] shadow-sm border-2 border-blue-200 dark:border-purple-900/30">
+            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-black dark:text-white mb-6 text-left flex items-center gap-2">
+              <span className="w-1.5 h-3 bg-blue-700 dark:bg-purple-500 rounded-full inline-block"></span>
               Quick Actions
             </h3>
-            <div className="grid grid-cols-4 gap-3 md:gap-4">
+            <div className="grid grid-cols-4 gap-3 md:gap-4 justify-items-center">
               {[
-                { id: 'utility', icon: Wallet, label: 'Utility Pay', color: 'from-emerald-500 to-green-600 shadow-green-500/10' },
-                { id: 'add_money', icon: Landmark, label: 'Add Cash', color: 'from-green-600 to-teal-600 shadow-emerald-500/10' },
-                { id: 'transfer', icon: Share2, label: 'Send Cash', color: 'from-teal-600 to-emerald-600 shadow-teal-500/10' },
-                { id: 'withdraw', icon: ShieldCheck, label: 'Payout', color: 'from-green-500 to-emerald-500 shadow-green-500/10' },
+                { id: 'utility', icon: Wallet, label: 'Utility Pay' },
+                { id: 'add_money', icon: Landmark, label: 'Add Cash' },
+                { id: 'transfer', icon: Share2, label: 'Send Cash' },
+                { id: 'withdraw', icon: ShieldCheck, label: 'Payout' },
               ].map((action) => (
                 <button
                   type="button"
                   key={action.id}
                   onClick={() => setTab(action.id)}
-                  className="flex flex-col items-center gap-2 group cursor-pointer"
+                  className="group flex flex-col items-center cursor-pointer transition-all active:scale-95"
                 >
-                  <div className={cn("w-14 h-14 md:w-16 md:h-16 rounded-[1.8rem] flex items-center justify-center text-white shadow-lg transition-all group-hover:scale-105 group-active:scale-95 bg-gradient-to-br", action.color)}>
-                    <action.icon size={22} className="md:size-[26px]" />
+                  <div className="w-[4.8rem] h-[4.8rem] md:w-[5.8rem] md:h-[5.8rem] rounded-full flex flex-col items-center justify-center gap-1 md:gap-1.5 text-white shadow-xl transition-all group-hover:scale-105 bg-gradient-to-br from-blue-900 to-indigo-950 border-2 border-blue-600/30 group-hover:border-blue-400 group-hover:shadow-blue-950/40">
+                    <action.icon size={18} className="md:size-6 text-blue-300 group-hover:text-white transition-colors" />
+                    <span className="text-[8px] md:text-[9.5px] font-black text-white uppercase tracking-wider text-center px-1 leading-tight select-none">{action.label}</span>
                   </div>
-                  <span className="text-[9px] md:text-[10px] font-black text-black uppercase tracking-wider text-center">{action.label}</span>
                 </button>
               ))}
             </div>
@@ -1872,7 +1883,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Transaction History Section */}
       {tab === 'activity' && (
         <div className="space-y-6 text-left animate-fade-in">
-          <div className="bg-gradient-to-r from-blue-900 to-indigo-950 p-8 rounded-[2.5rem] text-white border-2 border-blue-400 relative overflow-hidden shadow-sm">
+          <div className="bg-gradient-to-r from-purple-800 to-purple-950 p-8 rounded-[2.5rem] text-white border-2 border-purple-400 relative overflow-hidden shadow-sm">
             <span className="text-[8px] font-black bg-blue-500 text-white px-2.5 py-1 rounded-full uppercase tracking-widest font-mono font-sans">FINANCIAL AUDIT DECK</span>
             <h2 className="text-2xl font-black uppercase tracking-tight mt-3">Transaction ledger history</h2>
             <p className="text-blue-200 text-xs mt-1">Sleek real-time ledger of deposit receipts, wallet transfers, MLM commissions, and utility recharges.</p>
@@ -2027,7 +2038,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* profile View Section */}
       {tab === 'profile' && (
         <div className="space-y-6 text-left animate-fade-in">
-          <div className="bg-gradient-to-r from-slate-900 to-blue-955 p-8 rounded-[2.5rem] text-white border-2 border-blue-400 relative overflow-hidden shadow-sm">
+          <div className="bg-gradient-to-r from-purple-900 to-indigo-950 p-8 rounded-[2.5rem] text-white border-2 border-purple-400 relative overflow-hidden shadow-sm">
             <span className="text-[8px] font-black bg-blue-650 text-white px-2.5 py-1 rounded-full uppercase tracking-widest font-mono">SECURE REPRESENTATIVE DESK</span>
             <h2 className="text-2xl font-black uppercase tracking-tight mt-3">Representative profile hub</h2>
             <p className="text-blue-200 text-xs mt-1">Complete your identity validations, configure e-wallet direct deposits, edit bank forms, and monitor secure nodes.</p>
