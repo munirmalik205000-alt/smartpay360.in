@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { cn, compressImage } from '../services/utils';
+import { cn, compressImage, getApiUrl } from '../services/utils';
 import { Camera } from 'lucide-react';
 import { safeLocalStorage } from '../services/storage';
 
@@ -119,7 +119,7 @@ export const Logo: React.FC<LogoProps> = ({
           safeLocalStorage.setItem('spay_config', JSON.stringify(config));
           
           // Save to server-side persistent system configuration
-          fetch('/api/config', {
+          fetch(getApiUrl('/api/config'), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json'

@@ -7,6 +7,7 @@ import AdminPanel from './components/AdminPanel';
 import VendorPanel from './components/VendorPanel';
 import { Layout } from './components/Layout';
 import { safeLocalStorage } from './services/storage';
+import { getApiUrl } from './services/utils';
 import { ErrorBoundary } from './components/ErrorBoundary';
 
 const DEFAULT_LEVEL_PERCENTAGES_20 = [
@@ -131,7 +132,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchDb = async () => {
       try {
-        const response = await fetch('/api/db');
+        const response = await fetch(getApiUrl('/api/db'));
         if (response.ok) {
           const text = await response.text();
           if (text && text !== lastServerDbStringRef.current) {
@@ -183,7 +184,7 @@ const App: React.FC = () => {
     safeLocalStorage.setItem('spay_config', JSON.stringify(newConfig));
     
     // Direct server persistent save
-    fetch('/api/config', {
+    fetch(getApiUrl('/api/config'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -203,7 +204,7 @@ const App: React.FC = () => {
         const updated = { ...prev, customLogo: logoBase64 };
         safeLocalStorage.setItem('spay_config', JSON.stringify(updated));
         
-        fetch('/api/config', {
+        fetch(getApiUrl('/api/config'), {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -228,7 +229,7 @@ const App: React.FC = () => {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const response = await fetch('/api/config');
+        const response = await fetch(getApiUrl('/api/config'));
         if (response.ok) {
           const serverConfig = await response.json();
           if (serverConfig && (serverConfig.customLogo || serverConfig.systemName || serverConfig.qrCode)) {
@@ -431,7 +432,7 @@ const App: React.FC = () => {
     lastServerDbStringRef.current = payloadStr;
 
     // Synchronize to unified backend JSON database
-    fetch('/api/db', {
+    fetch(getApiUrl('/api/db'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

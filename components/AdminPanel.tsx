@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { User, Transaction, MLMConfig, UserRole, PaymentRequest, WithdrawalRequest, ChatMessage, Product, Package } from '../types';
 import { TrendingUp, Users, Wallet, ShieldCheck, MessageSquare, Settings, CheckCircle2, XCircle, Clock, Search, Filter, FileText, Gift, Award, Check, Trash2, Landmark, Smartphone } from 'lucide-react';
 import { motion } from 'motion/react';
-import { cn, compressImage } from '../services/utils';
+import { cn, compressImage, getApiUrl } from '../services/utils';
 import { safeLocalStorage } from '../services/storage';
 
 interface AdminProps {
@@ -122,7 +122,7 @@ const AdminPanel: React.FC<AdminProps> = ({
     safeLocalStorage.setItem('spay_config', JSON.stringify(updated));
     
     // Save to server-side persistent system configuration
-    fetch('/api/config', {
+    fetch(getApiUrl('/api/config'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -146,7 +146,7 @@ const AdminPanel: React.FC<AdminProps> = ({
     safeLocalStorage.setItem('spay_config', JSON.stringify(updated));
     
     // Save to server-side persistent system configuration
-    fetch('/api/config', {
+    fetch(getApiUrl('/api/config'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
