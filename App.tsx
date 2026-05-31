@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { User, UserRole, Transaction, Product, Order, MLMConfig, Wallets, PaymentRequest, WithdrawalRequest, ChatMessage, KYCDetails, RewardTarget, Package } from './types';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
@@ -123,32 +123,42 @@ const App: React.FC = () => {
     }
   });
 
+  const isSyncingFromServer = useRef(false);
+  const lastServerDbStringRef = useRef<string>("");
   const [isLoadedFromServer, setIsLoadedFromServer] = useState(false);
 
-  // Sync state from server on component mount
+  // Sync state from server on component mount and poll periodically
   useEffect(() => {
     const fetchDb = async () => {
       try {
         const response = await fetch('/api/db');
         if (response.ok) {
-          const data = await response.json();
-          if (data && data.users && data.users.length > 0) {
-            setUsers(data.users);
-            if (data.products) setProducts(data.products);
-            if (data.orders) setOrders(data.orders);
-            if (data.transactions) setTransactions(data.transactions);
-            if (data.paymentRequests) setPaymentRequests(data.paymentRequests);
-            if (data.withdrawalRequests) setWithdrawalRequests(data.withdrawalRequests);
-            if (data.chatMessages) setChatMessages(data.chatMessages);
-            if (data.packages) setPackages(data.packages);
+          const text = await response.text();
+          if (text && text !== lastServerDbStringRef.current) {
+            const data = JSON.parse(text);
+            lastServerDbStringRef.current = text;
 
-            // Sync current session state with updated credentials from server
-            const localSaved = safeLocalStorage.getItem('spay_current_user', '');
-            if (localSaved) {
-              const u = JSON.parse(localSaved);
-              const freshUser = (data.users as User[]).find(f => f.id === u.id);
-              if (freshUser) {
-                setCurrentUser(freshUser);
+            // Flag that we are syncing from server to bypass save POST
+            isSyncingFromServer.current = true;
+
+            if (data && data.users && data.users.length > 0) {
+              setUsers(data.users);
+              if (data.products) setProducts(data.products);
+              if (data.orders) setOrders(data.orders);
+              if (data.transactions) setTransactions(data.transactions);
+              if (data.paymentRequests) setPaymentRequests(data.paymentRequests);
+              if (data.withdrawalRequests) setWithdrawalRequests(data.withdrawalRequests);
+              if (data.chatMessages) setChatMessages(data.chatMessages);
+              if (data.packages) setPackages(data.packages);
+
+              // Sync current session state with updated credentials from server
+              const localSaved = safeLocalStorage.getItem('spay_current_user', '');
+              if (localSaved) {
+                const u = JSON.parse(localSaved);
+                const freshUser = (data.users as User[]).find(f => f.id === u.id);
+                if (freshUser) {
+                  setCurrentUser(freshUser);
+                }
               }
             }
           }
@@ -159,7 +169,12 @@ const App: React.FC = () => {
         setIsLoadedFromServer(true);
       }
     };
+
     fetchDb();
+
+    // Poll every 3 seconds to keep website & app fully in sync
+    const interval = setInterval(fetchDb, 3000);
+    return () => clearInterval(interval);
   }, []);
 
   // Synchronous config-updating pipeline to maintain full robustness
@@ -209,7 +224,7 @@ const App: React.FC = () => {
     };
   }, []);
 
-  // Load and sync configuration from the full-stack server
+  // Load and sync configuration from the full-stack server and poll periodically
   useEffect(() => {
     const fetchConfig = async () => {
       try {
@@ -224,12 +239,21 @@ const App: React.FC = () => {
             safeLocalStorage.setItem('spay_config', JSON.stringify(merged));
             
             // Also update the MLMConfig state
-            setMlmConfig(prev => ({
-              ...prev,
-              ...serverConfig,
-              levelRupeeRates: serverConfig.levelRupeeRates || prev.levelRupeeRates,
-              levelCoinRates: serverConfig.levelCoinRates || prev.levelCoinRates
-            }));
+            setMlmConfig(prev => {
+              if (
+                prev.customLogo === serverConfig.customLogo &&
+                prev.systemName === serverConfig.systemName &&
+                prev.qrCode === serverConfig.qrCode
+              ) {
+                return prev;
+              }
+              return {
+                ...prev,
+                ...serverConfig,
+                levelRupeeRates: serverConfig.levelRupeeRates || prev.levelRupeeRates,
+                levelCoinRates: serverConfig.levelCoinRates || prev.levelCoinRates
+              };
+            });
             
             // Trigger instant reactive logo and text updates
             window.dispatchEvent(new Event('spay-logo-updated'));
@@ -240,6 +264,8 @@ const App: React.FC = () => {
       }
     };
     fetchConfig();
+    const interval = setInterval(fetchConfig, 4000);
+    return () => clearInterval(interval);
   }, []);
 
   // Theme support
@@ -354,6 +380,24 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isLoadedFromServer) return; // Prevent overwriting database with empty states on initial load
 
+    // If this update was triggered by fetching remote changes, do not post it back to server
+    if (isSyncingFromServer.current) {
+      isSyncingFromServer.current = false;
+
+      if (users.length > 0) {
+        safeLocalStorage.setItem('spay_users', JSON.stringify(users));
+      }
+      safeLocalStorage.setItem('spay_products', JSON.stringify(products));
+      safeLocalStorage.setItem('spay_orders', JSON.stringify(orders));
+      safeLocalStorage.setItem('spay_tx', JSON.stringify(transactions));
+      safeLocalStorage.setItem('spay_config', JSON.stringify(mlmConfig));
+      safeLocalStorage.setItem('spay_payments', JSON.stringify(paymentRequests));
+      safeLocalStorage.setItem('spay_withdrawals', JSON.stringify(withdrawalRequests));
+      safeLocalStorage.setItem('spay_chats', JSON.stringify(chatMessages));
+      safeLocalStorage.setItem('spay_pkgs', JSON.stringify(packages));
+      return;
+    }
+
     if (users.length > 0) {
       safeLocalStorage.setItem('spay_users', JSON.stringify(users));
     }
@@ -366,22 +410,33 @@ const App: React.FC = () => {
     safeLocalStorage.setItem('spay_chats', JSON.stringify(chatMessages));
     safeLocalStorage.setItem('spay_pkgs', JSON.stringify(packages));
 
+    const payload = {
+      users,
+      products,
+      orders,
+      transactions,
+      paymentRequests,
+      withdrawalRequests,
+      chatMessages,
+      packages
+    };
+    const payloadStr = JSON.stringify(payload);
+
+    // If local state matches current server state, skip network post
+    if (payloadStr === lastServerDbStringRef.current) {
+      return;
+    }
+
+    // Update the ref to match the new local state payload we are sending out
+    lastServerDbStringRef.current = payloadStr;
+
     // Synchronize to unified backend JSON database
     fetch('/api/db', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({
-        users,
-        products,
-        orders,
-        transactions,
-        paymentRequests,
-        withdrawalRequests,
-        chatMessages,
-        packages
-      })
+      body: payloadStr
     }).catch(err => console.error('Failed to sync changes with backend:', err));
   }, [users, products, orders, transactions, mlmConfig, paymentRequests, withdrawalRequests, chatMessages, packages, isLoadedFromServer]);
 
