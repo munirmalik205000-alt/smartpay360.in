@@ -895,8 +895,8 @@ const AdminPanel: React.FC<AdminProps> = ({
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                   <div>
-                    <label className="block text-[10px] font-black text-purple-905 uppercase tracking-widest pl-1 mb-2">Platform Custom Logo Preview</label>
-                    <div className="aspect-square max-w-[150px] border-4 border-double border-purple-300 rounded-3xl flex flex-col items-center justify-center relative overflow-hidden bg-white shadow-md mx-auto">
+                    <label className="block text-[10px] font-black text-purple-905 uppercase tracking-widest pl-1 mb-2">Platform Custom Logo Preview (Banner Layout)</label>
+                    <div className="aspect-[3/1] max-w-[280px] w-full min-h-[90px] border-4 border-double border-purple-300 rounded-3xl flex flex-col items-center justify-center relative overflow-hidden bg-white shadow-md mx-auto p-2">
                       {tempLogo ? (
                         <div className="w-full h-full flex flex-col items-center justify-center p-3">
                           <img src={tempLogo} alt="Custom Logo Preview" className="w-full h-full object-contain rounded-xl" />
