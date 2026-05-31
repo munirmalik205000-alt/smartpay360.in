@@ -1187,6 +1187,7 @@ const App: React.FC = () => {
             onBuyPackage={handleBuyPackage}
             onMainToEWalletTransfer={handleMainToEWalletTransfer}
             onEWalletToEWalletTransfer={handleEWalletToEWalletTransfer}
+            onLogout={() => setCurrentUser(null)}
           />
         )}
       </Layout>

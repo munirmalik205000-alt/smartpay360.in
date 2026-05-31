@@ -1,9 +1,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { User, Transaction, Product, PaymentRequest, WithdrawalRequest, ChatMessage, BankDetails, RewardTarget, UserRole, Package } from '../types';
-import { Wallet, Bell, LogOut, ShieldCheck, MessageSquare, Share2, Copy, CheckCircle2, AlertCircle, TrendingUp, Users, ShoppingBag, ArrowRight, UserCheck, HelpCircle, Trophy, Sparkles, Landmark, FileText, Compass, Search, Tag, Eye, EyeOff, Heart, Check, Trash2, ShieldAlert } from 'lucide-react';
+import { Wallet, Bell, LogOut, ShieldCheck, MessageSquare, Share2, Copy, CheckCircle2, AlertCircle, TrendingUp, Users, ShoppingBag, ArrowRight, UserCheck, HelpCircle, Trophy, Sparkles, Landmark, FileText, Compass, Search, Tag, Eye, EyeOff, Heart, Check, Trash2, ShieldAlert, User as UserIcon, Menu as MenuIcon, X as XIcon, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../services/utils';
+import { safeLocalStorage } from '../services/storage';
 
 interface DashboardProps {
   user: User;
@@ -31,6 +32,7 @@ interface DashboardProps {
   onBuyPackage?: (userId: string, packageId: string) => void;
   onMainToEWalletTransfer?: (userId: string, amount: number) => void;
   onEWalletToEWalletTransfer?: (senderId: string, recipientEmail: string, amount: number) => void;
+  onLogout?: () => void;
 }
 
 const INDIAN_OPERATORS = [
@@ -47,9 +49,24 @@ const Dashboard: React.FC<DashboardProps> = ({
   onActivate, packagePrice, qrCode, onAddMoney, paymentRequests,
   withdrawalRequests, onWithdrawal, onUpdateBankDetails, chatMessages, onSendMessage,
   tab, setTab, onSubmitKYC, onClaimReward,
-  packages = [], onBuyPackage, onMainToEWalletTransfer, onEWalletToEWalletTransfer
+  packages = [], onBuyPackage, onMainToEWalletTransfer, onEWalletToEWalletTransfer,
+  onLogout
 }) => {
   const [transferData, setTransferData] = useState({ email: '', amount: '', pin: '' });
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [ledgerFilter, setLedgerFilter] = useState<'all' | 'main' | 'ewallet' | 'coinwallet' | 'commission' | 'recharge'>('all');
+
+  const filteredLedger = useMemo(() => {
+    return transactions.filter(tx => {
+      if (ledgerFilter === 'all') return true;
+      if (ledgerFilter === 'recharge') return tx.type === 'recharge';
+      if (ledgerFilter === 'coinwallet') return tx.walletType?.toLowerCase() === 'coinwallet' || tx.walletType?.toLowerCase() === 'coin';
+      if (tx.walletType?.toLowerCase() === ledgerFilter.toLowerCase()) return true;
+      if (tx.type?.toLowerCase() === ledgerFilter.toLowerCase()) return true;
+      return false;
+    });
+  }, [transactions, ledgerFilter]);
+
   const [transferSubTab, setTransferSubTab] = useState<'main' | 'ewallet' | 'self_conversion'>('main');
   const [ewalletTransfer, setEwalletTransfer] = useState({ email: '', amount: '', pin: '' });
   const [selfEwalletConversion, setSelfEwalletConversion] = useState({ amount: '', pin: '' });
@@ -234,12 +251,332 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [products, shopCategory, shopSearch]);
 
   return (
-    <div className="space-y-6 md:pb-6 relative text-black bg-white font-sans">
+    <div className="space-y-6 md:pb-6 relative text-black bg-white dark:bg-slate-900 font-sans transition-colors duration-200">
       {/* Decorative spectrum bar */}
-      <div className="h-1.5 w-full rounded-full flex overflow-hidden shadow-sm animate-pulse">
+      <div className="h-1.5 w-full rounded-full flex overflow-hidden shadow-sm animate-pulse shrink-0">
         <div className="w-[50%] h-full bg-blue-700"></div>
-        <div className="w-[50%] h-full bg-white border"></div>
+        <div className="w-[50%] h-full bg-white border dark:border-slate-805"></div>
       </div>
+
+      {/* 0. Top Navigation & Smart Menu Header */}
+      <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-blue-50/70 dark:bg-slate-950 p-4 rounded-3xl border-2 border-blue-200 dark:border-blue-900/35">
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsSidebarOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-700 hover:bg-blue-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer hover:shadow-blue-300"
+            id="spay-left-menu-drawer-btn"
+          >
+            <MenuIcon size={16} className="animate-pulse" />
+            <span>Smart Menu</span>
+          </button>
+          <div className="h-6 w-px bg-blue-200 dark:bg-blue-900"></div>
+          <span className="text-[9.5px] font-black uppercase text-blue-900 dark:text-blue-300 tracking-wider bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-900/40 shadow-sm">
+            Current Section: {
+              tab === 'home' ? '🏠 Overview' :
+              tab === 'activity' ? '📋 Ledger History' :
+              tab === 'income' ? '💰 Income History' :
+              tab === 'profile' ? '👤 My Profile' :
+              tab === 'mlm' ? '👥 Team Tree' :
+              tab === 'utility' ? '📶 Recharge option' :
+              tab === 'shop' ? '🛍️ Shop REP' :
+              tab === 'rewards' ? '🏆 Achiever rewards' :
+              tab === 'support' ? '💬 Customer Help' : 
+              tab === 'add_money' ? '💳 Add Money' :
+              tab === 'withdraw' ? '💸 Withdrawal' :
+              tab === 'transfer' ? '🔁 Money Transfer' : tab
+            }
+          </span>
+        </div>
+        
+        {/* Quick Balance Preview Ticker */}
+        <div className="flex flex-wrap items-center gap-2 justify-start md:justify-end">
+          <span className="text-[9px] font-black bg-blue-600 text-white px-2.5 py-1.5 rounded-xl uppercase tracking-wide">
+            E-WALLET: ₹{(user.wallets?.ewallet || 0).toFixed(2)}
+          </span>
+          <span className="text-[9px] font-black bg-emerald-600 text-white px-2.5 py-1.5 rounded-xl uppercase tracking-wide">
+            MAIN WALLET: ₹{(user.wallets?.main || 0).toFixed(2)}
+          </span>
+        </div>
+      </div>
+
+      {/* 1. Left Side Slide-out Drawer Overlay */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <div className="fixed inset-0 z-[100] overflow-hidden">
+            {/* Overlay backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSidebarOpen(false)}
+              className="absolute inset-0 bg-slate-950/70 backdrop-blur-sm transition-opacity"
+            />
+            
+            {/* Drawer body */}
+            <div className="absolute inset-y-0 left-0 max-w-full flex">
+              <motion.div
+                initial={{ x: '-100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '-100%' }}
+                transition={{ type: 'spring', duration: 0.45, bounce: 0.05 }}
+                className="w-screen max-w-xs md:max-w-sm bg-white dark:bg-slate-950 flex flex-col shadow-2xl border-r-4 border-blue-600"
+              >
+                {/* Header of Drawer */}
+                <div className="px-6 py-5 bg-gradient-to-br from-blue-900 to-indigo-950 border-b border-indigo-900 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 text-left text-white">
+                    <span className="text-xl">⚡</span>
+                    <div>
+                      <h4 className="text-xs font-black uppercase tracking-wider leading-none">SmartPay 360</h4>
+                      <p className="text-[8px] font-bold text-blue-300 uppercase tracking-widest mt-1">Ecosystem Navigation</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="p-1.5 rounded-lg bg-indigo-950 hover:bg-red-950 text-indigo-400 hover:text-white transition-colors cursor-pointer border border-indigo-805"
+                  >
+                    <XIcon size={18} />
+                  </button>
+                </div>
+
+                {/* User quick badge in drawer */}
+                <div className="bg-blue-50/80 dark:bg-slate-900/85 p-5 border-b border-blue-100 dark:border-blue-950 flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-blue-600 flex items-center justify-center text-white text-lg font-black uppercase shadow-inner shrink-0">
+                    {user.name.charAt(0)}
+                  </div>
+                  <div className="min-w-0 flex-1 text-left">
+                    <p className="text-xs font-black text-slate-900 dark:text-white uppercase truncate tracking-wide leading-none">{user.name}</p>
+                    <p className="text-[10px] font-bold text-slate-500 dark:text-blue-300 truncate mt-1">{user.email}</p>
+                    <span className="inline-block mt-2 px-2 py-0.5 bg-green-100 dark:bg-green-950 text-green-800 dark:text-green-300 text-[8px] font-extrabold rounded uppercase tracking-wider">
+                      ★ Level {user.level || 0} Leader
+                    </span>
+                  </div>
+                </div>
+
+                {/* Menu items list */}
+                <div className="flex-1 overflow-y-auto py-4 px-3 space-y-1.5 text-left no-scrollbar">
+                  {/* Category: accounts */}
+                  <p className="text-[8.5px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest pl-3 py-1">Identity & Wallets</p>
+                  
+                  <button
+                    type="button"
+                    onClick={() => { setTab('home'); setIsSidebarOpen(false); }}
+                    className={cn(
+                      "w-full flex items-center justify-between p-3 rounded-xl transition-all border cursor-pointer text-left",
+                      tab === 'home' ? "bg-blue-50 dark:bg-slate-900 border-blue-200 dark:border-blue-900/40" : "bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-900"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 rounded-lg">
+                        <Compass size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-950 dark:text-white uppercase tracking-wider">Home Dashboard</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold">Wallets & money operations</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-400" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setTab('profile'); setIsSidebarOpen(false); }}
+                    className={cn(
+                      "w-full flex items-center justify-between p-3 rounded-xl transition-all border cursor-pointer text-left",
+                      tab === 'profile' ? "bg-blue-50 dark:bg-slate-900 border-blue-200 dark:border-blue-900/40" : "bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-900"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 rounded-lg">
+                        <UserIcon size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-950 dark:text-white uppercase tracking-wider">My Profile Settings</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold">KYC status, bank accounts</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-400" />
+                  </button>
+
+                  {/* Category: Networking */}
+                  <p className="text-[8.5px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest pl-3 py-1 pt-3">MLM Network</p>
+
+                  <button
+                    type="button"
+                    onClick={() => { setTab('mlm'); setIsSidebarOpen(false); }}
+                    className={cn(
+                      "w-full flex items-center justify-between p-3 rounded-xl transition-all border cursor-pointer text-left",
+                      tab === 'mlm' ? "bg-blue-50 dark:bg-slate-900 border-blue-250 dark:border-blue-900/40" : "bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-900"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 rounded-lg">
+                        <Users size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-950 dark:text-white uppercase tracking-wider">Team Tree (Downline)</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold">Genealogy leads matrix</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-400" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setTab('rewards'); setIsSidebarOpen(false); }}
+                    className={cn(
+                      "w-full flex items-center justify-between p-3 rounded-xl transition-all border cursor-pointer text-left",
+                      tab === 'rewards' ? "bg-blue-50 dark:bg-slate-900 border-blue-200 dark:border-blue-900/40" : "bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-900"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 rounded-lg">
+                        <Trophy size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-950 dark:text-white uppercase tracking-wider">Achiever Rewards</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold">Laptops, motorbikes, BMW</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-400" />
+                  </button>
+
+                  {/* Category: ledger */}
+                  <p className="text-[8.5px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest pl-3 py-1 pt-3">Ledgers & Accounts</p>
+
+                  <button
+                    type="button"
+                    onClick={() => { setTab('activity'); setIsSidebarOpen(false); }}
+                    className={cn(
+                      "w-full flex items-center justify-between p-3 rounded-xl transition-all border cursor-pointer text-left",
+                      tab === 'activity' ? "bg-blue-50 dark:bg-slate-900 border-blue-200 dark:border-blue-900/40" : "bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-900"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 rounded-lg">
+                        <FileText size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-950 dark:text-white uppercase tracking-wider">Transaction History</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold">Secure ledger timelines</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-400" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setTab('income'); setIsSidebarOpen(false); }}
+                    className={cn(
+                      "w-full flex items-center justify-between p-3 rounded-xl transition-all border cursor-pointer text-left",
+                      tab === 'income' ? "bg-blue-50 dark:bg-slate-900 border-blue-200 dark:border-blue-900/40" : "bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-900"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 rounded-lg">
+                        <TrendingUp size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-950 dark:text-white uppercase tracking-wider">Income History</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold">Matrix level distribution royalty</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-400" />
+                  </button>
+
+                  {/* Category: Purchases */}
+                  <p className="text-[8.5px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest pl-3 py-1 pt-3">Recharges & Shop</p>
+
+                  <button
+                    type="button"
+                    onClick={() => { setTab('utility'); setIsSidebarOpen(false); }}
+                    className={cn(
+                      "w-full flex items-center justify-between p-3 rounded-xl transition-all border cursor-pointer text-left",
+                      tab === 'utility' ? "bg-blue-50 dark:bg-slate-900 border-blue-200 dark:border-blue-900/40" : "bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-900"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 rounded-lg">
+                        <Wallet size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-950 dark:text-white uppercase tracking-wider">Recharge Option</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold">Instant utility operator payments</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-400" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setTab('shop'); setIsSidebarOpen(false); }}
+                    className={cn(
+                      "w-full flex items-center justify-between p-3 rounded-xl transition-all border cursor-pointer text-left",
+                      tab === 'shop' ? "bg-blue-50 dark:bg-slate-900 border-blue-200 dark:border-blue-900/40" : "bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-900"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 rounded-lg">
+                        <ShoppingBag size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-950 dark:text-white uppercase tracking-wider">Shop Repurchase</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold">Buy physical products & claim BV</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-400" />
+                  </button>
+
+                  {/* Category: Support */}
+                  <p className="text-[8.5px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-widest pl-3 py-1 pt-3">Helpdesk</p>
+
+                  <button
+                    type="button"
+                    onClick={() => { setTab('support'); setIsSidebarOpen(false); }}
+                    className={cn(
+                      "w-full flex items-center justify-between p-3 rounded-xl transition-all border cursor-pointer text-left",
+                      tab === 'support' ? "bg-blue-50 dark:bg-slate-900 border-blue-200 dark:border-blue-900/40" : "bg-transparent border-transparent hover:bg-slate-50 dark:hover:bg-slate-900"
+                    )}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-200 rounded-lg">
+                        <MessageSquare size={16} />
+                      </div>
+                      <div>
+                        <p className="text-xs font-black text-slate-950 dark:text-white uppercase tracking-wider">Customer Support</p>
+                        <p className="text-[9px] text-slate-500 dark:text-slate-400 font-bold">Open active lead support chats</p>
+                      </div>
+                    </div>
+                    <ChevronRight size={14} className="text-slate-400" />
+                  </button>
+                </div>
+
+                {/* Footer segment of Drawer with Logout fallback */}
+                <div className="p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 space-y-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsSidebarOpen(false);
+                      if (onLogout) {
+                        onLogout();
+                      } else {
+                        // Safe client fallback
+                        safeLocalStorage.removeItem('spay_current_user');
+                        window.location.reload();
+                      }
+                    }}
+                    className="w-full py-3 bg-red-50 hover:bg-red-100 text-red-600 dark:bg-red-950/20 dark:hover:bg-red-950/40 rounded-xl transition-all flex items-center justify-center gap-2 text-xs font-black uppercase tracking-wider border border-red-200/50 cursor-pointer"
+                  >
+                    <LogOut size={16} />
+                    <span>Secure Sign Out</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {user.role === UserRole.ADMIN && (
         <div className="bg-blue-50 border-2 border-blue-400 p-4 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-4 shadow-md text-left text-black">
@@ -1528,6 +1865,325 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <p className="text-slate-400 text-xs font-black uppercase tracking-widest">No matching products found</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Transaction History Section */}
+      {tab === 'activity' && (
+        <div className="space-y-6 text-left animate-fade-in">
+          <div className="bg-gradient-to-r from-blue-900 to-indigo-950 p-8 rounded-[2.5rem] text-white border-2 border-blue-400 relative overflow-hidden shadow-sm">
+            <span className="text-[8px] font-black bg-blue-500 text-white px-2.5 py-1 rounded-full uppercase tracking-widest font-mono font-sans">FINANCIAL AUDIT DECK</span>
+            <h2 className="text-2xl font-black uppercase tracking-tight mt-3">Transaction ledger history</h2>
+            <p className="text-blue-200 text-xs mt-1">Sleek real-time ledger of deposit receipts, wallet transfers, MLM commissions, and utility recharges.</p>
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border-2 border-blue-105 dark:border-blue-900/30 shadow-sm space-y-6">
+            {/* Filter buttons */}
+            <div className="flex flex-wrap gap-2 items-center">
+              <span className="text-[9px] font-black uppercase text-slate-400 mr-2">Filter Wallet:</span>
+              {(['all', 'main', 'ewallet', 'coinwallet', 'commission', 'recharge'] as const).map(wType => (
+                <button
+                  key={wType}
+                  type="button"
+                  onClick={() => setLedgerFilter(wType)}
+                  className={cn(
+                    "px-4 py-2 border-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer",
+                    ledgerFilter === wType
+                      ? "bg-blue-700 text-white border-transparent shadow-sm"
+                      : "bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-205 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-750"
+                  )}
+                >
+                  {wType} Account
+                </button>
+              ))}
+            </div>
+
+            {/* List */}
+            <div className="bg-white dark:bg-slate-950 rounded-3xl border-2 border-blue-50 dark:border-blue-950/40 overflow-hidden divide-y divide-blue-50 dark:divide-blue-950/40">
+              {filteredLedger.map(tx => (
+                <motion.div 
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  key={tx.id} 
+                  className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-6 hover:bg-blue-50/50 dark:hover:bg-slate-900/20 gap-4 transition-colors text-left"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className={cn(
+                      "w-12 h-12 rounded-2xl flex items-center justify-center text-xl shadow-inner shrink-0",
+                      tx.amount > 0 ? 'bg-green-50 dark:bg-green-950/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-905' : 'bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-350 border border-red-200 dark:border-red-905'
+                    )}>
+                      {tx.type === 'recharge' ? '📱' : tx.type === 'add_funds' ? '💰' : tx.type === 'activation' ? '⚡' : tx.type === 'commission' ? '👑' : '💸'}
+                    </div>
+                    <div>
+                      <p className="text-sm font-black text-slate-955 dark:text-white leading-tight">{tx.description}</p>
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
+                        TX: {tx.id} • {new Date(tx.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })} • {new Date(tx.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-left sm:text-right w-full sm:w-auto self-end sm:self-center">
+                    <p className={cn("text-lg font-black tracking-tight", tx.amount > 0 ? 'text-green-700 dark:text-green-400' : 'text-red-650 dark:text-red-400')}>
+                      {tx.amount > 0 ? '+' : ''}₹{Math.abs(tx.amount).toFixed(2)}
+                    </p>
+                    <span className="inline-block px-2.5 py-0.5 mt-1 bg-blue-50 dark:bg-slate-900 text-blue-700 dark:text-blue-300 text-[8px] font-black uppercase rounded tracking-wider border border-blue-100 dark:border-blue-900/10">
+                      {tx.walletType} wallet
+                    </span>
+                  </div>
+                </motion.div>
+              ))}
+              {filteredLedger.length === 0 && (
+                <div className="py-20 text-center bg-white dark:bg-slate-950">
+                  <div className="w-20 h-20 bg-blue-50 dark:bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-blue-200 dark:border-blue-900/30">
+                    <Wallet className="text-blue-500" size={32} />
+                  </div>
+                  <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">No logs match your filter</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Income History Section */}
+      {tab === 'income' && (() => {
+        const commissionTxs = transactions.filter(tx => tx.walletType?.toLowerCase() === 'commission' || tx.type === 'commission' || tx.description.toLowerCase().includes('commission') || tx.description.toLowerCase().includes('royalty') || tx.description.toLowerCase().includes('bonus') || tx.description.toLowerCase().includes('points'));
+        const totalCommissionEarned = commissionTxs.filter(t => t.amount > 0).reduce((acc, t) => acc + t.amount, 0);
+        
+        const levelIncome = commissionTxs.filter(t => t.description.toLowerCase().includes('level')).reduce((acc, t) => acc + t.amount, 0);
+        const repurchaseIncome = commissionTxs.filter(t => t.description.toLowerCase().includes('repurchase') || t.description.toLowerCase().includes('purchase') || t.description.toLowerCase().includes('order')).reduce((acc, t) => acc + t.amount, 0);
+        
+        return (
+          <div className="space-y-6 text-left animate-fade-in">
+            <div className="bg-gradient-to-r from-emerald-800 to-teal-950 p-8 rounded-[2.5rem] text-white border-2 border-emerald-400 relative overflow-hidden shadow-sm">
+              <span className="text-[8px] font-black bg-emerald-500 text-white px-2.5 py-1 rounded-full uppercase tracking-widest font-mono">FINANCIAL GENEALOGY REPORTS</span>
+              <h2 className="text-2xl font-black uppercase tracking-tight mt-3">My MLM Income Audit</h2>
+              <p className="text-emerald-200 text-xs mt-1">Real-time audit track of cumulative matrix royalties, product repurchase commissions, and direct node expansion bonuses.</p>
+            </div>
+
+            {/* Income cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="p-6 bg-emerald-50/50 dark:bg-emerald-950/20 border-2 border-emerald-200 dark:border-emerald-900/30 rounded-[2rem] text-left">
+                <p className="text-gray-455 dark:text-gray-500 font-extrabold text-[9px] uppercase tracking-wider">Level commissions</p>
+                <p className="text-3xl font-black text-emerald-800 dark:text-emerald-400 mt-1">₹{levelIncome.toFixed(2)}</p>
+                <p className="text-[10px] text-gray-500 dark:text-slate-400 font-bold mt-1.5 leading-relaxed">Direct cascading 20-level downline commissions</p>
+              </div>
+              <div className="p-6 bg-teal-50/50 dark:bg-teal-950/20 border-2 border-teal-200 dark:border-teal-900/30 rounded-[2rem] text-left">
+                <p className="text-gray-455 dark:text-gray-500 font-extrabold text-[9px] uppercase tracking-wider">Repurchase BV Profits</p>
+                <p className="text-3xl font-black text-teal-800 dark:text-teal-400 mt-1">₹{repurchaseIncome.toFixed(2)}</p>
+                <p className="text-[10px] text-gray-500 dark:text-slate-400 font-bold mt-1.5 leading-relaxed">Commissions calculated from downline purchases</p>
+              </div>
+              <div className="p-6 bg-amber-50/50 dark:bg-amber-950/10 border-2 border-amber-200 dark:border-amber-900/20 rounded-[2rem] text-left">
+                <p className="text-gray-455 dark:text-gray-500 font-extrabold text-[9px] uppercase tracking-wider">Staked Coin wallet</p>
+                <p className="text-3xl font-black text-amber-800 dark:text-amber-400 mt-1">{(user.wallets?.coinwallet || 0).toLocaleString()} Coins</p>
+                <p className="text-[10px] text-gray-500 dark:text-slate-400 font-bold mt-1.5 leading-relaxed">Cryptographic yield reward assets</p>
+              </div>
+            </div>
+
+            {/* Income Ledger */}
+            <div className="bg-white dark:bg-slate-900 p-6 rounded-[2.5rem] border-2 border-blue-105 dark:border-blue-900/30 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-white font-sans">Direct & Matrix Commission Logs</h3>
+                <span className="text-[9px] font-black uppercase text-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-1 rounded">
+                  Cumulative: ₹{totalCommissionEarned.toFixed(2)}
+                </span>
+              </div>
+              
+              <div className="bg-white dark:bg-slate-950 rounded-3xl border-2 border-blue-50 dark:border-blue-950/40 overflow-hidden divide-y divide-blue-50 dark:divide-blue-950/40">
+                {commissionTxs.map(tx => (
+                  <div key={tx.id} className="flex justify-between items-center p-6 hover:bg-emerald-50/20 dark:hover:bg-slate-900/20 transition-colors">
+                    <div className="flex items-center gap-4 text-left">
+                      <div className="w-10 h-10 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 rounded-xl flex items-center justify-center text-lg shadow-sm font-black">
+                        👑
+                      </div>
+                      <div>
+                        <p className="text-sm font-black text-slate-955 dark:text-white leading-tight">{tx.description}</p>
+                        <p className="text-[9.5px] text-slate-500 font-bold uppercase tracking-widest mt-1">
+                          Ref: {tx.id} • {new Date(tx.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-base font-black text-emerald-700 dark:text-emerald-400">+₹{tx.amount.toFixed(2)}</p>
+                      <span className="text-[8px] font-black uppercase text-slate-400 tracking-wider">Processed successfully</span>
+                    </div>
+                  </div>
+                ))}
+                {commissionTxs.length === 0 && (
+                  <div className="py-20 text-center bg-white dark:bg-slate-950">
+                    <div className="w-20 h-20 bg-emerald-50 dark:bg-slate-900 rounded-full flex items-center justify-center mx-auto mb-4 border-2 border-dashed border-emerald-200 dark:border-emerald-900/30">
+                      <Trophy className="text-emerald-500" size={32} />
+                    </div>
+                    <p className="text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">No commission entries found yet</p>
+                    <p className="text-[10px] text-slate-400 mt-2 font-bold leading-relaxed px-6">Refer users using your referral code {user.referralCode} to build your live team and earn massive passive royalties up to 20 levels deep!</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* profile View Section */}
+      {tab === 'profile' && (
+        <div className="space-y-6 text-left animate-fade-in">
+          <div className="bg-gradient-to-r from-slate-900 to-blue-955 p-8 rounded-[2.5rem] text-white border-2 border-blue-400 relative overflow-hidden shadow-sm">
+            <span className="text-[8px] font-black bg-blue-650 text-white px-2.5 py-1 rounded-full uppercase tracking-widest font-mono">SECURE REPRESENTATIVE DESK</span>
+            <h2 className="text-2xl font-black uppercase tracking-tight mt-3">Representative profile hub</h2>
+            <p className="text-blue-200 text-xs mt-1">Complete your identity validations, configure e-wallet direct deposits, edit bank forms, and monitor secure nodes.</p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            {/* Column 1: Identity Card and Sponsor */}
+            <div className="p-8 bg-white dark:bg-slate-955 border-2 border-blue-105 dark:border-blue-900/20 rounded-[2.5rem] space-y-6 text-left shadow-sm">
+              <div className="flex items-center gap-4 border-b border-blue-50 dark:border-blue-50 pb-4">
+                <div className="w-14 h-14 bg-blue-650 rounded-3xl flex items-center justify-center text-white text-2xl font-black uppercase shrink-0">
+                  {user.name.charAt(0)}
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-slate-950 dark:text-white text-base leading-tight uppercase truncate">{user.name}</h4>
+                  <p className="text-[10px] text-slate-500 font-extrabold truncate mt-0.5">{user.email}</p>
+                </div>
+              </div>
+
+              <div className="space-y-4 text-xs font-semibold font-sans">
+                <div>
+                  <p className="text-[8px] font-black text-slate-450 uppercase tracking-widest">Phone Contact</p>
+                  <p className="font-bold text-slate-900 dark:text-white mt-1">{user.phone}</p>
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-slate-450 uppercase tracking-widest">Regional State</p>
+                  <p className="font-bold text-slate-900 dark:text-white mt-1">{user.state}</p>
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-slate-450 uppercase tracking-widest">Genealogy Level Depth</p>
+                  <p className="font-black text-blue-700 dark:text-blue-300 mt-1 uppercase">Node Row #{user.level || 0}</p>
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-slate-450 uppercase tracking-widest">Membership status</p>
+                  <span className={cn(
+                    "inline-block px-2.5 py-0.5 mt-1 text-[8px] font-black rounded uppercase tracking-wider",
+                    user.isActivated ? "bg-green-100 text-green-800 dark:bg-green-950 border border-green-300" : "bg-red-100 text-red-800 dark:bg-red-950 border border-red-300"
+                  )}>
+                    {user.isActivated ? '✅ Active Member' : '🚫 Inactive'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Referral code copy */}
+              <div className="bg-slate-50 dark:bg-slate-900 p-5 rounded-3xl border border-slate-100 dark:border-slate-550">
+                <p className="text-[8.5px] font-black text-slate-400 uppercase tracking-widest mb-1">Downline signup link</p>
+                <div className="flex items-center justify-between mt-2 gap-2 bg-white dark:bg-slate-950 p-2.5 rounded-2xl border border-slate-205 dark:border-slate-800">
+                  <p className="font-mono text-xs font-black text-green-700 dark:text-green-400 truncate">{user.referralCode}</p>
+                  <button 
+                    type="button"
+                    onClick={() => {
+                      const signupUrl = `${window.location.origin}?ref=${user.referralCode}`;
+                      navigator.clipboard.writeText(signupUrl); 
+                      alert('Sponsor Referral Sign-up Link Copied!');
+                    }} 
+                    className="p-2 bg-blue-700 hover:bg-blue-800 text-white rounded-lg transition-all active:scale-90 cursor-pointer"
+                    title="Copy Link"
+                  >
+                    <Copy size={12} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Column 2: Citizenship KYC Card */}
+            <div className="p-8 bg-white dark:bg-slate-955 border-2 border-blue-105 dark:border-blue-900/20 rounded-[2.5rem] space-y-5 text-left shadow-sm">
+              <div className="flex items-center gap-3 border-b border-blue-50 dark:border-blue-900/20 pb-4">
+                <div className="w-10 h-10 bg-blue-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center text-blue-700 dark:text-blue-300 border border-blue-150">
+                  <FileText size={20} />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-black dark:text-white leading-none">Citizenship KYC</h4>
+                  <span className={cn(
+                    "px-2 py-0.5 text-[8.0px] font-black rounded uppercase tracking-wider inline-block mt-2",
+                    user.kycDetails?.status === 'approved' ? 'bg-green-100 text-green-700' :
+                    user.kycDetails?.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                  )}>
+                    {user.kycDetails?.status || "NOT SUBMITTED"}
+                  </span>
+                </div>
+              </div>
+
+              {(!user.kycDetails || user.kycDetails.status === 'not_submitted') ? (
+                <form onSubmit={(e) => { e.preventDefault(); if (onSubmitKYC) onSubmitKYC(kycAadhaar, kycPan, kycGst); }} className="space-y-4">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold leading-normal">Submit UID/Aadhaar and PAN details below for corporate verification to allow heavy commission settlements & banking conversions.</p>
+                  <div>
+                    <label className="block text-[8px] font-black text-slate-450 uppercase tracking-widest pl-1 mb-1">Aadhaar Card Number (12 digit)</label>
+                    <input type="text" placeholder="Aadhaar Card (12 Digits)" pattern="\d{12}" required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border-2 border-blue-150 dark:border-blue-900/40 rounded-xl text-xs font-bold text-black dark:text-white focus:border-blue-500 outline-none" value={kycAadhaar} onChange={e => setKycAadhaar(e.target.value.replace(/\D/g, ''))} />
+                  </div>
+                  <div>
+                    <label className="block text-[8px] font-black text-slate-450 uppercase tracking-widest pl-1 mb-1">Permanent Account PAN (10 chars)</label>
+                    <input type="text" placeholder="PAN Number" required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border-2 border-blue-150 dark:border-blue-900/40 rounded-xl text-xs font-bold uppercase text-black dark:text-white focus:border-blue-500 outline-none" value={kycPan} onChange={e => setKycPan(e.target.value)} />
+                  </div>
+                  <div>
+                    <label className="block text-[8px] font-black text-slate-450 uppercase tracking-widest pl-1 mb-1">GST Registration (Optional)</label>
+                    <input type="text" placeholder="GST Registration" className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border-2 border-blue-150 dark:border-blue-900/40 rounded-xl text-xs font-bold uppercase text-black dark:text-white focus:border-blue-500 outline-none" value={kycGst} onChange={e => setKycGst(e.target.value)} />
+                  </div>
+                  <button type="submit" className="w-full py-3 bg-blue-700 hover:bg-blue-800 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-md cursor-pointer">Submit Documents</button>
+                </form>
+              ) : user.kycDetails.status === 'pending' ? (
+                <div className="bg-amber-50 dark:bg-amber-955/20 p-5 rounded-2xl border-2 border-dashed border-amber-300 text-slate-800 dark:text-slate-200">
+                  <p className="text-xs font-black">📄 Verification Active</p>
+                  <p className="text-[10px] font-bold mt-1.5 leading-relaxed">Compliance audit desk is actively checking Aadhaar, GST and PAN. Expect account verification shortly.</p>
+                </div>
+              ) : (
+                <div className="bg-green-50 dark:bg-green-955/25 p-5 rounded-2xl border-2 border-green-300 text-green-900 dark:text-green-300">
+                  <p className="text-xs font-black">✅ KYC Account Verified</p>
+                  <p className="text-[10.5px] font-bold mt-1.5 leading-relaxed">Corporate KYC verified on file. Unlimited banking disbursements and repurchase commissions enabled.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Column 3: Direct Banking Details Card */}
+            <div className="p-8 bg-white dark:bg-slate-955 border-2 border-blue-105 dark:border-blue-900/20 rounded-[2.5rem] space-y-4 text-left shadow-sm">
+              <div className="flex items-center gap-3 border-b border-blue-50 dark:border-blue-50 pb-4">
+                <div className="w-10 h-10 bg-indigo-50 dark:bg-slate-900 rounded-2xl flex items-center justify-center text-indigo-700 dark:text-indigo-400 border border-blue-150">
+                  <Landmark size={20} />
+                </div>
+                <div>
+                  <h4 className="font-extrabold text-black dark:text-white leading-none">Bank Accounts</h4>
+                  <p className="text-[8.5px] text-slate-400 uppercase font-black tracking-wider mt-2.5">Disbursement accounts</p>
+                </div>
+              </div>
+
+              <form 
+                onSubmit={(e) => { 
+                  e.preventDefault(); 
+                  onUpdateBankDetails(bankForm); 
+                  alert('🏦 Standard banking ledger details updated successfully!'); 
+                }} 
+                className="space-y-4"
+              >
+                <div>
+                  <label className="block text-[8px] font-black text-slate-450 uppercase tracking-widest pl-1 mb-1">Bank Name</label>
+                  <input type="text" placeholder="State Bank of India / HDFC" required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border-2 border-blue-150 dark:border-blue-900/40 rounded-xl text-xs font-bold text-black dark:text-white focus:border-blue-500 outline-none" value={bankForm.bankName} onChange={e => setBankForm({ ...bankForm, bankName: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-[8px] font-black text-slate-455 uppercase tracking-widest pl-1 mb-1">Account Holder Full Name</label>
+                  <input type="text" placeholder="Full name of beneficiary" required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border-2 border-blue-150 dark:border-blue-900/40 rounded-xl text-xs font-bold text-black dark:text-white focus:border-blue-500 outline-none" value={bankForm.holderName} onChange={e => setBankForm({ ...bankForm, holderName: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-[8px] font-black text-slate-450 uppercase tracking-widest pl-1 mb-1">Account Number (8 to 18 digits)</label>
+                  <input type="text" placeholder="Beneficiary Account Number" required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border-2 border-blue-150 dark:border-blue-900/40 rounded-xl text-xs font-bold text-black dark:text-white focus:border-blue-500 outline-none" value={bankForm.accountNumber} onChange={e => setBankForm({ ...bankForm, accountNumber: e.target.value.replace(/\D/g, '') })} />
+                </div>
+                <div>
+                  <label className="block text-[8px] font-black text-slate-450 uppercase tracking-widest pl-1 mb-1">IFSC Code Route (11 chars)</label>
+                  <input type="text" placeholder="IFSC Code" required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border-2 border-blue-150 dark:border-blue-900/40 rounded-xl text-xs font-bold uppercase text-black dark:text-white focus:border-blue-500 outline-none" value={bankForm.ifscCode} onChange={e => setBankForm({ ...bankForm, ifscCode: e.target.value })} />
+                </div>
+                <div>
+                  <label className="block text-[8px] font-black text-slate-450 uppercase tracking-widest pl-1 mb-1">UPI Address (Recipient UPI Id)</label>
+                  <input type="text" placeholder="UPI Handle (name@upi)" required className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border-2 border-blue-150 dark:border-blue-900/40 rounded-xl text-xs font-bold text-black dark:text-white focus:border-blue-500 outline-none" value={bankForm.upiId} onChange={e => setBankForm({ ...bankForm, upiId: e.target.value })} />
+                </div>
+                <button type="submit" className="w-full py-3 bg-indigo-700 hover:bg-indigo-805 text-white font-black text-[10px] uppercase tracking-widest rounded-xl transition-all shadow-md cursor-pointer">Update bank settings</button>
+              </form>
+            </div>
+
           </div>
         </div>
       )}

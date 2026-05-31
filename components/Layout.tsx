@@ -57,7 +57,7 @@ export const Layout: React.FC<LayoutProps> = ({
               className="cursor-pointer"
               onClick={() => onTabChange('home')}
             >
-              <Logo size="md" lightText={darkMode} />
+              <Logo size="sm" className="scale-90 md:scale-110 origin-left" lightText={darkMode} />
             </motion.div>
             {user.role === UserRole.ADMIN && (
               <span className="ml-2 px-2.5 py-1 bg-green-50 text-green-800 text-[9px] font-black rounded-full uppercase tracking-widest border border-green-300 flex items-center gap-1 shadow-sm">
