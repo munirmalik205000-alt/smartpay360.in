@@ -125,20 +125,31 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
   }, [formData.referralCode, users]);
 
   return (
-    <div className="min-h-[100dvh] w-full overflow-y-auto no-scrollbar flex flex-col items-center justify-center py-6 px-4 sm:p-6 relative bg-gradient-to-br from-blue-50 via-white to-blue-100 text-[#000000] font-sans animate-fade-in">
-      {/* Liquid Soft Blue Glowing Orbs */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[65%] h-[65%] bg-blue-300/10 rounded-full blur-[120px] transition-all animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-sky-300/10 rounded-full blur-[120px] transition-all animate-pulse duration-5000"></div>
-      </div>
+    <div className="h-[100dvh] w-full flex items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--color-blue-105,_#dbeafe),_var(--color-slate-50))] p-0 md:p-3 overflow-hidden select-none animate-fade-in text-[#000000]">
+      {/* 3D HD Premium Mobile Frame Chassis for absolute physical app feel */}
+      <div className="relative w-full h-[100dvh] md:h-[850px] md:max-w-[420px] rounded-none md:rounded-[3rem] shadow-none md:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.55)] md:border-[10px] md:border-neutral-900 bg-gradient-to-br from-blue-50 via-white to-blue-100 flex flex-col overflow-hidden transition-all duration-300">
+        
+        {/* Smartphone top camera pill notch (only on desktop bezel) */}
+        <div className="hidden md:absolute md:top-2 md:left-1/2 md:-translate-x-1/2 md:w-28 md:h-5 md:bg-neutral-900 md:rounded-full md:z-[60] md:flex md:items-center md:justify-center md:shadow-inner">
+          <div className="w-1.5 h-1.5 rounded-full bg-slate-800 border border-slate-900 mr-2 shrink-0"></div>
+          <div className="w-8 h-1 bg-slate-800/60 rounded-full shrink-0"></div>
+        </div>
 
-      {/* Main Authentication Card - Premium Modern Light Slate Plate */}
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.94, y: 30 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="w-full max-w-sm p-6 sm:p-8 rounded-[2rem] bg-white border-2 border-blue-200 shadow-[0_20px_40px_rgba(0,119,192,0.1)] relative z-10 overflow-hidden text-slate-800"
-      >
+        {/* Liquid Soft Blue Glowing Orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-[-10%] left-[-10%] w-[65%] h-[65%] bg-blue-300/10 rounded-full blur-[120px] transition-all animate-pulse"></div>
+          <div className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-sky-300/10 rounded-full blur-[120px] transition-all animate-pulse duration-5000"></div>
+        </div>
+
+        {/* Scrollable Container within the phone boundary */}
+        <div className="flex-1 overflow-y-auto no-scrollbar w-full px-5 py-6 pt-10 md:pt-14 pb-8 relative z-10 flex flex-col justify-start">
+          {/* Main Authentication Card - Premium Modern Light Slate Plate */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.94, y: 30 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+            className="w-full p-5 sm:p-6 rounded-[2.25rem] bg-white border-2 border-blue-200/60 shadow-[0_15px_35px_rgba(0,119,192,0.08)] relative z-10 overflow-visible text-slate-800"
+          >
         {/* Accent beautiful solid blue top line bar */}
         <div className="absolute top-0 left-0 right-0 h-[6px] bg-gradient-to-r from-blue-600 to-sky-500 shadow-[0_2px_8px_rgba(37,99,235,0.2)]">
         </div>
@@ -459,7 +470,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
             {view === 'login' ? "New Partner? Register Network node →" : "← Already Registered? Return to login"}
           </button>
         </div>
-      </motion.div>
+          </motion.div>
+        </div>
+
+        {/* Realistic virtual physical Home Indicator Bar on simulated phone base */}
+        <div className="hidden md:block shrink-0 h-4 bg-white/75 relative">
+          <div className="absolute bottom-1 right-1/2 translate-x-1/2 w-32 h-1 bg-slate-200 rounded-full"></div>
+        </div>
+      </div>
     </div>
   );
 };
