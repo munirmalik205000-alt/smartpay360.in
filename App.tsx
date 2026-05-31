@@ -245,7 +245,6 @@ const App: React.FC = () => {
 
     // Commission Rates or Absolute values depending on type
     const percentages = commissionType === 'recharge' ? mlmConfig.rechargeCommission : mlmConfig.productCommission;
-    const directPackageRates = mlmConfig.packageCommission;
 
     const updatedUsersMap = new Map<string, User>();
     users.forEach(u => updatedUsersMap.set(u.id, { ...u }));
@@ -256,36 +255,74 @@ const App: React.FC = () => {
 
       // Calculate commission amount
       let earning = 0;
+      let coinEarning = 0;
+
       if (commissionType === 'package') {
-        // Direct Package Commissions (Flat reward per level)
-        earning = directPackageRates[currentLevel - 1] || 1;
+        // Direct Package Commissions (using dynamic level rate splits)
+        const rupeeRate = (mlmConfig.levelRupeeRates && mlmConfig.levelRupeeRates[currentLevel - 1] !== undefined)
+          ? mlmConfig.levelRupeeRates[currentLevel - 1]
+          : (DEFAULT_LEVEL_PERCENTAGES_20[currentLevel - 1] || 0.005);
+
+        const coinRate = (mlmConfig.levelCoinRates && mlmConfig.levelCoinRates[currentLevel - 1] !== undefined)
+          ? mlmConfig.levelCoinRates[currentLevel - 1]
+          : (DEFAULT_LEVEL_PERCENTAGES_20[currentLevel - 1] || 0.005);
+
+        // Rupees Referral Income from ID Activation (rupeeRate * package activation price)
+        earning = parseFloat((baseAmount * rupeeRate).toFixed(2));
+        // Coin Referral Income from ID Activation (calculated from 500 base active coins * coinRate)
+        coinEarning = parseFloat((500 * coinRate).toFixed(2));
       } else {
         // Percentage based on BV / Amount
         const rate = percentages[currentLevel - 1] || 0.001;
         earning = parseFloat((baseAmount * rate).toFixed(2));
       }
 
-      if (earning > 0 && parentUser.isActivated) {
-        // TDS + Admin deduction (5% TDS, e.g.)
-        const tds = parseFloat((earning * mlmConfig.tdsRate).toFixed(2));
-        const service = parseFloat((earning * mlmConfig.serviceCharge).toFixed(2));
-        const finalNetEarning = parseFloat((earning - tds - service).toFixed(2));
+      if (parentUser.isActivated) {
+        let finalNetEarning = 0;
+        let tds = 0;
+        let service = 0;
 
-        // Update wallets - Add to main cash wallet per request
-        parentUser.wallets.main = parseFloat(((parentUser.wallets.main || 0) + finalNetEarning).toFixed(2));
-        parentUser.totalEarned = parseFloat((parentUser.totalEarned + finalNetEarning).toFixed(2));
+        if (earning > 0) {
+          // TDS + Admin deduction (5% TDS, e.g.)
+          tds = parseFloat((earning * mlmConfig.tdsRate).toFixed(2));
+          service = parseFloat((earning * mlmConfig.serviceCharge).toFixed(2));
+          finalNetEarning = parseFloat((earning - tds - service).toFixed(2));
 
-        // Generate Transaction details
-        transactionList.push({
-          id: `COMM-${Date.now()}-${currentLevel}-${Math.random().toString(36).substr(2, 4)}`,
-          userId: parentUser.id,
-          amount: finalNetEarning,
-          walletType: 'main',
-          type: 'commission',
-          description: `Level ${currentLevel} ${commissionType} income (Gross ₹${earning}, TDS ₹${tds}, Dev ₹${service})`,
-          status: 'success',
-          createdAt: new Date().toISOString()
-        });
+          // Update wallets - Add to main cash wallet per request
+          parentUser.wallets.main = parseFloat(((parentUser.wallets.main || 0) + finalNetEarning).toFixed(2));
+          parentUser.totalEarned = parseFloat((parentUser.totalEarned + finalNetEarning).toFixed(2));
+        }
+
+        if (coinEarning > 0) {
+          parentUser.wallets.coinwallet = parseFloat(((parentUser.wallets.coinwallet || 0) + coinEarning).toFixed(2));
+        }
+
+        if (earning > 0) {
+          // Generate Transaction details
+          transactionList.push({
+            id: `COMM-${Date.now()}-${currentLevel}-${Math.random().toString(36).substr(2, 4)}`,
+            userId: parentUser.id,
+            amount: finalNetEarning,
+            walletType: 'main',
+            type: 'commission',
+            description: `Level ${currentLevel} ${commissionType} Income (Gross ₹${earning.toFixed(2)}, TDS ₹${tds.toFixed(2)}, Dev ₹${service.toFixed(2)})`,
+            status: 'success',
+            createdAt: new Date().toISOString()
+          });
+        }
+
+        if (coinEarning > 0) {
+          transactionList.push({
+            id: `ACTCOINC-${Date.now()}-${currentLevel}-${Math.random().toString(36).substr(2, 4)}`,
+            userId: parentUser.id,
+            amount: coinEarning,
+            walletType: 'coinwallet',
+            type: 'coin_commission',
+            description: `Level ${currentLevel} Active Team Coins Commission reward (+${coinEarning} Coins)`,
+            status: 'success',
+            createdAt: new Date().toISOString()
+          });
+        }
 
         // Trigger updates to dynamic rewards progress count at Level 1 up to level 20
         if (parentUser.rewards) {
@@ -899,11 +936,31 @@ const App: React.FC = () => {
     }
 
     handleTransaction(userId, -mlmConfig.packagePrice, walletToDebit, 'activation', `S360 Elite Active Member Package Joining fee`);
-    setUsers(prev => prev.map(u => u.id === userId ? { ...u, isActivated: true, status: 'active' } : u));
+    setUsers(prev => prev.map(u => u.id === userId ? { 
+      ...u, 
+      isActivated: true, 
+      status: 'active',
+      wallets: {
+        ...u.wallets,
+        coinwallet: parseFloat(((u.wallets.coinwallet || 0) + 500).toFixed(2))
+      }
+    } : u));
+
+    // Record user's stake coins bonus transaction
+    setTransactions(prev => [{
+      id: `ACTCOIN-${Date.now()}`,
+      userId,
+      amount: 500,
+      walletType: 'coinwallet',
+      type: 'coin_reward',
+      description: `S360 Elite Activation Stake Coins Reward`,
+      status: 'success',
+      createdAt: new Date().toISOString()
+    }, ...prev]);
 
     // Distribute core Level Package commissions up to 20 levels!
     distributeMLMCommissions(userId, mlmConfig.packagePrice, 'package');
-    alert(`🎉 Congratulations! Your active core MLM distribution portfolio is online now. Debited from your ${walletToDebit === 'recharge' ? 'Recharge' : 'Main'} Wallet.`);
+    alert(`🎉 Congratulations! Your active core MLM distribution portfolio is online now. You received 500 Coins stake bonus! Debited from your ${walletToDebit === 'recharge' ? 'Recharge' : 'Main'} Wallet.`);
   };
 
   // Submit KYC
