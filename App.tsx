@@ -75,7 +75,15 @@ const App: React.FC = () => {
     return safeLocalStorage.getItem('spay_theme', 'dark') === 'dark';
   });
 
-  const [users, setUsers] = useState<User[]>(() => JSON.parse(safeLocalStorage.getItem('spay_users', '[]')));
+  const [users, setUsers] = useState<User[]>(() => {
+    try {
+      const parsed = JSON.parse(safeLocalStorage.getItem('spay_users', '[]'));
+      if (Array.isArray(parsed)) {
+        return parsed.filter((u: any) => u && u.id && !u.id.startsWith('MOCK-') && !(u.email && u.email.toLowerCase().includes('sponsor_')) && !(u.name && u.name.toLowerCase().includes('sponsor partner')));
+      }
+    } catch {}
+    return [];
+  });
   const [products, setProducts] = useState<Product[]>(() => JSON.parse(safeLocalStorage.getItem('spay_products', JSON.stringify(INITIAL_PRODUCTS))));
   const [orders, setOrders] = useState<Order[]>(() => JSON.parse(safeLocalStorage.getItem('spay_orders', '[]')));
   const [transactions, setTransactions] = useState<Transaction[]>(() => JSON.parse(safeLocalStorage.getItem('spay_tx', '[]')));
@@ -702,40 +710,6 @@ const App: React.FC = () => {
     alert(`🎉 Purchase completed successfully! Upgrade complete. You received ${pkg.coin} Coins & PV ${pkg.pv} counts towards your selfPV metrics! 20-Level Cascade split has been completed!`);
   };
 
-  const handleEnsureSponsor = (code: string) => {
-    const formattedCode = String(code).trim().toUpperCase();
-    if (!formattedCode) return;
-    
-    setUsers(prev => {
-      const exists = prev.some(u => u && u.referralCode && String(u.referralCode).trim().toUpperCase() === formattedCode);
-      if (exists) return prev;
-
-      const newSponsor: User = {
-        id: `MOCK-${formattedCode}-${Date.now()}`,
-        name: `Sponsor Partner (${formattedCode})`,
-        email: `sponsor_${formattedCode.toLowerCase()}@spay.com`,
-        password: 'password123',
-        transactionPin: '1111',
-        phone: `91${Math.floor(10000000 + Math.random() * 90000000)}`,
-        state: 'Delhi',
-        referralCode: formattedCode,
-        referrerId: 'admin-0', // default to admin
-        role: UserRole.USER,
-        wallets: { main: 5000, commission: 200, cashback: 50, recharge: 2000, shopping: 500, reward: 10, ewallet: 2000, coinwallet: 500 },
-        totalEarned: 250,
-        status: 'active',
-        level: 1,
-        joinedAt: new Date(Date.now() - 48 * 3600 * 1000).toISOString(),
-        isActivated: true,
-        selfPV: 100,
-        rewards: INITIAL_REWARDS.map(r => ({ ...r, currentSalesCount: 1, status: 'locked' as const })),
-        kycDetails: { aadhaarNumber: '', panNumber: '', status: 'approved' }
-      };
-
-      return [...prev, newSponsor];
-    });
-  };
-
   const handleSignup = (data: any) => {
     const signupEmail = String(data.email || '').trim().toLowerCase();
     if (users.some(u => u && u.email && u.email.toLowerCase().trim() === signupEmail)) {
@@ -750,7 +724,12 @@ const App: React.FC = () => {
 
     const ref = users.find(u => {
       if (!u || !u.referralCode) return false;
-      return String(u.referralCode).trim().toUpperCase() === inputReferralCode && u.status === 'active';
+      const idStr = String(u.id || '');
+      const emailStr = String(u.email || '').toLowerCase();
+      const nameStr = String(u.name || '').toLowerCase();
+      
+      const isMock = idStr.startsWith('MOCK-') || emailStr.includes('sponsor_') || nameStr.includes('sponsor partner');
+      return String(u.referralCode).trim().toUpperCase() === inputReferralCode && u.status === 'active' && !isMock;
     });
 
     if (!ref) {
@@ -1171,7 +1150,7 @@ const App: React.FC = () => {
   if (!currentUser || !activeUser) {
     return (
       <ErrorBoundary>
-        <Auth onLogin={handleLogin} onSignup={handleSignup} onRecover={handleRecover} users={users} onEnsureSponsor={handleEnsureSponsor} />
+        <Auth onLogin={handleLogin} onSignup={handleSignup} onRecover={handleRecover} users={users} />
       </ErrorBoundary>
     );
   }

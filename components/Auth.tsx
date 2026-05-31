@@ -25,7 +25,6 @@ interface AuthProps {
   onSignup: (data: any) => void;
   onRecover: (email: string, phone: string, type: 'password' | 'pin') => string | null;
   users: UserType[];
-  onEnsureSponsor?: (code: string) => void;
 }
 
 const STATES = [
@@ -37,7 +36,7 @@ const STATES = [
   "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal"
 ];
 
-const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsureSponsor }) => {
+const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users }) => {
   const [view, setView] = useState<'login' | 'signup' | 'recover-password' | 'recover-pin'>('login');
   const [stateSearch, setStateSearch] = useState('');
   const [isStateOpen, setIsStateOpen] = useState(false);
@@ -62,18 +61,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
       setView('signup');
     }
   }, []);
-
-  useEffect(() => {
-    const code = String(formData.referralCode || '').trim().toUpperCase();
-    if (code.length < 2) return;
-    
-    // Check if the sponsor code already exists in users
-    const exists = users.some(u => u && u.referralCode && String(u.referralCode).trim().toUpperCase() === code);
-    
-    if (!exists && onEnsureSponsor) {
-      onEnsureSponsor(code);
-    }
-  }, [formData.referralCode, users, onEnsureSponsor]);
 
   const filteredStates = useMemo(() => {
     return STATES.filter(s => s.toLowerCase().includes(stateSearch.toLowerCase()));
@@ -129,7 +116,12 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
     if (!code) return null;
     return users.find(u => {
       if (!u || !u.referralCode) return false;
-      return String(u.referralCode).trim().toUpperCase() === code && u.status === 'active';
+      const idStr = String(u.id || '');
+      const emailStr = String(u.email || '').toLowerCase();
+      const nameStr = String(u.name || '').toLowerCase();
+      
+      const isMock = idStr.startsWith('MOCK-') || emailStr.includes('sponsor_') || nameStr.includes('sponsor partner');
+      return String(u.referralCode).trim().toUpperCase() === code && u.status === 'active' && !isMock;
     });
   }, [formData.referralCode, users]);
 
