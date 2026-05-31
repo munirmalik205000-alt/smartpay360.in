@@ -114,6 +114,16 @@ const AdminPanel: React.FC<AdminProps> = ({
     };
     onUpdateConfig(updated);
     safeLocalStorage.setItem('spay_config', JSON.stringify(updated));
+    
+    // Save to server-side persistent system configuration
+    fetch('/api/config', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updated)
+    }).catch(err => console.error('Failed to save configuration permanently:', err));
+
     window.dispatchEvent(new Event('spay-logo-updated'));
     alert('🎨 Platform Logo & branding config has been updated successfully across both the Login Page and User Dashboard! Click OK to view changes.');
   };
@@ -128,6 +138,16 @@ const AdminPanel: React.FC<AdminProps> = ({
     };
     onUpdateConfig(updated);
     safeLocalStorage.setItem('spay_config', JSON.stringify(updated));
+    
+    // Save to server-side persistent system configuration
+    fetch('/api/config', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(updated)
+    }).catch(err => console.error('Failed to reset configuration permanently:', err));
+
     window.dispatchEvent(new Event('spay-logo-updated'));
     alert('Platform custom branding has been reset to default.');
   };

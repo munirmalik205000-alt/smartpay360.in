@@ -115,6 +115,39 @@ const App: React.FC = () => {
     }
   });
 
+  // Load and sync configuration from the full-stack server
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await fetch('/api/config');
+        if (response.ok) {
+          const serverConfig = await response.json();
+          if (serverConfig && (serverConfig.customLogo || serverConfig.systemName || serverConfig.qrCode)) {
+            // Merge with local config
+            const localConfigStr = safeLocalStorage.getItem('spay_config', '{}');
+            const localConfig = JSON.parse(localConfigStr);
+            const merged = { ...localConfig, ...serverConfig };
+            safeLocalStorage.setItem('spay_config', JSON.stringify(merged));
+            
+            // Also update the MLMConfig state
+            setMlmConfig(prev => ({
+              ...prev,
+              ...serverConfig,
+              levelRupeeRates: serverConfig.levelRupeeRates || prev.levelRupeeRates,
+              levelCoinRates: serverConfig.levelCoinRates || prev.levelCoinRates
+            }));
+            
+            // Trigger instant reactive logo and text updates
+            window.dispatchEvent(new Event('spay-logo-updated'));
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching global brand configuration:', err);
+      }
+    };
+    fetchConfig();
+  }, []);
+
   // Theme support
   useEffect(() => {
     if (darkMode) {

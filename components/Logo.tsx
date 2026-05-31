@@ -40,22 +40,14 @@ export const Logo: React.FC<LogoProps> = ({
   };
 
   const getLogoSizeClass = () => {
-    if (currentLogo) {
-      const bannerClasses = {
-        sm: 'w-28 h-8 md:w-32 md:h-10',
-        md: 'w-40 h-12 md:w-48 md:h-14',
-        lg: 'w-64 h-20 md:w-72 md:h-24 max-w-full',
-        xl: 'w-72 h-24 md:w-80 md:h-28 max-w-full',
-      };
-      return bannerClasses[size];
-    }
-    const squareClasses = {
-      sm: 'w-10 h-10',
-      md: 'w-14 h-14',
-      lg: 'w-24 h-24',
-      xl: 'w-32 h-32',
+    // Elegant uniform banner-style aspect ratio for both custom image and vector SVG logos
+    const bannerClasses = {
+      sm: 'w-32 h-10',
+      md: 'w-40 h-12 md:w-48 md:h-14',
+      lg: 'w-64 h-20 md:w-72 md:h-24 max-w-full',
+      xl: 'w-72 h-24 md:w-80 md:h-28 max-w-full',
     };
-    return squareClasses[size];
+    return bannerClasses[size];
   };
 
   const loadFromLocalStorage = () => {
@@ -164,22 +156,24 @@ export const Logo: React.FC<LogoProps> = ({
 
   return (
     <div className={cn("flex items-center justify-center select-none group relative mx-auto", className)}>
-      {/* Logo Icon portion */}
-      <div className={cn("relative shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-105", currentLogo ? "bg-transparent shadow-none" : "rounded-2xl overflow-hidden shadow-sm", getLogoSizeClass())}>
+      {/* Dynamic branding logo wrapper */}
+      <div className={cn(
+        "relative shrink-0 flex items-center justify-center transition-transform duration-300 group-hover:scale-[1.03]", 
+        getLogoSizeClass(),
+        currentLogo && lightText ? "bg-white p-2 rounded-2xl shadow-lg border border-slate-700/20" : ""
+      )}>
         {currentLogo ? (
           <img 
             src={currentLogo} 
-            alt="Logo Icon" 
+            alt="SmartPay 360" 
             className={cn(
               "w-full h-full object-contain transition-all duration-300",
-              lightText 
-                ? "invert contrast-125 brightness-110 mix-blend-screen" 
-                : "mix-blend-multiply"
+              !lightText && "mix-blend-multiply"
             )}
             referrerPolicy="no-referrer"
           />
         ) : (
-          <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_4px_12px_rgba(2,132,199,0.3)]">
+          <svg viewBox="0 0 280 80" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
             <defs>
               <linearGradient id="s360-sky-lite" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#0ea5e9" />
@@ -202,21 +196,48 @@ export const Logo: React.FC<LogoProps> = ({
               </linearGradient>
             </defs>
 
-            {/* Upper Loop (Sky/Blue Gradient) */}
-            <path d="M 14,31 L 50,10 L 50,21 L 23,36 Z" fill="url(#s360-sky-lite)" />
-            <path d="M 50,10 L 86,31 L 86,41 L 50,21 Z" fill="url(#s360-sky-dark)" />
-            <path d="M 86,31 L 86,51 L 68,61 L 68,41 Z" fill="url(#s360-sky-dark)" />
-            <path d="M 68,41 L 68,51 L 50,61 L 50,51 Z" fill="url(#s360-sky-lite)" />
-            <path d="M 50,51 L 50,61 L 32,51 L 32,41 Z" fill="url(#s360-sky-lite)" />
-            <path d="M 32,41 L 50,31 L 68,41 L 50,48 Z" fill="url(#s360-sky-dark)" opacity="0.85" />
+            {/* S-shaped hexagon logo on the left - translated & scaled to fit 80px high container */}
+            <g transform="translate(10, 5) scale(0.7)">
+              {/* Upper Loop (Sky/Blue Gradient) */}
+              <path d="M 14,31 L 50,10 L 50,21 L 23,36 Z" fill="url(#s360-sky-lite)" />
+              <path d="M 50,10 L 86,31 L 86,41 L 50,21 Z" fill="url(#s360-sky-dark)" />
+              <path d="M 86,31 L 86,51 L 68,61 L 68,41 Z" fill="url(#s360-sky-dark)" />
+              <path d="M 68,41 L 68,51 L 50,61 L 50,51 Z" fill="url(#s360-sky-lite)" />
+              <path d="M 50,51 L 50,61 L 32,51 L 32,41 Z" fill="url(#s360-sky-lite)" />
+              <path d="M 32,41 L 50,31 L 68,41 L 50,48 Z" fill="url(#s360-sky-dark)" opacity="0.85" />
 
-            {/* Lower Loop (Navy/Blue Gradient) */}
-            <path d="M 86,69 L 50,90 L 50,79 L 77,64 Z" fill="url(#s360-navy-lite)" />
-            <path d="M 50,90 L 14,69 L 14,59 L 50,79 Z" fill="url(#s360-navy-dark)" />
-            <path d="M 14,69 L 14,49 L 32,39 L 32,59 Z" fill="url(#s360-navy-dark)" />
-            <path d="M 32,59 L 32,49 L 50,39 L 50,49 Z" fill="url(#s360-navy-lite)" />
-            <path d="M 50,49 L 50,39 L 68,49 L 68,59 Z" fill="url(#s360-navy-lite)" />
-            <path d="M 68,59 L 50,69 L 32,59 L 50,52 Z" fill="url(#s360-navy-dark)" opacity="0.85" />
+              {/* Lower Loop (Navy/Blue Gradient) */}
+              <path d="M 86,69 L 50,90 L 50,79 L 77,64 Z" fill="url(#s360-navy-lite)" />
+              <path d="M 50,90 L 14,69 L 14,59 L 50,79 Z" fill="url(#s360-navy-dark)" />
+              <path d="M 14,69 L 14,49 L 32,39 L 32,59 Z" fill="url(#s360-navy-dark)" />
+              <path d="M 32,59 L 32,49 L 50,39 L 50,49 Z" fill="url(#s360-navy-lite)" />
+              <path d="M 50,49 L 50,39 L 68,49 L 68,59 Z" fill="url(#s360-navy-lite)" />
+              <path d="M 68,59 L 50,69 L 32,59 L 50,52 Z" fill="url(#s360-navy-dark)" opacity="0.85" />
+            </g>
+
+            {/* Stylized Brand Typography on the right */}
+            <text 
+              x="90" 
+              y="38" 
+              font-family="'Inter', ui-sans-serif, system-ui, sans-serif" 
+              font-weight="800" 
+              font-size="28" 
+              fill={lightText ? "#ffffff" : "#0c4a6e"}
+              letter-spacing="-0.03em"
+            >
+              SmartPay
+            </text>
+            <text 
+              x="90" 
+              y="66" 
+              font-family="'Inter', ui-sans-serif, system-ui, sans-serif" 
+              font-weight="700" 
+              font-size="26" 
+              fill={lightText ? "#38bdf8" : "#0ea5e9"}
+              letter-spacing="-0.02em"
+            >
+              360
+            </text>
           </svg>
         )}
         
