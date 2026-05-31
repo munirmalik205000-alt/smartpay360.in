@@ -269,7 +269,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 py-2 border-b-2 border-blue-200 pb-4">
             <div className="text-left">
               <p className="text-[10px] font-black text-blue-800 uppercase tracking-widest pl-0.5 leading-none font-mono">
-                ⚡ NODE ID SYSTEM ENABLED
+                ⚡ SMARTPAY SMART SYSTEM 
               </p>
               <h1 className="text-3xl font-black text-black tracking-tight mt-1 flex items-center gap-1.5 leading-tight">
                 {user.name} <Sparkles size={18} className="text-amber-600 animate-spin" />
@@ -1185,7 +1185,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   />
                 </div>
                 <button type="submit" className="w-full py-4 bg-blue-700 hover:bg-blue-800 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-md transition-all cursor-pointer font-sans">
-                  Send E-Wallet Cash
+                  Send E-Wallet 
                 </button>
               </form>
             )}
@@ -1221,7 +1221,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   />
                 </div>
                 <button type="submit" className="w-full py-4 bg-blue-800 hover:bg-blue-900 text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-md transition-all cursor-pointer font-sans">
-                  Activate Self Convert Topup
+                  Activate Self 
                 </button>
               </form>
             )}
