@@ -742,12 +742,20 @@ const App: React.FC = () => {
       return alert('🚨 Error: Email registered with another account.');
     }
 
-    // Check sponsor ID
+    // Check sponsor ID - strictly require valid & active code
     const inputReferralCode = String(data.referralCode || '').trim().toUpperCase();
+    if (!inputReferralCode) {
+      return alert('🚨 Error: Referral Code is required to sign up.');
+    }
+
     const ref = users.find(u => {
       if (!u || !u.referralCode) return false;
-      return String(u.referralCode).trim().toUpperCase() === inputReferralCode;
-    }) || users[0]; // defaults to admin-0 if empty
+      return String(u.referralCode).trim().toUpperCase() === inputReferralCode && u.status === 'active';
+    });
+
+    if (!ref) {
+      return alert('🚨 Error: The sponsor referral code is invalid, inactive, or suspended.');
+    }
     
     const initialRewardsList: RewardTarget[] = INITIAL_REWARDS.map(r => ({ ...r, currentSalesCount: 0 }));
 

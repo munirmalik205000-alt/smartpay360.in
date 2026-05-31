@@ -86,6 +86,15 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
     if (view === 'login') {
       onLogin(formData.phone, formData.password);
     } else if (view === 'signup') {
+      const code = String(formData.referralCode || '').trim();
+      if (!code) {
+        alert('Please enter your sponsor referral code.');
+        return;
+      }
+      if (!foundUpline) {
+        alert('Invalid or inactive referral code. Please enter a valid and active sponsor code.');
+        return;
+      }
       if (formData.transactionPin.length !== 4) {
         alert('Transaction PIN must be exactly 4 digits.');
         return;
@@ -120,7 +129,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
     if (!code) return null;
     return users.find(u => {
       if (!u || !u.referralCode) return false;
-      return String(u.referralCode).trim().toUpperCase() === code;
+      return String(u.referralCode).trim().toUpperCase() === code && u.status === 'active';
     });
   }, [formData.referralCode, users]);
 
@@ -222,31 +231,36 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
               {view === 'signup' && (
                 <div className="space-y-1">
                   <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider ml-1">Referral Code (Sponsor Code)</label>
-                  <div className="relative">
-                    <Share2 size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600" />
+                  <div className="relative flex items-center">
+                    <Share2 size={15} className="absolute left-4 text-blue-600" />
                     <input
                       type="text"
-                      className="w-full pl-11 pr-5 py-3.5 bg-white border-2 border-blue-500 focus:border-blue-600 text-slate-900 font-extrabold text-xs rounded-2xl uppercase focus:outline-none transition-all shadow-sm focus:ring-4 focus:ring-blue-100 placeholder-slate-400"
+                      className="w-full pl-11 pr-[135px] py-3.5 bg-white border-2 border-blue-500 focus:border-blue-600 text-slate-900 font-extrabold text-xs rounded-2xl uppercase focus:outline-none transition-all shadow-sm focus:ring-4 focus:ring-blue-105 placeholder-slate-400"
                       placeholder="ENTER REFERRAL CODE"
                       value={formData.referralCode}
                       onChange={(e) => setFormData({...formData, referralCode: e.target.value.toUpperCase()})}
                     />
+                    {/* Sponsor name right inside the input field context at the opposite/far side */}
+                    {formData.referralCode.trim() && (
+                      <div className="absolute right-2.5 max-w-[125px] flex items-center">
+                        {foundUpline ? (
+                          <div className="bg-green-100 text-green-800 text-[8.5px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border border-green-300 truncate shadow-sm flex items-center gap-1">
+                            <span className="w-1 h-1 rounded-full bg-green-500 inline-block animate-pulse"></span>
+                            <span className="truncate">{foundUpline.name}</span>
+                          </div>
+                        ) : (
+                          <div className="bg-red-50 text-red-700 text-[8.5px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border border-red-300 truncate shadow-sm">
+                            Invalid
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {/* Real-time Upline Sponsor Verification preview as clear Green / red tags */}
+                  {/* Compact verification notification */}
                   {formData.referralCode.trim() && (
-                    <div 
-                      className={cn(
-                        "mt-1.5 px-3 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-wider border flex items-center gap-2 transition-all duration-300",
-                        foundUpline 
-                          ? "bg-green-50 border-green-200 text-green-850" 
-                          : "bg-red-50 border-red-200 text-red-650"
-                      )}
-                    >
-                      <div className={cn("w-1.5 h-1.5 rounded-full", foundUpline ? "bg-green-600 animate-ping" : "bg-red-500")} />
-                      <span>
-                        {foundUpline ? `✅ Sponsor Active: ${foundUpline.name}` : `❌ Invalid Sponsor Code`}
-                      </span>
-                    </div>
+                    <p className={`text-[8.5px] font-black uppercase mt-1 ml-1 leading-tight tracking-wider ${foundUpline ? 'text-green-600' : 'text-red-500 animate-pulse'}`}>
+                      {foundUpline ? `✅ Active Sponsor Detected` : `❌ Code doesn't exist or sponsor is suspended/inactive`}
+                    </p>
                   )}
                 </div>
               )}
