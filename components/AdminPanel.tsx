@@ -881,6 +881,21 @@ const AdminPanel: React.FC<AdminProps> = ({
                 </div>
               </div>
 
+              {/* Dynamic Platform System Custom Name Input */}
+              <div className="bg-blue-50/20 p-5 rounded-3xl border border-blue-100 space-y-1">
+                <label className="block text-[10px] font-black text-blue-900 uppercase tracking-widest pl-1">Custom Brand/Platform Name (SmartPay Replacement)</label>
+                <input 
+                  type="text" 
+                  className="w-full px-4 py-3.5 bg-white border-2 border-blue-150 rounded-2xl font-black text-xs text-black uppercase tracking-widest focus:border-blue-650 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all shadow-sm"
+                  placeholder="e.g. SMARTPAY 360" 
+                  value={config.systemName || ''}
+                  onChange={(e) => onUpdateConfig({ ...config, systemName: e.target.value.toUpperCase() })}
+                />
+                <p className="text-[9px] text-slate-500 leading-tight font-black uppercase tracking-wider pl-1 pt-1">
+                  💡 Type your platform's name here to live-rebrand all text headers, greetings, links, and system notifications instantly!
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-[10px] font-black text-blue-900 uppercase tracking-widest mb-1 pl-1">Activation Package (₹)</label>

@@ -125,19 +125,19 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
   }, [formData.referralCode, users]);
 
   return (
-    <div className="min-h-[100dvh] w-full overflow-y-auto no-scrollbar flex flex-col items-center justify-center py-6 px-4 sm:p-6 relative bg-gradient-to-br from-blue-50 via-white to-blue-100 text-[#000000] font-sans">
+    <div className="min-h-[100dvh] w-full overflow-y-auto no-scrollbar flex flex-col items-center justify-center py-6 px-4 sm:p-6 relative bg-gradient-to-br from-blue-50 via-white to-blue-100 text-[#000000] font-sans animate-fade-in">
       {/* Liquid Soft Blue Glowing Orbs */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[65%] h-[65%] bg-blue-400/20 rounded-full blur-[120px] transition-all animate-pulse"></div>
-        <div className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-sky-300/20 rounded-full blur-[120px] transition-all animate-pulse duration-5000"></div>
+        <div className="absolute top-[-10%] left-[-10%] w-[65%] h-[65%] bg-blue-300/10 rounded-full blur-[120px] transition-all animate-pulse"></div>
+        <div className="absolute bottom-[-10%] right-[-10%] w-[65%] h-[65%] bg-sky-300/10 rounded-full blur-[120px] transition-all animate-pulse duration-5000"></div>
       </div>
 
-      {/* Main Authentication Card - Clean Crisp White & Blue Plate */}
+      {/* Main Authentication Card - Premium Modern Light Slate Plate */}
       <motion.div 
         initial={{ opacity: 0, scale: 0.94, y: 30 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="w-full max-w-sm p-6 sm:p-8 rounded-[2rem] bg-white border-2 border-blue-600/15 shadow-[0_20px_40px_rgba(0,119,192,0.1)] relative z-10 overflow-hidden"
+        className="w-full max-w-sm p-6 sm:p-8 rounded-[2rem] bg-white border-2 border-blue-200 shadow-[0_20px_40px_rgba(0,119,192,0.1)] relative z-10 overflow-hidden text-slate-800"
       >
         {/* Accent beautiful solid blue top line bar */}
         <div className="absolute top-0 left-0 right-0 h-[6px] bg-gradient-to-r from-blue-600 to-sky-500 shadow-[0_2px_8px_rgba(37,99,235,0.2)]">
@@ -147,7 +147,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
         <div className="flex flex-col items-center text-center mb-5 mt-2">
           {/* We ensure logo rendering is clean and dark text compliant */}
           <Logo size="lg" lightText={false} className="justify-center" />
-          <p className="text-[10px] text-blue-700 font-extrabold uppercase tracking-[0.2em] mt-3.5 bg-blue-50 px-3.5 py-1.2 rounded-full border border-blue-200/60">
+          <p className="text-[10px] text-blue-700 font-extrabold uppercase tracking-[0.2em] mt-3.5 bg-blue-50 px-3.5 py-1.5 rounded-full border border-blue-150">
             Unified Portal Gateway
           </p>
         </div>
@@ -163,10 +163,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
               key={t.id} 
               onClick={() => { setView(t.id as any); setRecoveryResult(null); }}
               className={cn(
-                "flex-1 py-2.5 rounded-xl text-[10px] font-black transition-all duration-300 uppercase tracking-widest cursor-pointer",
+                "flex-1 py-2.5 rounded-xl text-[10px] font-black transition-all duration-300 uppercase tracking-widest cursor-pointer text-center",
                 (view === t.id || (view.startsWith('recover') && t.id === 'login')) 
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-700 text-white shadow-md shadow-blue-500/15 border border-blue-600/10" 
-                  : "text-slate-500 hover:text-black hover:bg-white/60"
+                  ? "bg-purple-900 hover:bg-purple-950 text-white shadow-md shadow-purple-900/30 border-2 border-purple-700" 
+                  : "text-slate-600 hover:text-purple-900 hover:bg-white/60"
               )}
             >
               {t.label}
@@ -181,20 +181,20 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="text-center space-y-6"
+              className="text-center space-y-6 animate-fade-in"
             >
-              <div className="p-6 rounded-3xl border border-green-200 bg-green-50/50 text-center shadow-inner">
-                 <div className="w-12 h-12 bg-green-700 rounded-full flex items-center justify-center text-white mx-auto mb-4 shadow-md shadow-green-750/20">
+              <div className="p-6 rounded-3xl border border-green-200 bg-green-50 text-center shadow-inner">
+                 <div className="w-12 h-12 bg-green-600 rounded-full flex items-center justify-center text-white mx-auto mb-4 shadow-md shadow-green-600/20">
                    <CheckCircle2 size={24} />
                  </div>
                  <p className="text-[11px] font-black text-green-800 uppercase tracking-widest mb-2">Verification Successful</p>
-                 <p className="text-slate-700 text-[10px] font-bold uppercase tracking-wider mb-2">Security credentials recovered:</p>
+                 <p className="text-slate-600 text-[10px] font-bold uppercase tracking-wider mb-2">Security credentials recovered:</p>
                  <p className="text-2xl font-black text-green-800 select-all font-mono tracking-tight">{recoveryResult}</p>
               </div>
               <button 
                 type="button"
                 onClick={() => { setView('login'); setRecoveryResult(null); }}
-                className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-black rounded-2xl uppercase tracking-widest text-[10px] shadow-lg hover:scale-102 transition-all active:scale-98 border border-blue-700/20 cursor-pointer"
+                className="w-full py-3.5 bg-purple-900 hover:bg-purple-950 text-white font-black rounded-2xl uppercase tracking-widest text-[11px] shadow-lg shadow-purple-950/20 hover:scale-102 transition-all active:scale-98 border-2 border-purple-700 cursor-pointer text-center"
               >
                 Return to Login
               </button>
@@ -206,32 +206,32 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -8 }}
               onSubmit={handleSubmit} 
-              className="space-y-4 text-[#000000]"
+              className="space-y-4 text-slate-800"
             >
               {view === 'signup' && (
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-[#000000] uppercase tracking-wider ml-1">Referral Code (Sponsor Code)</label>
+                  <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider ml-1">Referral Code (Sponsor Code)</label>
                   <div className="relative">
                     <Share2 size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600" />
                     <input
                       type="text"
-                      className="w-full pl-11 pr-5 py-3.5 bg-white border-2 border-slate-200 focus:border-blue-600 text-[#000000] font-black text-xs rounded-2xl uppercase focus:outline-none transition-all shadow-sm focus:ring-4 focus:ring-blue-105"
+                      className="w-full pl-11 pr-5 py-3.5 bg-white border-2 border-blue-500 focus:border-blue-600 text-slate-900 font-extrabold text-xs rounded-2xl uppercase focus:outline-none transition-all shadow-sm focus:ring-4 focus:ring-blue-100 placeholder-slate-400"
                       placeholder="ENTER REFERRAL CODE"
                       value={formData.referralCode}
                       onChange={(e) => setFormData({...formData, referralCode: e.target.value.toUpperCase()})}
                     />
                   </div>
-                  {/* Real-time Upline Sponsor Verification preview as dark Green / red */}
+                  {/* Real-time Upline Sponsor Verification preview as clear Green / red tags */}
                   {formData.referralCode.trim() && (
                     <div 
                       className={cn(
                         "mt-1.5 px-3 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-wider border flex items-center gap-2 transition-all duration-300",
                         foundUpline 
-                          ? "bg-green-50/70 border-green-200 text-green-800" 
-                          : "bg-red-50/70 border-red-200 text-red-650"
+                          ? "bg-green-50 border-green-200 text-green-850" 
+                          : "bg-red-50 border-red-200 text-red-650"
                       )}
                     >
-                      <div className={cn("w-1.5 h-1.5 rounded-full", foundUpline ? "bg-green-700 animate-ping" : "bg-red-600")} />
+                      <div className={cn("w-1.5 h-1.5 rounded-full", foundUpline ? "bg-green-600 animate-ping" : "bg-red-500")} />
                       <span>
                         {foundUpline ? `✅ Sponsor Active: ${foundUpline.name}` : `❌ Invalid Sponsor Code`}
                       </span>
@@ -242,13 +242,13 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
 
               {view === 'signup' && (
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-[#000000] uppercase tracking-wider ml-1">Full Name</label>
+                  <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider ml-1">Full Name</label>
                   <div className="relative">
                     <User size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600" />
                     <input
                       type="text"
                       required
-                      className="w-full pl-11 pr-5 py-3.5 bg-white border-2 border-slate-200 focus:border-blue-600 text-[#000000] font-black text-xs rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-105 transition-all shadow-sm"
+                      className="w-full pl-11 pr-5 py-3.5 bg-white border-2 border-blue-500 focus:border-blue-600 text-slate-900 font-extrabold text-xs rounded-2xl focus:outline-none transition-all shadow-sm focus:ring-4 focus:ring-blue-100 placeholder-slate-400"
                       placeholder="Enter legal state name"
                       value={formData.name}
                       onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -259,7 +259,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
 
               {view === 'signup' && (
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-[#000000] uppercase tracking-wider ml-1">
+                  <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider ml-1">
                     Email Address
                   </label>
                   <div className="relative">
@@ -267,7 +267,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
                     <input
                       type="email"
                       required
-                      className="w-full pl-11 pr-5 py-3.5 bg-white border-2 border-slate-200 focus:border-blue-600 text-[#000000] font-black text-xs rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-105 transition-all shadow-sm"
+                      className="w-full pl-11 pr-5 py-3.5 bg-white border-2 border-blue-500 focus:border-blue-600 text-slate-900 font-extrabold text-xs rounded-2xl focus:outline-none transition-all shadow-sm focus:ring-4 focus:ring-blue-100 placeholder-slate-400"
                       placeholder="name@example.com"
                       value={formData.email}
                       onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -277,8 +277,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
               )}
 
               {view === 'login' && (
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-[#000000] uppercase tracking-wider ml-1">
+                <div className="space-y-1 animate-fade-in">
+                  <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider ml-1">
                     Mobile Number
                   </label>
                   <div className="relative">
@@ -286,7 +286,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
                     <input
                       type="text"
                       required
-                      className="w-full pl-11 pr-5 py-3.5 bg-white border-2 border-slate-200 focus:border-blue-600 text-[#000000] font-black text-xs rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-105 transition-all shadow-sm animate-fade-in"
+                      className="w-full pl-11 pr-5 py-3.5 bg-white border-2 border-blue-500 focus:border-blue-600 text-slate-900 font-extrabold text-xs rounded-2xl focus:outline-none transition-all shadow-sm focus:ring-4 focus:ring-blue-100 placeholder-slate-400"
                       placeholder="Enter 10-digit Mobile Number"
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
@@ -298,13 +298,13 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
               {(view === 'signup' || view.startsWith('recover')) && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-black text-[#000000] uppercase tracking-wider ml-1">Mobile</label>
+                    <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider ml-1">Mobile</label>
                     <div className="relative">
                       <Phone size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600" />
                       <input
                         type="tel"
                         required
-                        className="w-full pl-8 pr-2 py-3.5 bg-white border-2 border-slate-200 focus:border-blue-600 text-[#000000] font-black text-xs rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-105 transition-all shadow-sm"
+                        className="w-full pl-8 pr-2 py-3.5 bg-white border-2 border-blue-500 focus:border-blue-600 text-slate-900 font-extrabold text-xs rounded-2xl focus:outline-none transition-all shadow-sm focus:ring-4 focus:ring-blue-105 placeholder-[#94a3b8]"
                         placeholder="10 digits"
                         value={formData.phone}
                         onChange={handlePhoneChange}
@@ -313,9 +313,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
                   </div>
                   {view === 'signup' && (
                     <div className="space-y-1 relative">
-                      <label className="block text-[10px] font-black text-[#000000] tracking-wider ml-1">State</label>
+                      <label className="block text-[10px] font-black text-slate-700 tracking-wider ml-1">State</label>
                       <div 
-                        className="w-full px-3 py-3.5 bg-white border-2 border-slate-200 text-slate-800 cursor-pointer font-black text-xs truncate flex items-center justify-between rounded-2xl shadow-sm hover:border-blue-400 transition-all duration-300"
+                        className="w-full px-3 py-3.5 bg-white border-2 border-blue-500 text-slate-800 cursor-pointer font-black text-xs truncate flex items-center justify-between rounded-2xl shadow-sm hover:border-blue-600 focus:outline-none transition-all duration-300"
                         onClick={() => setIsStateOpen(!isStateOpen)}
                       >
                         <span className="truncate">{formData.state || "Select State"}</span>
@@ -331,17 +331,17 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
                           >
                             <input 
                               type="text"
-                              className="w-full px-3 py-2.5 border-b border-slate-200 bg-slate-50 text-[#000000] font-black text-xs focus:outline-none"
+                              className="w-full px-3 py-2.5 border-b border-slate-100 bg-slate-50 text-black font-black text-xs focus:outline-none placeholder-slate-400"
                               placeholder="Search state..."
                               value={stateSearch}
                               onChange={(e) => setStateSearch(e.target.value)}
                               autoFocus
                             />
-                            <div className="max-h-36 overflow-y-auto no-scrollbar">
+                            <div className="max-h-36 overflow-y-auto no-scrollbar bg-white">
                               {filteredStates.map(s => (
                                 <div 
                                   key={s} 
-                                  className="px-4 py-2 text-xs font-black cursor-pointer transition-colors hover:bg-gradient-to-r hover:from-blue-600 hover:to-indigo-600 hover:text-white text-slate-700"
+                                  className="px-4 py-2 text-xs font-black cursor-pointer transition-colors hover:bg-gradient-to-r hover:from-[#002d5c] hover:to-blue-700 hover:text-white text-slate-700"
                                   onClick={() => {
                                     setFormData({...formData, state: s});
                                     setIsStateOpen(false);
@@ -361,14 +361,14 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
               )}
 
               {view === 'login' && (
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-[#000000] uppercase tracking-wider ml-1">Password</label>
+                <div className="space-y-1 animate-fade-in">
+                  <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider ml-1">Password</label>
                   <div className="relative">
                     <Lock size={15} className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600" />
                     <input
                       type={showPassword ? "text" : "password"}
                       required
-                      className="w-full pl-11 pr-11 py-3.5 bg-white border-2 border-slate-200 focus:border-blue-600 text-[#000000] font-black text-xs rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-105 transition-all shadow-sm"
+                      className="w-full pl-11 pr-11 py-3.5 bg-white border-2 border-blue-500 focus:border-blue-600 text-slate-900 font-extrabold text-xs rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all shadow-sm placeholder-slate-400"
                       placeholder="••••••••"
                       value={formData.password}
                       onChange={(e) => setFormData({...formData, password: e.target.value})}
@@ -382,19 +382,19 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
                     </button>
                   </div>
                   
-                  {/* Forgot Password and Forgot PIN as red text */}
+                  {/* Forgot Password and Forgot PIN as dynamic light links */}
                   <div className="flex justify-between px-1.5 pt-1.5">
                      <button 
                       type="button" 
                       onClick={() => setView('recover-password')}
-                      className="text-[9px] font-black text-red-600 hover:text-red-800 hover:underline transition-colors uppercase tracking-widest cursor-pointer"
+                      className="text-[9px] font-black text-blue-600 hover:text-blue-800 hover:underline transition-colors uppercase tracking-widest cursor-[#002d5c]"
                      >
                        Forgot Password?
                      </button>
                      <button 
                       type="button" 
                       onClick={() => setView('recover-pin')}
-                      className="text-[9px] font-black text-red-600 hover:text-red-800 hover:underline transition-colors uppercase tracking-widest cursor-pointer"
+                      className="text-[9px] font-black text-blue-600 hover:text-blue-800 hover:underline transition-colors uppercase tracking-widest cursor-[#002d5c]"
                      >
                        Forgot PIN?
                      </button>
@@ -405,13 +405,13 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
               {view === 'signup' && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-black text-[#000000] uppercase tracking-wider ml-1">Password</label>
+                    <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider ml-1">Password</label>
                     <div className="relative">
                       <Lock size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600" />
                       <input
                         type="password"
                         required
-                        className="w-full pl-8 pr-2 py-3.5 bg-white border-2 border-slate-200 focus:border-blue-600 text-[#000000] font-black text-xs rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-105 transition-all shadow-sm"
+                        className="w-full pl-8 pr-2 py-3.5 bg-white border-2 border-blue-500 focus:border-blue-600 text-slate-900 font-extrabold text-xs rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all shadow-sm placeholder-slate-400"
                         placeholder="••••••••"
                         value={formData.password}
                         onChange={(e) => setFormData({...formData, password: e.target.value})}
@@ -419,7 +419,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
                     </div>
                   </div>
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-black text-[#000000] uppercase tracking-wider ml-1">Trans. PIN</label>
+                    <label className="block text-[10px] font-black text-slate-700 uppercase tracking-wider ml-1">Trans. PIN</label>
                     <div className="relative">
                       <Key size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-600" />
                       <input
@@ -427,7 +427,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
                         required
                         inputMode="numeric"
                         pattern="\d{4}"
-                        className="w-full pl-8 pr-2 py-3.5 bg-white border-2 border-slate-200 focus:border-blue-600 text-[#000000] font-black text-xs text-center tracking-[0.2em] rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-105 transition-all shadow-sm"
+                        className="w-full pl-8 pr-2 py-3.5 bg-white border-2 border-blue-500 focus:border-blue-600 text-slate-900 font-extrabold text-center tracking-[0.2em] rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all shadow-sm placeholder-slate-400"
                         placeholder="0000"
                         value={formData.transactionPin}
                         onChange={handlePinChange}
@@ -439,7 +439,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
 
               <button
                 type="submit"
-                className="w-full py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] mt-4 flex items-center justify-center gap-2 text-white bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-600 hover:to-indigo-600 shadow-md shadow-blue-500/10 active:scale-95 transition-all duration-300 cursor-pointer border border-blue-800/25"
+                className="w-full py-4 rounded-2xl font-black uppercase tracking-[0.12em] text-[11px] mt-4 flex items-center justify-center gap-2 text-white bg-purple-900 hover:bg-purple-950 shadow-lg shadow-purple-900/30 active:scale-95 transition-all duration-300 cursor-pointer border-2 border-purple-700 text-center"
               >
                 {view === 'login' ? 'Access Account Engine' : 
                  view === 'signup' ? 'Create Account' : 'Execute Recovery Pipeline'}
@@ -454,7 +454,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
           <button
             type="button"
             onClick={() => { setView(view === 'login' ? 'signup' : 'login'); setRecoveryResult(null); }}
-            className="text-blue-700 text-[10px] font-black hover:text-blue-900 transition-colors uppercase tracking-widest cursor-pointer"
+            className="text-blue-600 text-[10px] font-black hover:text-[#002d5c] transition-colors uppercase tracking-widest cursor-pointer"
           >
             {view === 'login' ? "New Partner? Register Network node →" : "← Already Registered? Return to login"}
           </button>

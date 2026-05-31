@@ -25,15 +25,33 @@ export const Logo: React.FC<LogoProps> = ({
 
   const currentSize = sizeClasses[size];
 
-  // Resolve custom logo from prop or localStorage fallback
+  // Resolve custom logo and system name from prop or localStorage fallback
   let resolvedLogo = customLogo;
+  let resolvedSystemName = '';
   if (!resolvedLogo) {
     try {
       const configStr = localStorage.getItem('spay_config');
       if (configStr) {
         const parsed = JSON.parse(configStr);
-        if (parsed && parsed.customLogo) {
-          resolvedLogo = parsed.customLogo;
+        if (parsed) {
+          if (parsed.customLogo) {
+            resolvedLogo = parsed.customLogo;
+          }
+          if (parsed.systemName) {
+            resolvedSystemName = parsed.systemName;
+          }
+        }
+      }
+    } catch {
+      // ignore
+    }
+  } else {
+    try {
+      const configStr = localStorage.getItem('spay_config');
+      if (configStr) {
+        const parsed = JSON.parse(configStr);
+        if (parsed && parsed.systemName) {
+          resolvedSystemName = parsed.systemName;
         }
       }
     } catch {
@@ -64,13 +82,21 @@ export const Logo: React.FC<LogoProps> = ({
     }
 
     return (
-      <div className={cn("flex items-center select-none", className)}>
+      <div className={cn("flex items-center select-none gap-2", className)}>
         <img 
           src={resolvedLogo} 
           alt="Platform Logo" 
           className={cn("object-contain max-w-[200px]", currentHeight)}
           referrerPolicy="no-referrer"
         />
+        {resolvedSystemName && !iconOnly && (
+          <span className={cn(
+            "font-black tracking-tight leading-none text-lg",
+            lightText ? "text-white" : "text-[#002d5c] dark:text-white"
+          )}>
+            {resolvedSystemName}
+          </span>
+        )}
       </div>
     );
   }
@@ -178,10 +204,10 @@ export const Logo: React.FC<LogoProps> = ({
             size === 'sm' ? 'tracking-tighter text-sm' : 'tracking-tight',
             lightText ? "text-white" : "text-[#002d5c] dark:text-white"
           )}>
-            SmartPay
+            {resolvedSystemName ? resolvedSystemName.split(' ')[0] : 'SmartPay'}
           </span>
           <span className="font-extrabold text-[#00adef] leading-none tracking-widest mt-0.5" style={{ fontSize: size === 'sm' ? '8px' : '10px' }}>
-            360
+            {resolvedSystemName ? resolvedSystemName.split(' ').slice(1).join(' ') : '360'}
           </span>
         </div>
       )}

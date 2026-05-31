@@ -152,6 +152,7 @@ export interface MLMConfig {
   serviceCharge: number; // e.g. 0.05
   qrCode: string; // Admin QR for Add Money
   customLogo?: string; // Admin uploaded platform logo (Base64)
+  systemName?: string; // Admin custom platform name (e.g., replaces SmartPay 360)
   activationFee?: number;
   levelRupeeRates?: number[]; // level Rupee income chart rates
   levelCoinRates?: number[];  // level Coin distribution rates
