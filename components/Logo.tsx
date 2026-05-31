@@ -236,22 +236,22 @@ export const Logo: React.FC<LogoProps> = ({
             <text 
               x="90" 
               y="38" 
-              font-family="'Inter', ui-sans-serif, system-ui, sans-serif" 
-              font-weight="800" 
-              font-size="28" 
+              fontFamily="'Inter', ui-sans-serif, system-ui, sans-serif" 
+              fontWeight="800" 
+              fontSize="28" 
               fill={lightText ? "#ffffff" : "#0c4a6e"}
-              letter-spacing="-0.03em"
+              letterSpacing="-0.03em"
             >
               SmartPay
             </text>
             <text 
               x="90" 
               y="66" 
-              font-family="'Inter', ui-sans-serif, system-ui, sans-serif" 
-              font-weight="700" 
-              font-size="26" 
+              fontFamily="'Inter', ui-sans-serif, system-ui, sans-serif" 
+              fontWeight="700" 
+              fontSize="26" 
               fill={lightText ? "#38bdf8" : "#0ea5e9"}
-              letter-spacing="-0.02em"
+              letterSpacing="-0.02em"
             >
               360
             </text>

@@ -275,11 +275,11 @@ const Dashboard: React.FC<DashboardProps> = ({
           <button
             type="button"
             onClick={() => setIsSidebarOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-805 text-white rounded-2xl text-[10px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer hover:shadow-purple-300"
+            className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-700 to-indigo-700 hover:from-purple-800 hover:to-indigo-800 text-white rounded-2xl text-[10px] font-black uppercase tracking-wider shadow-md transition-all active:scale-95 cursor-pointer hover:shadow-purple-300"
             id="spay-left-menu-drawer-btn"
           >
             <MenuIcon size={16} className="animate-pulse" />
-            <span>Smart Menu</span>
+            <span className="text-white">Smart Menu</span>
           </button>
           <div className="h-6 w-px bg-blue-200 dark:bg-blue-900"></div>
           <span className="text-[9.5px] font-black uppercase text-blue-900 dark:text-blue-300 tracking-wider bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-900/40 shadow-sm">
@@ -824,9 +824,9 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
 
           {/* 4. Highly Polished "Quick Actions" Section */}
-          <div className="bg-white dark:bg-purple-950/20 p-6 md:p-8 rounded-[2.5rem] shadow-sm border-2 border-blue-200 dark:border-purple-900/30">
+          <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-[2.5rem] shadow-sm border-2 border-blue-200 dark:border-blue-900/30">
             <h3 className="text-[11px] font-extrabold uppercase tracking-[0.25em] text-black dark:text-white mb-6 text-left flex items-center gap-2">
-              <span className="w-1.5 h-3 bg-blue-700 dark:bg-purple-500 rounded-full inline-block"></span>
+              <span className="w-1.5 h-3 bg-blue-700 dark:bg-blue-500 rounded-full inline-block"></span>
               Quick Actions
             </h3>
             <div className="grid grid-cols-4 gap-3 md:gap-4 justify-items-center">
@@ -840,11 +840,13 @@ const Dashboard: React.FC<DashboardProps> = ({
                   type="button"
                   key={action.id}
                   onClick={() => setTab(action.id)}
-                  className="group flex flex-col items-center cursor-pointer transition-all active:scale-95"
+                  className="group flex flex-col items-center cursor-pointer transition-all active:scale-95 gap-2"
                 >
-                  <div className="w-[4.8rem] h-[4.8rem] md:w-[5.8rem] md:h-[5.8rem] rounded-full flex flex-col items-center justify-center gap-1 md:gap-1.5 text-white shadow-xl transition-all group-hover:scale-105 bg-gradient-to-br from-blue-900 to-indigo-950 border-2 border-blue-600/30 group-hover:border-blue-400 group-hover:shadow-blue-950/40">
-                    <action.icon size={18} className="md:size-6 text-blue-300 group-hover:text-white transition-colors" />
-                    <span className="text-[8px] md:text-[9.5px] font-black text-white uppercase tracking-wider text-center px-1 leading-tight select-none">{action.label}</span>
+                  <span className="text-[9.5px] md:text-[10px] font-black text-white uppercase tracking-wider text-center px-2.5 py-1 rounded-full bg-blue-900 shadow-sm border border-blue-700/60 leading-tight select-none">
+                    {action.label}
+                  </span>
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-white shadow-lg transition-all group-hover:scale-105 bg-gradient-to-br from-blue-900 via-blue-950 to-indigo-950 border-2 border-blue-600/40 group-hover:border-blue-400 group-hover:shadow-blue-950/40">
+                    <action.icon size={20} className="md:size-[24px] text-blue-300 group-hover:text-white transition-colors" />
                   </div>
                 </button>
               ))}
