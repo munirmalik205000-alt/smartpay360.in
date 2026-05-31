@@ -840,14 +840,14 @@ const Dashboard: React.FC<DashboardProps> = ({
                   type="button"
                   key={action.id}
                   onClick={() => setTab(action.id)}
-                  className="group flex flex-col items-center cursor-pointer transition-all active:scale-95 gap-2"
+                  className="group flex flex-col items-center cursor-pointer transition-all active:scale-95 gap-3"
                 >
-                  <span className="text-[9.5px] md:text-[10px] font-black text-white uppercase tracking-wider text-center px-2.5 py-1 rounded-full bg-blue-900 shadow-sm border border-blue-700/60 leading-tight select-none">
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-white shadow-[0_10px_20px_rgba(29,78,216,0.25)] dark:shadow-[0_10px_25px_rgba(0,0,0,0.6)] border-2 border-blue-400/40 group-hover:border-blue-300 transition-all group-hover:scale-110 bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-900 group-hover:shadow-[0_12px_24px_rgba(37,99,235,0.4)]">
+                    <action.icon size={22} className="md:size-[26px] text-white transition-transform group-hover:rotate-6" />
+                  </div>
+                  <span className="text-[10px] md:text-[11px] font-extrabold text-slate-800 dark:text-slate-100 uppercase tracking-widest text-center leading-tight select-none transition-colors group-hover:text-blue-605">
                     {action.label}
                   </span>
-                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center text-white shadow-lg transition-all group-hover:scale-105 bg-gradient-to-br from-blue-900 via-blue-950 to-indigo-950 border-2 border-blue-600/40 group-hover:border-blue-400 group-hover:shadow-blue-950/40">
-                    <action.icon size={20} className="md:size-[24px] text-blue-300 group-hover:text-white transition-colors" />
-                  </div>
                 </button>
               ))}
             </div>
