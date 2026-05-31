@@ -163,11 +163,10 @@ const App: React.FC = () => {
               }
             }
           }
+          setIsLoadedFromServer(true);
         }
       } catch (err) {
         console.error('Error fetching system database:', err);
-      } finally {
-        setIsLoadedFromServer(true);
       }
     };
 
