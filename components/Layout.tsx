@@ -91,9 +91,9 @@ export const Layout: React.FC<LayoutProps> = ({
             
             <div className={cn("h-8 w-px mx-1 hidden sm:block", darkMode ? "bg-slate-800" : "bg-blue-200")}></div>
 
-            <div className="text-right hidden sm:block text-slate-900">
-              <p className="text-xs font-black leading-tight uppercase tracking-wider text-slate-950">{user.name}</p>
-              <p className="text-[10px] text-blue-800 font-extrabold uppercase">{user.email}</p>
+            <div className={cn("text-right hidden sm:block", darkMode ? "text-slate-100" : "text-slate-900")}>
+              <p className={cn("text-xs font-black leading-tight uppercase tracking-wider", darkMode ? "text-white" : "text-slate-950")}>{user.name}</p>
+              <p className={cn("text-[10px] font-extrabold uppercase", darkMode ? "text-blue-300" : "text-blue-800")}>{user.email}</p>
             </div>
 
             <button

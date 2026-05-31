@@ -165,8 +165,12 @@ const Dashboard: React.FC<DashboardProps> = ({
     const amt = parseFloat(addMoneyData.amount);
     if (isNaN(amt) || amt <= 0) return alert('🚨 Valid numerical amount is required.');
     if (!addMoneyData.utr) return alert('🚨 Transaction ID / UTR verification number required.');
-    if (!addMoneyData.screenshot) return alert('🚨 Verification screenshot required to process ledger load.');
-    onAddMoney({ amount: amt, utr: addMoneyData.utr, screenshot: addMoneyData.screenshot });
+    const cleanUtr = addMoneyData.utr.trim();
+    if (!/^\d+$/.test(cleanUtr)) {
+      return alert('🚨 UTR number holds numeric digits only. कृपया केवल अंकों का UTR नंबर दर्ज करें।');
+    }
+    // Screenshot is optional, defaulting to empty string if not attached
+    onAddMoney({ amount: amt, utr: cleanUtr, screenshot: addMoneyData.screenshot || '' });
     setAddMoneyData({ amount: '', utr: '', screenshot: '' });
   };
 
@@ -358,7 +362,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   onClick={() => setTab('withdraw')}
                   className="py-4 bg-white hover:bg-blue-50 text-blue-900 font-bold rounded-full text-xs uppercase tracking-widest border-2 border-blue-700 active:scale-95 transition-all text-center flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  🏦 Bank Withdrawal 
+                  🏦 Pay Out
                 </button>
               </div>
 
@@ -716,7 +720,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   key={u.name} 
                   onClick={handleSelect}
                   className={cn(
-                    "bg-blue-50/95 dark:bg-blue-900/20 p-6 rounded-[2rem] border border-blue-200 shadow-sm text-center transition-all cursor-pointer hover:border-blue-450"
+                    "bg-blue-50/95 dark:bg-blue-900/20 p-6 rounded-[2rem] border border-blue-200 shadow-sm text-center transition-all cursor-pointer hover:border-blue-500"
                   )}
                 >
                   <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl bg-white dark:bg-slate-800 border border-blue-150 shadow-inner">{u.icon}</div>
@@ -751,7 +755,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                 <form onSubmit={executeRechargeSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1 mb-2">Select Operator Service Provider</label>
+                    <label className="block text-[10px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest pl-1 mb-2">Select Operator Service Provider</label>
                     <div className="grid grid-cols-4 gap-2">
                       {INDIAN_OPERATORS.map(op => (
                         <div 
@@ -770,7 +774,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Mobile / Connection / Consumer ID</label>
+                    <label className="block text-[10px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest pl-1">Mobile / Connection / Consumer ID</label>
                     <input 
                       type="text" 
                       required 
@@ -782,7 +786,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Recharge Amount (₹)</label>
+                    <label className="block text-[10px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest pl-1">Recharge Amount (₹)</label>
                     <input 
                       type="number" 
                       required 
@@ -807,7 +811,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="block text-[10px] font-black text-slate-450 uppercase tracking-widest pl-1">Transaction 4-Digit Security PIN</label>
+                    <label className="block text-[10px] font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest pl-1">Transaction 4-Digit Security PIN</label>
                     <input 
                       type="password" 
                       maxLength={4}
@@ -861,7 +865,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <input 
                     type="number" 
                     required 
-                    className="w-full px-6 py-4 bg-white border-2 border-blue-150 rounded-2xl focus:border-blue-500 focus:outline-none transition-all font-black text-lg text-black placeholder-slate-450"
+                    className="w-full px-6 py-4 bg-white border-2 border-blue-150 rounded-2xl focus:border-blue-500 focus:outline-none transition-all font-black text-lg text-black placeholder-slate-400"
                     placeholder="0.00"
                     value={addMoneyData.amount}
                     onChange={e => setAddMoneyData({...addMoneyData, amount: e.target.value})}
@@ -872,7 +876,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <input 
                     type="text" 
                     required 
-                    className="w-full px-6 py-4 bg-white border-2 border-blue-150 rounded-2xl focus:border-blue-500 focus:outline-none transition-all font-bold text-sm text-black placeholder-slate-455"
+                    className="w-full px-6 py-4 bg-white border-2 border-blue-150 rounded-2xl focus:border-blue-500 focus:outline-none transition-all font-bold text-sm text-black placeholder-slate-400"
                     placeholder="Enter Payment UPI UTR"
                     value={addMoneyData.utr}
                     onChange={e => setAddMoneyData({...addMoneyData, utr: e.target.value})}
@@ -881,7 +885,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               </div>
 
               <div className="space-y-2 text-left">
-                <label className="block text-[10px] font-black text-black uppercase tracking-widest ml-1">Attach Transfer Screenshot</label>
+                <label className="block text-[10px] font-black text-black uppercase tracking-widest ml-1">Attach Transfer Screenshot (Optional / वैकल्पिक)</label>
                 <div className="relative group">
                   <input 
                     type="file" 
@@ -1404,7 +1408,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       onClick={() => onClaimReward && onClaimReward(r.id)}
                       className={cn(
                         "w-full py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
-                        r.status === 'claimed' ? 'bg-slate-200 text-slate-450 cursor-not-allowed' :
+                        r.status === 'claimed' ? 'bg-slate-200 text-slate-500 cursor-not-allowed' :
                         r.status === 'approved' ? 'bg-green-600 text-white cursor-not-allowed' :
                         isLocked ? 'bg-slate-100 text-slate-300 dark:bg-slate-800 dark:text-slate-600 cursor-not-allowed' : 'bg-violet-600 text-white hover:bg-violet-700 shadow-lg shadow-violet-600/15'
                       )}

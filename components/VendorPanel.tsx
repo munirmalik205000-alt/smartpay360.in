@@ -153,7 +153,7 @@ const VendorPanel: React.FC<VendorProps> = ({ user, products, orders, onAddProdu
             )) : (
               <div className="h-full flex flex-col items-center justify-center text-center opacity-30 my-auto py-10">
                 <ShoppingBag size={48} className="text-slate-200 mb-2" />
-                <p className="text-xs font-black text-slate-450 uppercase tracking-widest leading-none">All orders completed</p>
+                <p className="text-xs font-black text-slate-600 uppercase tracking-widest leading-none">All orders completed</p>
               </div>
             )}
           </div>

@@ -148,7 +148,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover, users, onEnsu
           {/* We ensure logo rendering is clean and dark text compliant */}
           <Logo size="lg" lightText={false} className="justify-center" />
           <p className="text-[10px] text-blue-700 font-extrabold uppercase tracking-[0.2em] mt-3.5 bg-blue-50 px-3.5 py-1.2 rounded-full border border-blue-200/60">
-            Welcome To SmartPay360
+            Unified Portal Gateway
           </p>
         </div>
 

@@ -153,4 +153,6 @@ export interface MLMConfig {
   qrCode: string; // Admin QR for Add Money
   customLogo?: string; // Admin uploaded platform logo (Base64)
   activationFee?: number;
+  levelRupeeRates?: number[]; // level Rupee income chart rates
+  levelCoinRates?: number[];  // level Coin distribution rates
 }

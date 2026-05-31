@@ -26,7 +26,9 @@ const DEFAULT_MLM_CONFIG: MLMConfig = {
   packagePrice: 999, // Premium Activation Package
   tdsRate: 0.05,
   serviceCharge: 0.05,
-  qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=smartpay360@okaxis%26pn=SmartPay360%26am=999%26cu=INR'
+  qrCode: 'https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=upi://pay?pa=smartpay360@okaxis%26pn=SmartPay360%26am=999%26cu=INR',
+  levelRupeeRates: [...DEFAULT_LEVEL_PERCENTAGES_20],
+  levelCoinRates: [...DEFAULT_LEVEL_PERCENTAGES_20]
 };
 
 const INITIAL_PRODUCTS: Product[] = [
@@ -77,7 +79,21 @@ const App: React.FC = () => {
   const [products, setProducts] = useState<Product[]>(() => JSON.parse(safeLocalStorage.getItem('spay_products', JSON.stringify(INITIAL_PRODUCTS))));
   const [orders, setOrders] = useState<Order[]>(() => JSON.parse(safeLocalStorage.getItem('spay_orders', '[]')));
   const [transactions, setTransactions] = useState<Transaction[]>(() => JSON.parse(safeLocalStorage.getItem('spay_tx', '[]')));
-  const [mlmConfig, setMlmConfig] = useState<MLMConfig>(() => JSON.parse(safeLocalStorage.getItem('spay_config', JSON.stringify(DEFAULT_MLM_CONFIG))));
+  const [mlmConfig, setMlmConfig] = useState<MLMConfig>(() => {
+    try {
+      const saved = safeLocalStorage.getItem('spay_config', '');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...DEFAULT_MLM_CONFIG,
+          ...parsed,
+          levelRupeeRates: parsed.levelRupeeRates || [...DEFAULT_LEVEL_PERCENTAGES_20],
+          levelCoinRates: parsed.levelCoinRates || [...DEFAULT_LEVEL_PERCENTAGES_20]
+        };
+      }
+    } catch {}
+    return DEFAULT_MLM_CONFIG;
+  });
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>(() => JSON.parse(safeLocalStorage.getItem('spay_payments', '[]')));
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>(() => JSON.parse(safeLocalStorage.getItem('spay_withdrawals', '[]')));
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>(() => JSON.parse(safeLocalStorage.getItem('spay_chats', '[]')));
@@ -255,8 +271,8 @@ const App: React.FC = () => {
         const service = parseFloat((earning * mlmConfig.serviceCharge).toFixed(2));
         const finalNetEarning = parseFloat((earning - tds - service).toFixed(2));
 
-        // Update wallets
-        parentUser.wallets.commission = parseFloat((parentUser.wallets.commission + finalNetEarning).toFixed(2));
+        // Update wallets - Add to main cash wallet per request
+        parentUser.wallets.main = parseFloat(((parentUser.wallets.main || 0) + finalNetEarning).toFixed(2));
         parentUser.totalEarned = parseFloat((parentUser.totalEarned + finalNetEarning).toFixed(2));
 
         // Generate Transaction details
@@ -264,7 +280,7 @@ const App: React.FC = () => {
           id: `COMM-${Date.now()}-${currentLevel}-${Math.random().toString(36).substr(2, 4)}`,
           userId: parentUser.id,
           amount: finalNetEarning,
-          walletType: 'commission',
+          walletType: 'main',
           type: 'commission',
           description: `Level ${currentLevel} ${commissionType} income (Gross ₹${earning}, TDS ₹${tds}, Dev ₹${service})`,
           status: 'success',
@@ -466,15 +482,21 @@ const App: React.FC = () => {
       const parentUser = updatedUsersMap.get(currentReferrerId);
       if (!parentUser) break;
 
-      // level commission percentage rate
-      const rate = DEFAULT_LEVEL_PERCENTAGES_20[currentLevel - 1] || 0.005;
+      // level commission percentage rate from admin system configs if present
+      const rupeeRate = (mlmConfig.levelRupeeRates && mlmConfig.levelRupeeRates[currentLevel - 1] !== undefined)
+        ? mlmConfig.levelRupeeRates[currentLevel - 1]
+        : (DEFAULT_LEVEL_PERCENTAGES_20[currentLevel - 1] || 0.005);
 
-      // Rupees Level Income (rate * price)
-      const rupeeEarning = parseFloat((price * rate).toFixed(2));
-      // Coin Level Reward (rate * pkg.coin)
-      const coinEarning = parseFloat((pkg.coin * rate).toFixed(2));
-      // PV Level Reward (rate * pkg.pv)
-      const pvEarning = parseFloat((pkg.pv * rate).toFixed(2));
+      const coinRate = (mlmConfig.levelCoinRates && mlmConfig.levelCoinRates[currentLevel - 1] !== undefined)
+        ? mlmConfig.levelCoinRates[currentLevel - 1]
+        : (DEFAULT_LEVEL_PERCENTAGES_20[currentLevel - 1] || 0.005);
+
+      // Rupees Level Income (rupeeRate * price)
+      const rupeeEarning = parseFloat((price * rupeeRate).toFixed(2));
+      // Coin Level Reward (coinRate * pkg.coin)
+      const coinEarning = parseFloat((pkg.coin * coinRate).toFixed(2));
+      // PV Level Reward (using rupeeRate * pkg.pv or standard rate)
+      const pvEarning = parseFloat((pkg.pv * rupeeRate).toFixed(2));
 
       if (parentUser.isActivated) {
         // Calculate TDS and administration fee deductions
@@ -482,18 +504,18 @@ const App: React.FC = () => {
         const service = parseFloat((rupeeEarning * mlmConfig.serviceCharge).toFixed(2));
         const finalNetRupee = parseFloat((rupeeEarning - tds - service).toFixed(2));
 
-        // Credit parents wallets
-        parentUser.wallets.commission = parseFloat((parentUser.wallets.commission + finalNetRupee).toFixed(2));
+        // Credit parents wallets - Main wallet preferred instead of commission
+        parentUser.wallets.main = parseFloat(((parentUser.wallets.main || 0) + finalNetRupee).toFixed(2));
         parentUser.totalEarned = parseFloat((parentUser.totalEarned + finalNetRupee).toFixed(2));
         parentUser.wallets.coinwallet = parseFloat(((parentUser.wallets.coinwallet || 0) + coinEarning).toFixed(2));
         parentUser.selfPV = parseFloat(((parentUser.selfPV || 0) + pvEarning).toFixed(2));
 
-        // Rupee transaction entry
+        // Rupee transaction entry (walletType changed to 'main')
         transactionList.push({
           id: `PKGM-${Date.now()}-${currentLevel}-${Math.random().toString(36).substr(2, 4)}`,
           userId: parentUser.id,
           amount: finalNetRupee,
-          walletType: 'commission',
+          walletType: 'main',
           type: 'commission',
           description: `Level ${currentLevel} Package Income from node ${buyer?.name} (Base ₹${rupeeEarning.toFixed(2)}, TDS ₹${tds.toFixed(2)})`,
           status: 'success',

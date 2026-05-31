@@ -36,6 +36,7 @@ const AdminPanel: React.FC<AdminProps> = ({
   const [activeTab, setActiveTab] = useState<'stats' | 'members' | 'kyc' | 'payments' | 'withdrawals' | 'rewards' | 'support' | 'products' | 'config' | 'packages'>('stats');
   const [selectedChatUser, setSelectedChatUser] = useState<string | null>(null);
   const [adminReply, setAdminReply] = useState('');
+  const [rateTab, setRateTab] = useState<'rupee' | 'coin'>('rupee');
 
   // Manage members states
   const [memberSearch, setMemberSearch] = useState('');
@@ -100,6 +101,49 @@ const AdminPanel: React.FC<AdminProps> = ({
   const handleLogoReset = () => {
     onUpdateConfig({ ...config, customLogo: undefined });
     alert('Platform custom logo reset to default SVG logo.');
+  };
+
+  const DEFAULT_LEVEL_PERCENTAGES = [
+    0.15, 0.08, 0.05, 0.03, 0.02, 0.02, 0.01, 0.01, 0.01, 0.01,
+    0.005, 0.005, 0.005, 0.005, 0.005, 0.002, 0.002, 0.002, 0.002, 0.002
+  ];
+
+  const handleUpdateLevelRupeeRate = (index: number, val: number) => {
+    const current = [...(config.levelRupeeRates || DEFAULT_LEVEL_PERCENTAGES)];
+    current[index] = parseFloat((val / 100).toFixed(5));
+    onUpdateConfig({ ...config, levelRupeeRates: current });
+  };
+
+  const handleUpdateLevelCoinRate = (index: number, val: number) => {
+    const current = [...(config.levelCoinRates || DEFAULT_LEVEL_PERCENTAGES)];
+    current[index] = parseFloat((val / 100).toFixed(5));
+    onUpdateConfig({ ...config, levelCoinRates: current });
+  };
+
+  const applyPresetRupee = (type: 'default' | 'flat1' | 'flat2') => {
+    let preset: number[] = [];
+    if (type === 'default') {
+      preset = [...DEFAULT_LEVEL_PERCENTAGES];
+    } else if (type === 'flat1') {
+      preset = Array(20).fill(0.01);
+    } else {
+      preset = Array(20).fill(0.02);
+    }
+    onUpdateConfig({ ...config, levelRupeeRates: preset });
+    alert('💰 Rupee Level Rates preset applied successfully!');
+  };
+
+  const applyPresetCoin = (type: 'default' | 'flat1' | 'flat2') => {
+    let preset: number[] = [];
+    if (type === 'default') {
+      preset = [...DEFAULT_LEVEL_PERCENTAGES];
+    } else if (type === 'flat1') {
+      preset = Array(20).fill(0.01);
+    } else {
+      preset = Array(20).fill(0.02);
+    }
+    onUpdateConfig({ ...config, levelCoinRates: preset });
+    alert('🪙 Coin Level Rates preset applied successfully!');
   };
 
   const handleCreateProductSubmit = (e: React.FormEvent) => {
@@ -463,11 +507,20 @@ const AdminPanel: React.FC<AdminProps> = ({
                 key={req.id} 
                 className="bg-white rounded-[2.5rem] border-2 border-blue-150 shadow-sm overflow-hidden flex flex-col"
               >
-                <div className="h-48 bg-blue-50 relative group">
-                  <img src={req.screenshot} alt="Proof" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                  <div className="absolute inset-0 bg-blue-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <button onClick={() => window.open(req.screenshot, '_blank')} className="bg-white text-blue-900 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-50 cursor-pointer">View Full Proof</button>
-                  </div>
+                <div className="h-48 bg-blue-50 relative group flex items-center justify-center border-b border-blue-150">
+                  {req.screenshot ? (
+                    <>
+                      <img src={req.screenshot} alt="Proof" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                      <div className="absolute inset-0 bg-blue-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <button onClick={() => window.open(req.screenshot, '_blank')} className="bg-white text-blue-900 px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-blue-50 cursor-pointer">View Full Proof</button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center p-6 space-y-1">
+                      <p className="text-neutral-500 font-extrabold text-[11px] uppercase tracking-wider">No Screenshot Uploaded</p>
+                      <p className="text-neutral-400 font-bold text-[9px] uppercase tracking-wider">वैकल्पिक (Optional UTR Verification)</p>
+                    </div>
+                  )}
                 </div>
                 <div className="p-6 space-y-4 flex-1 flex flex-col">
                   <div className="flex justify-between items-start">
@@ -843,6 +896,103 @@ const AdminPanel: React.FC<AdminProps> = ({
                 <p className="text-[10px] font-black text-blue-900 uppercase tracking-widest mb-2">20-Level Cascade split ratio details</p>
                 <p className="text-[11px] font-bold text-neutral-800 leading-relaxed">Levels 1-5 credit 2% each. Levels 6-20 credit 0.5% cascade distribution. Admin deducts 5% TD & platform service maintenance fee securely during each cashout settlements node execution.</p>
               </div>
+            </div>
+          </div>
+
+          {/* Column 2: 20-Level Income Chart Rate & Coin Distribution Configuration */}
+          <div className="bg-white p-10 rounded-[3rem] border-2 border-blue-150 shadow-sm flex flex-col">
+            <h3 className="text-xl font-black text-black mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <span className="flex items-center gap-2">
+                <span className="p-1 px-2.5 bg-indigo-100 border border-indigo-200 rounded-xl text-indigo-900 text-sm">📊</span>
+                20-Level MLM Split Rates
+              </span>
+              <div className="flex bg-neutral-150 p-1.5 rounded-2xl border border-neutral-250 self-start sm:self-auto">
+                <button
+                  type="button"
+                  onClick={() => setRateTab('rupee')}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${rateTab === 'rupee' ? 'bg-indigo-705 text-white shadow-sm' : 'text-neutral-500 hover:text-indigo-900'}`}
+                >
+                  💰 Rupee (%)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRateTab('coin')}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${rateTab === 'coin' ? 'bg-indigo-750 text-white shadow-sm' : 'text-neutral-500 hover:text-indigo-900'}`}
+                >
+                  🪙 Coin (%)
+                </button>
+              </div>
+            </h3>
+
+            {/* Presets Button Row */}
+            <div className="flex flex-wrap gap-2 mb-6">
+              <span className="text-[9px] font-black text-neutral-400 self-center uppercase tracking-widest mr-2">Presets:</span>
+              <button
+                type="button"
+                onClick={() => rateTab === 'rupee' ? applyPresetRupee('default') : applyPresetCoin('default')}
+                className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 rounded-lg text-[9px] font-black text-black uppercase tracking-wider transition-all cursor-pointer"
+              >
+                🔄 Default System
+              </button>
+              <button
+                type="button"
+                onClick={() => rateTab === 'rupee' ? applyPresetRupee('flat1') : applyPresetCoin('flat1')}
+                className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 rounded-lg text-[9px] font-black text-black uppercase tracking-wider transition-all cursor-pointer"
+              >
+                📊 Flat 1%
+              </button>
+              <button
+                type="button"
+                onClick={() => rateTab === 'rupee' ? applyPresetRupee('flat2') : applyPresetCoin('flat2')}
+                className="px-3 py-1.5 bg-neutral-100 hover:bg-neutral-200 border border-neutral-300 rounded-lg text-[9px] font-black text-black uppercase tracking-wider transition-all cursor-pointer"
+              >
+                📊 Flat 2%
+              </button>
+            </div>
+
+            {/* Rates Sub-panel grid */}
+            <div className="flex-1 overflow-y-auto pr-2 max-h-[360px] bg-neutral-50/50 p-5 rounded-[2rem] border border-neutral-200 space-y-4">
+              <p className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mb-4">
+                {rateTab === 'rupee' 
+                  ? '💰 Enter generation percentage rate (e.g. 15 for 15%) for level-wise Rupee commissions'
+                  : '🪙 Enter generation percentage rate (e.g. 15 for 15%) for level-wise Coin distributions'}
+              </p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
+                {Array(20).fill(0).map((_, i) => {
+                  const val = rateTab === 'rupee'
+                    ? ((config.levelRupeeRates ? config.levelRupeeRates[i] : undefined) ?? DEFAULT_LEVEL_PERCENTAGES[i] ?? 0) * 100
+                    : ((config.levelCoinRates ? config.levelCoinRates[i] : undefined) ?? DEFAULT_LEVEL_PERCENTAGES[i] ?? 0) * 100;
+                  return (
+                    <div key={i} className="flex items-center gap-2 p-2 bg-white border border-neutral-200 rounded-2xl shadow-sm">
+                      <span className="text-[10px] font-black text-neutral-500 uppercase w-7 text-right">L{i + 1}</span>
+                      <div className="relative flex-1">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          max="100"
+                          className="w-full pl-2 pr-6 py-1.5 bg-neutral-50 border rounded-lg font-black text-xs text-black focus:outline-none focus:bg-white focus:ring-2 focus:ring-indigo-700"
+                          value={parseFloat(val.toFixed(3))}
+                          onChange={e => {
+                            const num = parseFloat(e.target.value) || 0;
+                            if (rateTab === 'rupee') {
+                              handleUpdateLevelRupeeRate(i, num);
+                            } else {
+                              handleUpdateLevelCoinRate(i, num);
+                            }
+                          }}
+                        />
+                        <span className="absolute right-2 top-2 text-[10px] font-bold text-neutral-500">%</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            
+            <div className="mt-4 p-4 bg-indigo-50/60 rounded-2xl border border-indigo-100 text-[10px] font-black text-indigo-900 leading-relaxed uppercase tracking-wider">
+              💡 Updates to the rates are autosaved instantly and applied immediately during next product upgrade nodes.
             </div>
           </div>
         </div>
