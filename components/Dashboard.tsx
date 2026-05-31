@@ -271,8 +271,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       {/* 0. Top Navigation & Smart Menu Header */}
       <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-blue-50/70 dark:bg-purple-950/40 p-4 rounded-3xl border-2 border-blue-200 dark:border-purple-900/40">
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-[9.5px] font-black uppercase text-blue-900 dark:text-blue-300 tracking-wider bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-900/40 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3 w-full">
+          <span className="text-[9.5px] font-black uppercase text-blue-900 dark:text-blue-300 tracking-wider bg-white dark:bg-slate-900 px-3 py-1.5 rounded-xl border border-blue-200 dark:border-blue-900/40 shadow-sm w-full text-center md:text-left">
             Current Section: {
               tab === 'home' ? '🏠 Overview' :
               tab === 'activity' ? '📋 Ledger History' :
@@ -287,16 +287,6 @@ const Dashboard: React.FC<DashboardProps> = ({
               tab === 'withdraw' ? '💸 Withdrawal' :
               tab === 'transfer' ? '🔁 Money Transfer' : tab
             }
-          </span>
-        </div>
-        
-        {/* Quick Balance Preview Ticker */}
-        <div className="flex flex-wrap items-center gap-2 justify-start md:justify-end">
-          <span className="text-[9px] font-black bg-blue-600 text-white px-2.5 py-1.5 rounded-xl uppercase tracking-wide">
-            E-WALLET: ₹{(user.wallets?.ewallet || 0).toFixed(2)}
-          </span>
-          <span className="text-[9px] font-black bg-emerald-600 text-white px-2.5 py-1.5 rounded-xl uppercase tracking-wide">
-            MAIN WALLET: ₹{(user.wallets?.main || 0).toFixed(2)}
           </span>
         </div>
       </div>
@@ -604,19 +594,19 @@ const Dashboard: React.FC<DashboardProps> = ({
       {tab === 'home' && (
         <div className="space-y-6">
           {/* 1. Header Greetings in high UX design */}
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 py-2 border-b-2 border-blue-200 pb-4">
-            <div className="text-left">
-              <p className="text-[10px] font-black text-blue-800 uppercase tracking-widest pl-0.5 leading-none font-mono">
+          <div className="bg-gradient-to-r from-purple-800 to-indigo-900 px-6 py-5 rounded-[2rem] text-white border-2 border-purple-500/30 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-md text-left">
+            <div>
+              <p className="text-[10px] font-black text-purple-200 uppercase tracking-widest pl-0.5 leading-none font-mono animate-pulse">
                 ⚡ NODE ID SYSTEM ENABLED
               </p>
-              <h1 className="text-3xl font-black text-black tracking-tight mt-1 flex items-center gap-1.5 leading-tight">
-                {user.name} <Sparkles size={18} className="text-amber-600 animate-spin" />
+              <h1 className="text-3xl font-black text-white tracking-tight mt-1.5 flex items-center gap-1.5 leading-tight">
+                {user.name} <Sparkles size={18} className="text-amber-400 animate-spin" />
               </h1>
             </div>
             
-            <div className="bg-blue-50 px-4 py-2.5 rounded-2xl border-2 border-blue-200 flex items-center gap-3 shadow-sm">
-              <span className="w-2.5 h-2.5 rounded-full bg-green-600 animate-pulse"></span>
-              <p className="text-[9px] font-black uppercase tracking-widest text-black font-mono">
+            <div className="bg-white/10 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-white/20 flex items-center gap-3 self-start md:self-auto shadow-sm">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse"></span>
+              <p className="text-[9px] font-black uppercase tracking-widest text-white font-mono">
                 SECURE PLATFORM LIVE
               </p>
             </div>
