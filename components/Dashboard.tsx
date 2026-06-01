@@ -86,9 +86,12 @@ const Dashboard: React.FC<DashboardProps> = ({
     e.preventDefault();
     const amt = parseFloat(addMoneyData.amount);
     if (isNaN(amt) || amt <= 0) return alert('Enter valid amount');
-    if (!addMoneyData.utr) return alert('Enter UTR Number');
-    if (!addMoneyData.screenshot) return alert('Upload payment screenshot');
-    onAddMoney({ amount: amt, utr: addMoneyData.utr, screenshot: addMoneyData.screenshot });
+    
+    // UTR and Screenshot are optional
+    const finalUtr = addMoneyData.utr.trim() || 'N/A';
+    const finalScreenshot = addMoneyData.screenshot || '';
+    
+    onAddMoney({ amount: amt, utr: finalUtr, screenshot: finalScreenshot });
     setAddMoneyData({ amount: '', utr: '', screenshot: '' });
   };
 
@@ -284,7 +287,130 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       )}
       
-      {/* ... Rest of tabs (mlm, support, add_money, shop) omitted for brevity as they haven't changed Pin logic ... */}
+      {tab === 'add_money' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          <div className="bg-white p-8 rounded-3xl border shadow-sm text-center flex flex-col items-center justify-center border-slate-100">
+            <h3 className="text-lg font-black mb-6 text-slate-800">Scan & Pay to Add Money</h3>
+            {qrCode ? (
+              <div className="p-4 bg-white border border-slate-100 rounded-3xl shadow-xs mb-6">
+                 <img src={qrCode} alt="Payment QR" className="w-64 h-64 object-contain" />
+              </div>
+            ) : (
+              <div className="w-64 h-64 bg-slate-100 rounded-3xl flex items-center justify-center text-slate-400 text-xs font-bold border border-dashed mb-6 p-4 text-center">
+                 Admin hasn't uploaded QR code yet. Please contact support.
+              </div>
+            )}
+            <p className="text-xs text-slate-500 font-bold max-w-xs leading-relaxed uppercase tracking-wider">
+               Scan the code above, complete the payment, and submit the details on the right to receive funds.
+            </p>
+          </div>
+          <div className="bg-white p-8 rounded-3xl border shadow-sm border-slate-100">
+            <h3 className="text-lg font-black mb-6 text-slate-800">Payment Proof Details</h3>
+            <form onSubmit={handleAddMoneySubmit} className="space-y-5">
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">Deposit Amount (₹) <span className="text-red-500">*</span></label>
+                <input 
+                  type="number" required placeholder="0.00"
+                  className="w-full px-5 py-3 bg-slate-50 border rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:outline-none font-bold"
+                  value={addMoneyData.amount} onChange={e => setAddMoneyData({...addMoneyData, amount: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">UTR / Transaction ID <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <input 
+                  type="text" placeholder="12-digit UPI Transaction ID (Optional)"
+                  className="w-full px-5 py-3 bg-slate-50 border rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:outline-none font-mono text-sm"
+                  value={addMoneyData.utr} onChange={e => setAddMoneyData({...addMoneyData, utr: e.target.value})}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">Upload Details Screenshot <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <input 
+                  type="file" accept="image/*"
+                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  onChange={handleScreenshotChange}
+                />
+              </div>
+              <button type="submit" className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl hover:bg-blue-700 active:scale-[0.98] transition-all">
+                SUBMIT FOR APPROVAL
+              </button>
+            </form>
+
+            <div className="mt-8 border-t pt-6">
+              <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-wider font-bold">Recent Requests</h4>
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                {paymentRequests.map(r => (
+                  <div key={r.id} className="p-3 bg-slate-50 rounded-xl border flex justify-between items-center text-[10px] border-slate-100">
+                    <div>
+                      <p className="font-bold text-slate-700">₹{r.amount} - UTR: {r.utr || 'N/A'}</p>
+                      <p className="text-slate-400">{new Date(r.createdAt).toLocaleDateString()}</p>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full font-black uppercase text-[8px] ${
+                      r.status === 'approved' ? 'bg-emerald-100 text-emerald-600' : 
+                      r.status === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-red-100 text-red-600'
+                    }`}>
+                      {r.status}
+                    </span>
+                  </div>
+                ))}
+                {paymentRequests.length === 0 && <p className="text-center text-slate-300 text-[10px] py-4 italic">No previous requests found.</p>}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tab === 'shop' && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {products.map(p => (
+            <div key={p.id} className="bg-white rounded-2xl border overflow-hidden shadow-sm group border-slate-100 hover:border-blue-200 transition-all">
+              <div className="h-40 bg-slate-50 flex items-center justify-center text-4xl">{p.image}</div>
+              <div className="p-4">
+                <h4 className="font-bold text-sm text-slate-800">{p.name}</h4>
+                <p className="text-xs text-slate-400 mt-1 line-clamp-2">{p.description}</p>
+                <div className="flex items-center justify-between mt-4">
+                  <span className="text-sm font-black text-slate-900">₹{p.price}</span>
+                  <button onClick={() => onOrder(user.id, p.id)} className="px-4 py-2 bg-blue-600 text-white text-[10px] font-bold rounded-lg hover:bg-blue-700 transition-all uppercase tracking-wider">BUY NOW</button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {products.length === 0 && (
+             <div className="col-span-full text-center py-10 text-slate-400 text-xs">No products listed.</div>
+          )}
+        </div>
+      )}
+
+      {tab === 'support' && (
+        <div className="max-w-3xl mx-auto bg-white rounded-3xl border shadow-sm flex flex-col h-[500px] overflow-hidden border-slate-100">
+          <div className="p-4 border-b bg-slate-50 border-slate-100">
+            <h3 className="font-bold text-slate-800 flex items-center gap-2">
+              <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+              Admin Support Chat Helpdesk
+            </h3>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+            {chatMessages.map(m => (
+              <div key={m.id} className={`flex ${m.senderId === user.id ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-[80%] p-3 rounded-2xl text-xs font-semibold shadow-sm ${
+                  m.senderId === user.id ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none border'
+                }`}>
+                  <p className="mb-1 opacity-70 text-[9px] uppercase font-bold">{m.senderName || (m.senderId === 'admin-0' ? 'ADMIN' : 'SUPPORT')}</p>
+                  <p>{m.message}</p>
+                  <p className="mt-1 opacity-50 text-[8px] text-right">{new Date(m.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                </div>
+              </div>
+            ))}
+            {chatMessages.length === 0 && (
+               <div className="text-center py-20 text-slate-400 text-xs">No chat history. Start a conversation below.</div>
+            )}
+          </div>
+          <form className="p-4 border-t bg-white flex gap-2 border-slate-100" onSubmit={(e) => { e.preventDefault(); if(!chatInput.trim()) return; onSendMessage(chatInput, 'admin-0'); setChatInput(''); }}>
+             <input type="text" className="flex-1 px-4 py-2 bg-slate-50 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/10 font-bold" placeholder="Type your support message here..." value={chatInput} onChange={e => setChatInput(e.target.value)} />
+             <button type="submit" className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all text-xs uppercase tracking-wider">SEND</button>
+          </form>
+        </div>
+      )}
       {tab === 'mlm' && (
         <div className="bg-white p-6 rounded-2xl shadow-sm border">
           <h3 className="text-lg font-bold mb-6">Downline Tree (10 Levels)</h3>

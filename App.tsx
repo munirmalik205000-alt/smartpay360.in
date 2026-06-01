@@ -127,6 +127,17 @@ export default function App() {
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
+      // Robust local storage clearance for sandboxed iframes
+      try {
+        for (const key of Object.keys(localStorage)) {
+          if (key.includes('supabase.auth') || key.startsWith('sb-')) {
+            localStorage.removeItem(key);
+          }
+        }
+        localStorage.removeItem('supabase.auth.token');
+      } catch (storageErr) {
+        console.warn('LocalStorage clear error:', storageErr);
+      }
       setSession(null);
       setUserProfile(null);
       window.location.reload();

@@ -212,7 +212,7 @@ const AdminPanel: React.FC<AdminProps> = ({
                     <td className="px-6 py-4 font-bold">{req.userName}</td>
                     <td className="px-6 py-4 text-green-600 font-black">₹{req.amount}</td>
                     <td className="px-6 py-4">
-                      {req.receiptImage ? <a href={req.receiptImage} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-xs">View proof</a> : 'N/A'}
+                      {req.screenshot ? <a href={req.screenshot} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-xs">View proof</a> : 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-[10px]">{new Date(req.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
