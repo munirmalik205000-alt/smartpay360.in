@@ -611,7 +611,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
        <header className="bg-white border-b sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
              {!(activeUserProfile.email === 'admin@spay.com' || activeUserProfile.role === 'ADMIN') && (
                <button 
@@ -640,7 +640,7 @@ export default function App() {
          </div>
       )}
 
-      <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="flex-1 w-full max-w-4xl mx-auto px-4 sm:px-6 py-6">
         {(activeUserProfile.email === 'admin@spay.com' || activeUserProfile.role === 'ADMIN') ? (
           <AdminPanel
             users={users}

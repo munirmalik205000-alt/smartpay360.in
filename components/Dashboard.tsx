@@ -148,88 +148,89 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto px-1 sm:px-4 pb-12 font-sans text-slate-900 selection:bg-violet-100 selection:text-violet-900">
+    <div className="space-y-4 max-w-4xl mx-auto px-2 sm:px-4 pb-12 font-sans text-slate-900 selection:bg-violet-100 selection:text-violet-900">
       
-      {/* 🚀 HEADER: PhonePe style User Context Profile Area */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#1a1438] text-white p-6 rounded-3xl border border-[#ffffff0f] shadow-xl relative overflow-hidden">
+      {/* 🚀 HEADER: Paytm/PhonePe style Premium Dynamic Header Area */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-gradient-to-r from-[#1a1438] to-[#120e2e] text-white p-4.5 rounded-2xl sm:rounded-3xl border border-violet-500/20 shadow-xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#5f259f] rounded-full blur-[110px] opacity-25 pointer-events-none"></div>
-        
-        <div className="flex items-center gap-4 relative z-10 w-full sm:w-auto">
-          <div className="relative">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-600 flex items-center justify-center border-2 border-white/20 text-white font-extrabold text-2xl uppercase shadow-md">
+        <div className="absolute bottom-0 left-0 w-16 h-16 bg-[#00baf2] rounded-full blur-[40px] opacity-20 pointer-events-none"></div>
+
+        <div className="flex items-center gap-3 relative z-10 w-full sm:w-auto">
+          <div className="relative shrink-0">
+            <div className="w-13 h-13 rounded-full bg-gradient-to-tr from-[#5f259f] via-violet-600 to-[#00baf2] flex items-center justify-center border-2 border-white/20 text-white font-extrabold text-lg uppercase shadow-md">
               {user.email[0]}
             </div>
-            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-[#1a1438] flex items-center justify-center text-[10px]" title="Network Active Status">
-              {user.is_active ? <CheckCircle2 className="w-4 h-4 text-white" /> : <AlertCircle className="w-4 h-3.5 text-white" />}
+            <div className="absolute -bottom-1 -right-0.5 w-5 h-5 rounded-full bg-emerald-500 border-2 border-[#1a1438] flex items-center justify-center text-[10px]" title="Network Active Status">
+              {user.is_active ? <CheckCircle2 className="w-3.5 h-3.5 text-white" /> : <AlertCircle className="w-3.5 h-3.5 text-white" />}
             </div>
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <h2 className="text-lg font-black tracking-tight">{user.username || user.email.split('@')[0]}</h2>
-              <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${
+              <h2 className="text-base sm:text-lg font-black tracking-tight text-white truncate">{user.username || user.email.split('@')[0]}</h2>
+              <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider shrink-0 ${
                 user.is_active ? 'bg-amber-400 text-slate-900 shadow-sm' : 'bg-slate-700 text-slate-300'
               }`}>
-                {user.is_active ? '🌟 Premium Active' : 'Basic Tier'}
+                {user.is_active ? '🌟 Premium' : 'Basic'}
               </span>
             </div>
-            <p className="text-xs text-violet-200 mt-1 font-semibold">{user.email}</p>
-            <p className="text-[10px] text-slate-400 mt-0.5">Sponsor: {user.sponsor_id || "None"}</p>
+            <p className="text-[10px] sm:text-xs text-violet-200 mt-0.5 font-semibold truncate">{user.email}</p>
+            <p className="text-[9px] text-slate-400 mt-0.5">Sponsor: {user.sponsor_id || "None"}</p>
           </div>
         </div>
 
         {/* Dynamic Balance Badging */}
-        <div className="flex mt-2 sm:mt-0 w-full sm:w-auto gap-4 self-stretch sm:self-center border-t border-white/10 sm:border-0 pt-4 sm:pt-0 justify-around sm:justify-end">
+        <div className="flex mt-1.5 sm:mt-0 w-full sm:w-auto gap-3.5 self-stretch sm:self-center border-t border-white/5 sm:border-0 pt-3 sm:pt-0 justify-around sm:justify-end">
           <div className="text-center sm:text-right">
-            <p className="text-[10px] font-bold text-violet-300 uppercase tracking-widest">Main Wallet</p>
-            <p className="text-xl sm:text-2xl font-black text-white mt-1">₹{(user.wallet_balance || 0).toFixed(2)}</p>
+            <p className="text-[8px] font-bold text-violet-300 uppercase tracking-widest">Main Wallet</p>
+            <p className="text-lg sm:text-2xl font-black text-white mt-0.5">₹{(user.wallet_balance || 0).toFixed(2)}</p>
           </div>
-          <div className="h-10 w-[1px] bg-white/10 self-center"></div>
+          <div className="h-8 w-[1px] bg-white/10 self-center"></div>
           <div className="text-center sm:text-right">
-            <p className="text-[10px] font-bold text-violet-300 uppercase tracking-widest">Recharge Wallet</p>
-            <p className="text-xl sm:text-2xl font-black text-amber-400 mt-1">₹{(user.recharge_wallet || 0).toFixed(2)}</p>
+            <p className="text-[8px] font-bold text-[#00baf2] uppercase tracking-widest">Recharge Wallet</p>
+            <p className="text-lg sm:text-2xl font-black text-amber-400 mt-0.5">₹{(user.recharge_wallet || 0).toFixed(2)}</p>
           </div>
         </div>
       </div>
 
       {/* ⚠️ INACTIVE ACTION PROMPT */}
       {!user.is_active && (
-        <div className="bg-gradient-to-r from-violet-900 to-indigo-900 text-white p-5 rounded-3xl border border-violet-500/20 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg relative overflow-hidden">
+        <div className="bg-gradient-to-r from-violet-950 to-indigo-950 text-white p-4 rounded-2xl border border-violet-500/20 flex flex-col md:flex-row items-center justify-between gap-3 shadow-lg relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500 rounded-full blur-3xl opacity-20 pointer-events-none"></div>
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <Sparkles className="w-5 h-5 text-amber-400 animate-pulse" />
-              <h3 className="font-extrabold text-base tracking-tight text-white">Unlock Rank Earnings & Premium Recharges</h3>
+              <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
+              <h3 className="font-extrabold text-sm tracking-tight text-white">Unlock Rank Earnings & Premium Recharges</h3>
             </div>
-            <p className="text-xs text-violet-200 leading-relaxed max-w-xl">
-              Purchase our lifetime dynamic membership license bundle for just <strong className="text-amber-400 text-sm">₹{packagePrice}</strong>. Unlock multilevel downline rankings, instant auto-recharge utility triggers, and direct bank payouts.
+            <p className="text-[10px] sm:text-xs text-violet-200 leading-normal max-w-xl">
+              Purchase our lifetime membership license bundle for just <strong className="text-amber-400 font-black">₹{packagePrice}</strong>. Unlock multilevel network binary ranking and direct cashouts.
             </p>
           </div>
           <button 
             type="button" 
             onClick={() => onActivate(user.id)} 
-            className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl transition-all block text-center whitespace-nowrap"
+            className="w-full md:w-auto px-5 py-2.5 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-xl font-black text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-98 whitespace-nowrap block text-center"
           >
             Activate Instant Bundle
           </button>
         </div>
       )}
 
-      {/* 💳 MOBILE APP COGNITIVE WALLET CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {/* 💳 MOBILE APP COGNITIVE WALLET CARDS - Sleek Dual Column Grid on Mobile */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
         {/* Passbook Commission Card */}
-        <div className="bg-gradient-to-tr from-violet-600 to-purple-800 text-white p-6 rounded-3xl border border-white/10 shadow-lg relative overflow-hidden">
-          <div className="absolute top-[-30%] right-[-20%] w-32 h-32 bg-indigo-500 rounded-full blur-[40px] opacity-40"></div>
+        <div className="bg-gradient-to-tr from-[#5f259f] to-indigo-900 text-white p-4.5 rounded-2xl border border-white/15 shadow-md relative overflow-hidden">
+          <div className="absolute top-[-30%] right-[-20%] w-32 h-32 bg-[#00baf2] rounded-full blur-[40px] opacity-35"></div>
           <div className="flex justify-between items-start">
-            <p className="text-[10px] font-black text-violet-200 uppercase tracking-widest">Active Commissions</p>
-            <ArrowUpRight className="w-5 h-5 text-violet-200" />
+            <p className="text-[9px] font-black text-violet-200 uppercase tracking-wider">A/C Commission</p>
+            <ArrowUpRight className="w-4 h-4 text-violet-200" />
           </div>
-          <p className="text-2xl font-black text-white mt-2">₹{(user.earning_wallet || 0).toFixed(2)}</p>
-          <div className="mt-4 flex items-center justify-between">
-            <span className="text-[10px] text-violet-200 font-bold">10 Levels dynamic payout ready</span>
+          <p className="text-xl sm:text-2xl font-black text-white mt-1.5">₹{(user.earning_wallet || 0).toFixed(2)}</p>
+          <div className="mt-3.5 flex flex-col xs:flex-row xs:items-center justify-between gap-1.5 pt-2 border-t border-white/10">
+            <span className="text-[8px] text-violet-200 font-bold truncate">Premium ready</span>
             <button 
               type="button" 
               onClick={() => setTab('withdraw')} 
-              className="px-3 py-1 bg-white hover:bg-violet-50 text-violet-700 text-[10px] font-black rounded-lg uppercase tracking-wide shadow-xs transition-colors"
+              className="px-2.5 py-1 bg-white hover:bg-violet-50 text-violet-700 text-[9px] font-black rounded-lg uppercase tracking-wider transition-all shadow-xs"
             >
               Withdraw
             </button>
@@ -237,42 +238,42 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
 
         {/* Passbook Recharge Wallet Card */}
-        <div className="bg-gradient-to-tr from-indigo-800 to-slate-950 text-white p-6 rounded-3xl border border-white/5 shadow-lg relative overflow-hidden">
-          <div className="absolute bottom-[-30%] right-[-10%] w-32 h-32 bg-blue-500 rounded-full blur-[40px] opacity-25"></div>
+        <div className="bg-gradient-to-tr from-[#053c5e] to-slate-950 text-white p-4.5 rounded-2xl border border-white/10 shadow-md relative overflow-hidden">
+          <div className="absolute bottom-[-30%] right-[-10%] w-32 h-32 bg-[#00baf2] rounded-full blur-[40px] opacity-25"></div>
           <div className="flex justify-between items-start">
-            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Recharge Balance</p>
-            <Smartphone className="w-5 h-5 text-violet-400" />
+            <p className="text-[9px] font-black text-blue-300 uppercase tracking-wider">Recharge Balance</p>
+            <Smartphone className="w-4 h-4 text-[#00baf2]" />
           </div>
-          <p className="text-2xl font-black text-amber-400 mt-2">₹{(user.recharge_wallet || 0).toFixed(2)}</p>
-          <div className="mt-4 flex items-center justify-between">
-            <span className="text-[10px] text-slate-400 font-bold">Instantly pay utility bills</span>
+          <p className="text-xl sm:text-2xl font-black text-amber-400 mt-1.5 font-mono">₹{(user.recharge_wallet || 0).toFixed(2)}</p>
+          <div className="mt-3.5 flex flex-col xs:flex-row xs:items-center justify-between gap-1.5 pt-2 border-t border-white/5">
+            <span className="text-[8px] text-slate-300 font-bold truncate">Instant Trigger</span>
             <button 
               type="button" 
               onClick={() => setTab('add_money')} 
-              className="px-3 py-1 bg-gradient-to-r from-blue-500 to-violet-600 text-white hover:opacity-90 text-[10px] font-black rounded-lg uppercase tracking-wide shadow-xs transition-colors"
+              className="px-2.5 py-1 bg-gradient-to-r from-[#00baf2] to-[#120e2e] text-white text-[9px] font-black rounded-lg uppercase tracking-wider transition-transform active:scale-95 shadow-md"
             >
               Add Cash
             </button>
           </div>
         </div>
 
-        {/* Network & Downline Size Card */}
-        <div className="bg-gradient-to-tr from-slate-900 to-slate-950 text-white p-6 rounded-3xl border border-white/5 shadow-lg relative overflow-hidden">
-          <div className="absolute top-[-30%] left-[-20%] w-32 h-32 bg-amber-500 rounded-full blur-[40px] opacity-20"></div>
+        {/* Network & Downline Size Card - Full width span on mobile or beautifully padded */}
+        <div className="col-span-2 sm:col-span-1 bg-gradient-to-tr from-slate-900 to-slate-950 text-white p-4.5 rounded-2xl border border-white/5 shadow-md relative overflow-hidden">
+          <div className="absolute top-[-30%] left-[-20%] w-32 h-32 bg-amber-500 rounded-full blur-[40px] opacity-15"></div>
           <div className="flex justify-between items-start">
-            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Network Business</p>
-            <Network className="w-5 h-5 text-amber-400" />
+            <p className="text-[9px] font-black text-slate-300 uppercase tracking-wider">My Network</p>
+            <Network className="w-4 h-4 text-emerald-400" />
           </div>
-          <p className="text-2xl font-black text-white mt-2">{myDownline.length} <span className="text-xs text-slate-400 font-bold">Members</span></p>
-          <div className="mt-4 flex items-center justify-between">
+          <p className="text-xl sm:text-2xl font-black text-white mt-1.5">{myDownline.length} <span className="text-[9px] text-slate-400 font-bold tracking-normal uppercase">Members</span></p>
+          <div className="mt-3.5 flex flex-row items-center justify-between gap-1 pt-2 border-t border-slate-800">
             <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span className="text-[10px] text-emerald-400 font-black">{activeDownlineCount} Active Users</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-[8px] text-emerald-400 font-black">{activeDownlineCount} Active</span>
             </div>
             <button 
               type="button" 
               onClick={() => setTab('mlm')} 
-              className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-black rounded-lg uppercase tracking-wide transition-colors"
+              className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[9px] font-black rounded-lg uppercase tracking-wider transition-colors shadow-xs"
             >
               My Tree
             </button>
@@ -281,14 +282,14 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       {/* 🔮 PHONEPE MOBILE QUICK ACTIONS INTERACTIVE CORES */}
-      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Transfer Money</h3>
-        <div className="grid grid-cols-4 gap-2 text-center">
+      <div className="bg-white p-3.5 sm:p-5 rounded-2.5xl border border-slate-100 shadow-sm">
+        <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Settle & Transfer Cash</h3>
+        <div className="grid grid-cols-4 gap-1 text-center">
           {[
-            { id: 'add_money', name: 'Add Wallet Money', desc: 'Scan & Load Cash', color: 'from-blue-50 to-indigo-50 text-indigo-700 ring-indigo-100/50', icon: <ArrowDownToLine className="w-6 h-6 stroke-[1.8]" /> },
-            { id: 'transfer', name: 'To Bank / Self', desc: 'Send via Mail', color: 'from-violet-50 to-purple-50 text-violet-700 ring-violet-100/50', icon: <Send className="w-6 h-6 stroke-[1.8]" /> },
-            { id: 'withdraw', name: 'Withdraw Cash', desc: 'Settle to Bank', color: 'from-amber-50 to-orange-50 text-orange-700 ring-orange-100/50', icon: <Landmark className="w-6 h-6 stroke-[1.8]" /> },
-            { id: 'mlm', name: 'Downline Tree', desc: '10 level Network', color: 'from-emerald-50 to-teal-50 text-emerald-700 ring-emerald-100/50', icon: <Network className="w-6 h-6 stroke-[1.8]" /> }
+            { id: 'add_money', name: 'Add Money', desc: 'Scan QR & load', color: 'from-[#0b081c] to-[#120e2e] text-[#00baf2] ring-[#00baf2]/10', icon: <ArrowDownToLine className="w-5 h-5" /> },
+            { id: 'transfer', name: 'To Wallet', desc: 'Instant peer key', color: 'from-[#1a1438] to-[#110c24] text-[#a78bfa] ring-[#a78bfa]/10', icon: <Send className="w-5 h-5" /> },
+            { id: 'withdraw', name: 'To Bank', desc: 'Direct payout A/C', color: 'from-[#231a4c] to-[#1a1438] text-amber-400 ring-amber-500/10', icon: <Landmark className="w-5 h-5" /> },
+            { id: 'mlm', name: 'Downlines', desc: '10 level layout', color: 'from-slate-900 to-slate-950 text-emerald-400 ring-emerald-500/10', icon: <Network className="w-5 h-5" /> }
           ].map(action => (
             <button 
               type="button"
@@ -296,11 +297,11 @@ const Dashboard: React.FC<DashboardProps> = ({
               onClick={() => setTab(action.id as any)}
               className="flex flex-col items-center group transition-transform active:scale-95"
             >
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${action.color} flex items-center justify-center mb-2 shadow-sm ring-4 group-hover:shadow-md transition-all`}>
+              <div className={`w-11 h-11 xs:w-12 xs:h-12 rounded-xl bg-gradient-to-br ${action.color} flex items-center justify-center mb-1.5 shadow-sm ring-3 group-hover:scale-103 transition-transform`}>
                 {action.icon}
               </div>
-              <p className="text-[11px] font-black text-slate-800 group-hover:text-violet-700 transition-colors leading-tight max-w-[80px]">{action.name}</p>
-              <p className="text-[8px] text-slate-400 mt-0.5 hidden sm:block">{action.desc}</p>
+              <p className="text-[10px] sm:text-[11px] font-black text-slate-800 leading-tight truncate w-full px-0.5">{action.name}</p>
+              <p className="text-[7.5px] text-slate-400 mt-0.5 hidden xs:block">{action.desc}</p>
             </button>
           ))}
         </div>

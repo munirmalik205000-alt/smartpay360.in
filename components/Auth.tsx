@@ -126,56 +126,56 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
   };
 
   return (
-    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-[#110c24] p-3 sm:p-6 md:p-8 relative overflow-y-auto font-sans">
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-gradient-to-b from-[#110c24] via-[#090518] to-[#04020a] p-3 sm:p-5 relative overflow-y-auto font-sans">
       
       {/* PhonePe Inspired Interactive Cyber Aura */}
-      <div className="absolute top-[-30%] left-[-20%] w-[90%] h-[90%] opacity-40 bg-gradient-to-tr from-[#673ab7] via-[#5f259f] to-[#3f51b5] rounded-full blur-[160px] pointer-events-none"></div>
-      <div className="absolute bottom-[-35%] right-[-20%] w-[90%] h-[90%] opacity-35 bg-gradient-to-br from-[#1e1b4b] via-[#4f46e5] to-[#7c3aed] rounded-full blur-[140px] pointer-events-none"></div>
+      <div className="absolute top-[-30%] left-[-20%] w-[90%] h-[90%] opacity-40 bg-gradient-to-tr from-[#673ab7] via-[#5f259f] to-[#00baf2] rounded-full blur-[160px] pointer-events-none"></div>
+      <div className="absolute bottom-[-35%] right-[-20%] w-[90%] h-[90%] opacity-35 bg-gradient-to-br from-[#120e2e] via-[#4f46e5] to-[#7c3aed] rounded-full blur-[140px] pointer-events-none"></div>
       
       {/* Decorative Brand Vectors */}
-      <div className="absolute top-[8%] left-[8%] text-purple-500/25 animate-pulse hidden lg:block">
-        <SmartphoneNfc className="w-16 h-16 stroke-[1]" />
+      <div className="absolute top-[8%] left-[8%] text-purple-500/20 animate-pulse hidden lg:block">
+        <SmartphoneNfc className="w-14 h-14 stroke-[1]" />
       </div>
-      <div className="absolute bottom-[8%] right-[8%] text-blue-500/25 animate-pulse hidden lg:block">
-        <CreditCard className="w-16 h-16 stroke-[1]" />
+      <div className="absolute bottom-[8%] right-[8%] text-[#00baf2]/20 animate-pulse hidden lg:block">
+        <CreditCard className="w-14 h-14 stroke-[1]" />
       </div>
 
-      <div className="w-full max-w-sm sm:max-w-[420px] bg-[#1a1438]/95 backdrop-blur-2xl px-4 py-6 sm:px-8 sm:py-8 rounded-3xl shadow-[0_25px_60px_rgba(0,0,0,0.6)] border border-[#ffffff0f] relative z-10 mx-auto my-auto overflow-hidden">
+      <div className="w-full max-w-[390px] bg-[#1a1438]/90 backdrop-blur-2xl px-4.5 py-5 sm:px-8 sm:py-7 rounded-2.5xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-violet-500/25 relative z-10 mx-auto my-auto overflow-hidden">
         
-        {/* PhonePe Classic Golden Accent Stroke on Top & Bottom */}
-        <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-violet-600 via-[#5f259f] to-amber-500" />
+        {/* PhonePe/Paytm Classic Golden Accent Stroke on Top & Bottom */}
+        <div className="absolute top-0 left-0 right-0 h-[4px] bg-gradient-to-r from-[#5f259f] via-violet-600 to-[#00baf2]" />
         <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#ffffff05]" />
 
         {/* Brand Section */}
-        <div className="text-center mb-5">
-          <div className="inline-block transform scale-[0.85] sm:scale-100 transition-transform duration-500 hover:scale-[1.02]">
-            <Logo size="md" />
+        <div className="text-center mb-4.5">
+          <div className="inline-block transform scale-[0.80] sm:scale-95 transition-transform duration-500 hover:scale-[1.01]">
+            <Logo size="sm" />
           </div>
           
-          <div className="mt-3 flex items-center justify-center gap-1 bg-[#231a4c] w-fit mx-auto px-3 py-1 rounded-full border border-violet-500/20 shadow-inner">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-            <span className="text-[10px] text-violet-200 font-extrabold uppercase tracking-wide">
-              {view === 'login' ? 'Direct UPI Gateway' : view === 'signup' ? 'Get Instant Referral Bonus' : 'Identity Verification'}
+          <div className="mt-2 flex items-center justify-center gap-1 bg-[#231a4c] w-fit mx-auto px-3 py-1 rounded-full border border-violet-500/30 shadow-inner">
+            <Sparkles className="w-3 h-3 text-amber-400 animate-pulse" />
+            <span className="text-[9px] text-[#00baf2] font-black uppercase tracking-widest">
+              {view === 'login' ? 'SECURE UPI PAYMENTS' : view === 'signup' ? 'EARN LEVEL PENALTIES & CASH' : 'CREDENTIALS LOOKUP'}
             </span>
           </div>
 
-          <p className="text-slate-400 text-[10px] sm:text-xs font-semibold tracking-wide mt-2">
-            {view === 'login' ? 'Easily process your standard recharges and instant transfers.' : 
-             view === 'signup' ? 'Sign up to generate earnings through state level multi ranking.' :
-             'Securely fetch your lost credentials via instant API lookups.'}
+          <p className="text-slate-400 text-[10px] font-semibold tracking-wide mt-1.5 leading-snug">
+            {view === 'login' ? 'Pay bills, recharges & manage your downline network instantly.' : 
+             view === 'signup' ? 'Complete fast 10-level binary business matrix signup.' :
+             'Secure recovery using authenticated database ledger keys.'}
           </p>
         </div>
 
         {/* Tab Selection */}
         {(view === 'login' || view === 'signup') && (
-          <div className="flex bg-[#0b081c] p-1 rounded-2xl mb-5 border border-white/[0.04]">
+          <div className="flex bg-[#0b081c] p-0.5 rounded-xl mb-4.5 border border-white/[0.04]">
             <button
               type="button"
               onClick={() => setView('login')}
-              className={`flex-1 py-2 sm:py-2.5 text-xs font-black rounded-xl transition-all duration-300 ${
+              className={`flex-1 py-1.5 sm:py-2 text-[11px] font-black rounded-lg transition-all duration-300 ${
                 view === 'login' 
-                  ? 'bg-gradient-to-r from-[#673ab7] to-[#4f46e5] text-white shadow-lg' 
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-gradient-to-r from-[#5f259f] to-[#00baf2] text-white shadow-md' 
+                  : 'text-slate-500 hover:text-white'
               }`}
             >
               Secure Login
@@ -183,53 +183,53 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
             <button
               type="button"
               onClick={() => setView('signup')}
-              className={`flex-1 py-2 sm:py-2.5 text-xs font-black rounded-xl transition-all duration-300 ${
+              className={`flex-1 py-1.5 sm:py-2 text-[11px] font-black rounded-lg transition-all duration-300 ${
                 view === 'signup' 
-                  ? 'bg-gradient-to-r from-[#673ab7] to-[#4f46e5] text-white shadow-lg' 
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-gradient-to-r from-[#5f259f] to-[#00baf2] text-white shadow-md' 
+                  : 'text-slate-500 hover:text-white'
               }`}
             >
-              Sign Up
+              New Sign Up
             </button>
           </div>
         )}
 
         {recoveryResult ? (
-          <div className="space-y-4">
-            <div className="bg-emerald-950/40 p-4 rounded-2xl border border-emerald-800 text-center shadow-inner">
-              <div className="w-10 h-10 bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-3 text-emerald-400 shadow-sm">
-                <ShieldCheck className="w-5 h-5 animate-pulse" />
+          <div className="space-y-3.5">
+            <div className="bg-emerald-950/40 p-4 rounded-xl border border-emerald-800 text-center shadow-inner">
+              <div className="w-9 h-9 bg-emerald-900/50 rounded-full flex items-center justify-center mx-auto mb-2 text-emerald-400 shadow-sm">
+                <ShieldCheck className="w-4 h-4 animate-pulse" />
               </div>
               <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">Identity Verified</p>
-              <p className="text-slate-300 text-xs mb-3 font-medium">Please note your digital credential securely:</p>
-              <div className="bg-slate-950 px-5 py-2.5 rounded-xl border border-dashed border-emerald-700 inline-block shadow-sm">
-                <span className="text-2xl font-extrabold text-amber-400 font-mono tracking-wider select-all">{recoveryResult}</span>
+              <p className="text-slate-300 text-xs mb-2 font-medium">Please note your digital credential securely:</p>
+              <div className="bg-slate-950 px-5 py-2 rounded-xl border border-dashed border-emerald-700 inline-block shadow-sm">
+                <span className="text-xl font-extrabold text-[#00baf2] font-mono tracking-wider select-all">{recoveryResult}</span>
               </div>
             </div>
             
             <button 
               type="button"
               onClick={() => { setView('login'); setRecoveryResult(null); }}
-              className="w-full py-3 text-center bg-gradient-to-r from-[#673ab7] to-[#4f46e5] hover:opacity-90 text-white font-bold rounded-xl text-xs uppercase tracking-widest transition-all duration-200 outline-none shadow-md"
+              className="w-full py-2 bg-gradient-to-r from-[#5f259f] to-[#00baf2] hover:opacity-90 text-white font-bold rounded-xl text-xs uppercase tracking-widest transition-all duration-200 outline-none shadow-md"
             >
               Back to Secure Login
             </button>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-3.5">
+          <form onSubmit={handleSubmit} className="space-y-2.5">
             
             {/* Full Name */}
             {view === 'signup' && (
-              <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Full Name</label>
+              <div className="space-y-0.5">
+                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider ml-1">Full Name</label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-violet-400 transition-colors">
-                    <User className="w-4 h-4 stroke-[1.8]" />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-[#00baf2] transition-colors">
+                    <User className="w-3.5 h-3.5" />
                   </div>
                   <input
                     type="text"
                     required
-                    className="w-full pl-9 pr-4 py-2 sm:py-2.5 bg-[#0b081c] border border-violet-500/10 focus:border-[#673ab7] text-white font-medium text-xs sm:text-sm rounded-xl focus:ring-4 focus:ring-[#673ab7]/10 outline-none transition-all placeholder:text-slate-600 shadow-inner"
+                    className="w-full pl-8.5 pr-4 py-1.5 bg-[#0b081c] border border-violet-500/10 focus:border-[#00baf2] text-white font-medium text-xs rounded-xl focus:ring-2 focus:ring-[#00baf2]/20 outline-none transition-all placeholder:text-slate-700 shadow-inner"
                     placeholder="E.g. Munir Malik"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -239,16 +239,16 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
             )}
 
             {/* Email Field */}
-            <div className="space-y-1">
-              <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Email / Username</label>
+            <div className="space-y-0.5">
+              <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider ml-1">Email / Username</label>
               <div className="relative group">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-violet-400 transition-colors">
-                  <Mail className="w-4 h-4 stroke-[1.8]" />
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-[#00baf2] transition-colors">
+                  <Mail className="w-3.5 h-3.5" />
                 </div>
                 <input
                   type="email"
                   required
-                  className="w-full pl-9 pr-4 py-2 sm:py-2.5 bg-[#0b081c] border border-violet-500/10 focus:border-[#673ab7] text-white font-medium text-xs sm:text-sm rounded-xl focus:ring-4 focus:ring-[#673ab7]/10 outline-none transition-all placeholder:text-slate-600 shadow-inner"
+                  className="w-full pl-8.5 pr-4 py-1.5 bg-[#0b081c] border border-violet-500/10 focus:border-[#00baf2] text-white font-medium text-xs rounded-xl focus:ring-2 focus:ring-[#00baf2]/20 outline-none transition-all placeholder:text-slate-700 shadow-inner"
                   placeholder="name@email.com"
                   value={formData.email}
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -258,20 +258,20 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
 
             {/* Mobile / State (Stacked tightly or grouped) */}
             {(view === 'signup' || view === 'recover-password' || view === 'recover-pin') && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 
                 {/* Mobile */}
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Mobile Number</label>
+                <div className="space-y-0.5">
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider ml-1">Mobile</label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-violet-400 transition-colors">
-                      <Smartphone className="w-4 h-4 stroke-[1.8]" />
+                    <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-[#00baf2] transition-colors">
+                      <Smartphone className="w-3.5 h-3.5" />
                     </div>
                     <input
                       type="tel"
                       required
-                      className="w-full pl-9 pr-4 py-2 sm:py-2.5 bg-[#0b081c] border border-violet-500/10 focus:border-[#673ab7] text-white font-medium text-xs sm:text-sm rounded-xl focus:ring-4 focus:ring-[#673ab7]/10 outline-none transition-all placeholder:text-slate-600 shadow-inner"
-                      placeholder="10-digit number"
+                      className="w-full pl-7.5 pr-2 py-1.5 bg-[#0b081c] border border-violet-500/10 focus:border-[#00baf2] text-white font-medium text-xs rounded-xl focus:ring-2 focus:ring-[#00baf2]/20 outline-none transition-all placeholder:text-slate-700 shadow-inner"
+                      placeholder="10-digit"
                       value={formData.phone}
                       onChange={(e) => setFormData({...formData, phone: e.target.value})}
                     />
@@ -280,15 +280,15 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
 
                 {/* State Dropdown (Only on signup) */}
                 {view === 'signup' && (
-                  <div className="space-y-1 relative">
-                    <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">State</label>
+                  <div className="space-y-0.5 relative">
+                    <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider ml-1">State</label>
                     <div 
-                      className="w-full px-3 py-2 sm:py-2.5 bg-[#0b081c] border border-violet-500/10 hover:border-violet-500/20 text-white rounded-xl cursor-pointer font-semibold text-xs sm:text-sm truncate flex items-center justify-between shadow-inner focus:ring-4 focus:ring-[#673ab7]/10 transition-all select-none"
+                      className="w-full px-2.5 py-1.5 bg-[#0b081c] border border-violet-500/10 hover:border-violet-500/30 text-white rounded-xl cursor-pointer font-semibold text-xs truncate flex items-center justify-between shadow-inner focus:ring-2 focus:ring-[#00baf2]/20 transition-all select-none"
                       onClick={() => setIsStateOpen(!isStateOpen)}
                     >
-                      <span className="flex items-center gap-1.5 min-w-0">
-                        <MapPin className="w-4 h-4 text-violet-400/70 shrink-0" />
-                        {formData.state ? <span className="text-white truncate">{formData.state}</span> : <span className="text-slate-600">Select State</span>}
+                      <span className="flex items-center gap-1 min-w-0">
+                        <MapPin className="w-3.5 h-3.5 text-[#00baf2] shrink-0" />
+                        {formData.state ? <span className="text-white truncate">{formData.state}</span> : <span className="text-slate-500">Pick State</span>}
                       </span>
                       <ChevronDown className={`w-3.5 h-3.5 text-slate-500 shrink-0 transition-transform ${isStateOpen ? 'rotate-180' : ''}`} />
                     </div>
@@ -297,17 +297,17 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
                       <div className="absolute top-[102%] left-0 w-full bg-[#161033] border border-violet-900/50 rounded-xl shadow-2xl z-50 overflow-hidden">
                         <input 
                           type="text"
-                          className="w-full px-3 py-2 border-b border-violet-950 text-xs focus:outline-none bg-[#0b081c] text-white font-bold"
-                          placeholder="Search state..."
+                          className="w-full px-2 py-1 border-b border-violet-950 text-[10px] focus:outline-none bg-[#0b081c] text-white font-bold"
+                          placeholder="Search..."
                           value={stateSearch}
                           onChange={(e) => setStateSearch(e.target.value)}
                           autoFocus
                         />
-                        <div className="max-h-36 overflow-y-auto no-scrollbar scroll-smooth">
+                        <div className="max-h-28 overflow-y-auto no-scrollbar scroll-smooth">
                           {filteredStates.map(s => (
                             <div 
                               key={s} 
-                              className="px-3.5 py-2 hover:bg-[#5f259f] hover:text-white text-xs font-bold cursor-pointer transition-colors text-slate-300"
+                              className="px-2.5 py-1.5 hover:bg-[#5f259f] hover:text-white text-[10px] font-bold cursor-pointer transition-colors text-slate-300"
                               onClick={() => {
                                 setFormData({...formData, state: s});
                                 setIsStateOpen(false);
@@ -318,7 +318,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
                             </div>
                           ))}
                           {filteredStates.length === 0 && (
-                            <div className="px-3.5 py-2 text-xs text-slate-500 italic">No states found</div>
+                            <div className="px-2 py-1.5 text-[10px] text-slate-500 italic">None found</div>
                           )}
                         </div>
                       </div>
@@ -330,16 +330,16 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
 
             {/* Password input */}
             {(view === 'login' || view === 'signup') && (
-              <div className="space-y-1">
-                <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">Password</label>
+              <div className="space-y-0.5">
+                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider ml-1">Password</label>
                 <div className="relative group">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-violet-400 transition-colors">
-                    <Lock className="w-4 h-4 stroke-[1.8]" />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-[#00baf2] transition-colors">
+                    <Lock className="w-3.5 h-3.5" />
                   </div>
                   <input
                     type={showPassword ? "text" : "password"}
                     required
-                    className="w-full pl-9 pr-9 py-2 sm:py-2.5 bg-[#0b081c] border border-violet-500/10 focus:border-[#673ab7] text-white font-medium text-xs sm:text-sm rounded-xl focus:ring-4 focus:ring-[#673ab7]/10 outline-none transition-all placeholder:text-slate-600 shadow-inner"
+                    className="w-full pl-8.5 pr-8 py-1.5 bg-[#0b081c] border border-violet-500/10 focus:border-[#00baf2] text-white font-medium text-xs rounded-xl focus:ring-2 focus:ring-[#00baf2]/20 outline-none transition-all placeholder:text-slate-700 shadow-inner"
                     placeholder="Enter password"
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
@@ -347,9 +347,9 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300"
+                    className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-500 hover:text-slate-300"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                   </button>
                 </div>
               </div>
@@ -357,21 +357,21 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
 
             {/* Transaction PIN & Sponsor ID */}
             {view === 'signup' && (
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2">
                 
                 {/* Transaction PIN */}
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1">UPI PIN (4 digit)</label>
+                <div className="space-y-0.5">
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider ml-1">UPI PIN (4 digit)</label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-violet-400 transition-colors">
-                      <KeyRound className="w-4 h-4 stroke-[1.8]" />
+                    <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-[#00baf2] transition-colors">
+                      <KeyRound className="w-3.5 h-3.5" />
                     </div>
                     <input
                       type={showPin ? "text" : "password"}
                       required
                       inputMode="numeric"
                       pattern="\d{4}"
-                      className="w-full pl-9 pr-9 py-2 bg-[#0b081c] border border-violet-500/10 focus:border-[#673ab7] text-white font-bold text-xs sm:text-sm rounded-xl focus:ring-4 focus:ring-[#673ab7]/10 outline-none transition-all placeholder:text-slate-600 tracking-[0.1em] shadow-inner"
+                      className="w-full pl-7.5 pr-7 py-1.5 bg-[#0b081c] border border-violet-500/10 focus:border-[#00baf2] text-white font-bold text-xs rounded-xl focus:ring-2 focus:ring-[#00baf2]/20 outline-none transition-all placeholder:text-slate-700 tracking-[0.1em] shadow-inner text-center"
                       placeholder="0000"
                       value={formData.transactionPin}
                       onChange={handlePinChange}
@@ -379,23 +379,23 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
                     <button
                       type="button"
                       onClick={() => setShowPin(!showPin)}
-                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-500 hover:text-slate-300"
+                      className="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-500 hover:text-slate-300"
                     >
-                      {showPin ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {showPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                     </button>
                   </div>
                 </div>
 
                 {/* Sponsor ID */}
-                <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider ml-1 truncate">Referral Code</label>
+                <div className="space-y-0.5">
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider ml-1 truncate">Referral Code</label>
                   <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-violet-400 transition-colors">
-                      <UserPlus className="w-4 h-4 stroke-[1.8]" />
+                    <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-[#00baf2] transition-colors">
+                      <UserPlus className="w-3.5 h-3.5" />
                     </div>
                     <input
                       type="text"
-                      className="w-full pl-9 pr-3 py-2 bg-[#0b081c] border border-violet-500/10 focus:border-[#673ab7] text-white font-medium text-xs sm:text-sm rounded-xl focus:ring-4 focus:ring-[#673ab7]/10 outline-none transition-all placeholder:text-slate-600 shadow-inner"
+                      className="w-full pl-7.5 pr-2 py-1.5 bg-[#0b081c] border border-violet-500/10 focus:border-[#00baf2] text-white font-medium text-xs rounded-xl focus:ring-2 focus:ring-[#00baf2]/20 outline-none transition-all placeholder:text-slate-700 shadow-inner"
                       placeholder="Optional"
                       value={formData.referralCode}
                       onChange={(e) => setFormData({...formData, referralCode: e.target.value})}
@@ -408,19 +408,19 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
 
             {/* Helper links */}
             {view === 'login' && (
-              <div className="flex justify-between items-center px-1 text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-wide">
+              <div className="flex justify-between items-center px-1 text-[10px] font-bold text-slate-400 uppercase tracking-wide py-0.5">
                 <button 
                   type="button" 
                   onClick={() => setView('recover-password')}
-                  className="hover:text-purple-400 transition-colors"
+                  className="hover:text-[#00baf2] transition-colors"
                 >
                   Forgot Password?
                 </button>
-                <span className="text-violet-900">|</span>
+                <span className="text-violet-900/40">|</span>
                 <button 
                   type="button" 
                   onClick={() => setView('recover-pin')}
-                  className="hover:text-purple-400 transition-colors"
+                  className="hover:text-[#00baf2] transition-colors"
                 >
                   Forgot UPI PIN?
                 </button>
@@ -430,24 +430,24 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
             {/* Action Button */}
             <button
               type="submit"
-              className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-[#673ab7] via-[#5f259f] to-[#3f51b5] hover:opacity-95 text-white font-black rounded-xl shadow-lg shadow-violet-950/40 active:scale-[0.98] transition-all uppercase tracking-widest text-xs mt-2 h-[42px] sm:h-[46px] flex items-center justify-center gap-2 border border-violet-500/30"
+              className="w-full py-2 bg-gradient-to-r from-[#5f259f] to-[#00baf2] hover:opacity-95 text-white font-black rounded-xl shadow-lg active:scale-[0.98] transition-all uppercase tracking-widest text-[10px] mt-2 h-[38px] flex items-center justify-center gap-2 border border-white/10"
             >
               <span>{view === 'login' ? 'Proceed To Secure Login' : 
-                     view === 'signup' ? 'Complete Account Registration' : 'Verify My Identity'}</span>
-              <Send className="w-3.5 h-3.5" />
+                     view === 'signup' ? 'Complete Fast Sign Up' : 'Verify My Identity'}</span>
+              <Send className="w-3 h-3" />
             </button>
           </form>
         )}
 
         {/* Alternate Navigation back link */}
         {(view === 'recover-password' || view === 'recover-pin' || recoveryResult) && (
-          <div className="mt-5 text-center border-t border-violet-900/40 pt-3.5">
+          <div className="mt-4 text-center border-t border-violet-900/30 pt-3">
             <button
               type="button"
               onClick={() => { setView('login'); setRecoveryResult(null); }}
-              className="inline-flex items-center gap-1.5 text-slate-400 hover:text-white transition-colors text-[10px] sm:text-xs font-bold uppercase tracking-widest"
+              className="inline-flex items-center gap-1.5 text-slate-500 hover:text-white transition-colors text-[10px] font-bold uppercase tracking-widest"
             >
-              <ArrowLeft className="w-3.5 h-3.5" />
+              <ArrowLeft className="w-3 h-3" />
               Back to Secure Login
             </button>
           </div>
@@ -455,27 +455,27 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
 
         {/* Footer prompts */}
         {view === 'login' && (
-          <div className="mt-5 text-center border-t border-violet-900/40 pt-3.5">
+          <div className="mt-4 text-center border-t border-violet-900/30 pt-3">
             <button
               type="button"
               onClick={() => { setView('signup'); setRecoveryResult(null); }}
-              className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-slate-400 hover:text-violet-400 transition-colors uppercase tracking-wider"
+              className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-[#00baf2] transition-colors uppercase tracking-wider"
             >
               <span>New to Gateway?</span>
-              <span className="text-amber-400 underline underline-offset-4 font-black">Open an account</span>
+              <span className="text-amber-400 underline underline-offset-4 font-black">Open account</span>
             </button>
           </div>
         )}
 
         {view === 'signup' && (
-          <div className="mt-5 text-center border-t border-violet-900/40 pt-3.5">
+          <div className="mt-4 text-center border-t border-violet-900/30 pt-3">
             <button
               type="button"
               onClick={() => { setView('login'); setRecoveryResult(null); }}
-              className="inline-flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-slate-400 hover:text-violet-400 transition-colors uppercase tracking-wider"
+              className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-[#00baf2] transition-colors uppercase tracking-wider"
             >
               <span>Already registered?</span>
-              <span className="text-[#a78bfa] underline underline-offset-4 font-black">Login securely</span>
+              <span className="text-[#00baf2] underline underline-offset-4 font-black">Login securely</span>
             </button>
           </div>
         )}
