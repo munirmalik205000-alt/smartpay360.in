@@ -47,6 +47,11 @@ CREATE POLICY "Users can update own profile"
   ON public.users FOR UPDATE 
   USING (auth.uid() = id);
 
+-- Users can insert their own profile
+CREATE POLICY "Users can insert own profile" 
+  ON public.users FOR INSERT 
+  WITH CHECK (auth.uid() = id);
+
 -- Policies for Transactions
 CREATE POLICY "Users can view own transactions" 
   ON public.transactions FOR SELECT 

@@ -8,6 +8,7 @@ import AdminPanel from './components/AdminPanel';
 export default function App() {
   const [session, setSession] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'admin'>('dashboard');
 
@@ -15,16 +16,20 @@ export default function App() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       if (session?.user) {
-        fetchUserProfile(session.user.id);
+        fetchUserProfile(session.user);
       } else {
         setLoading(false);
       }
+    }).catch((err) => {
+      console.warn("Supabase auth offline or unconfigured:", err);
+      setProfileError("Could not connect to Supabase database. Please check your URL and API Key.");
+      setLoading(false);
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       if (session?.user) {
-        fetchUserProfile(session.user.id);
+        fetchUserProfile(session.user);
       } else {
         setUserProfile(null);
         setLoading(false);
@@ -36,18 +41,42 @@ export default function App() {
     }
   }, []);
 
-  const fetchUserProfile = async (userId: string) => {
+  const fetchUserProfile = async (user: any) => {
     try {
+      setProfileError(null);
       const { data, error } = await supabase
         .from('users')
         .select('*')
-        .eq('id', userId)
+        .eq('id', user.id)
         .single();
       
-      if (error) throw error;
-      setUserProfile(data as User);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
+      if (error && error.code === 'PGRST116') {
+        // Not found, attempt to create
+        const { data: newData, error: insertError } = await supabase
+          .from('users')
+          .insert([{ 
+             id: user.id,
+             email: user.email,
+             username: user.user_metadata?.username || 'User'
+          }])
+          .select()
+          .single();
+          
+        if (!insertError && newData) {
+          setUserProfile(newData as User);
+        } else {
+          console.error('Error auto-creating profile:', insertError);
+          setProfileError(insertError?.message || 'Failed to auto-create profile. Missing INSERT permissions or table?');
+        }
+      } else if (error) {
+        console.error('Error fetching profile:', error);
+        setProfileError(error.message);
+      } else if (data) {
+        setUserProfile(data as User);
+      }
+    } catch (error: any) {
+      console.error('Exception fetching profile:', error);
+      setProfileError(error.message);
     } finally {
       setLoading(false);
     }
@@ -62,10 +91,25 @@ export default function App() {
   }
 
   if (!userProfile) {
-    return <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white">
-      <p>Setting up your profile...</p>
-      <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-blue-600 rounded">Refresh</button>
-    </div>;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4 text-center">
+        <p className="text-xl mb-2">Setting up your profile...</p>
+        {profileError && (
+          <div className="bg-red-900/50 border border-red-500 text-red-200 p-4 rounded mt-4 max-w-md">
+            <p className="font-bold">Error loading profile:</p>
+            <p className="font-mono text-sm mt-2">{profileError}</p>
+            <p className="text-sm mt-4 text-red-300">
+              Note: Make sure you have executed the schema.sql script in your Supabase SQL Editor. 
+              If the 'users' table is missing or lacks the correct RLS policies, this will fail.
+            </p>
+          </div>
+        )}
+        <div className="flex gap-4 mt-6">
+          <button onClick={() => window.location.reload()} className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded">Retry</button>
+          <button onClick={() => supabase.auth.signOut()} className="px-4 py-2 border border-red-600 text-red-400 rounded hover:bg-red-900/30">Sign Out</button>
+        </div>
+      </div>
+    );
   }
 
   return (
