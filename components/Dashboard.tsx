@@ -1,6 +1,35 @@
-
 import React, { useState, useMemo } from 'react';
 import { User, Transaction, Product, PaymentRequest, WithdrawalRequest, ChatMessage, BankDetails } from '../types';
+import { 
+  User as UserIcon, 
+  Smartphone, 
+  Tv, 
+  Zap, 
+  Droplet, 
+  Car, 
+  Globe, 
+  CreditCard, 
+  Send, 
+  Landmark, 
+  PlusCircle, 
+  ArrowUpRight, 
+  ArrowDownLeft, 
+  Network, 
+  MessageSquare, 
+  ShoppingBag, 
+  Copy, 
+  Share2, 
+  ShieldCheck, 
+  ShieldAlert,
+  ChevronRight, 
+  History, 
+  Sparkles,
+  CheckCircle2,
+  AlertCircle,
+  HelpCircle,
+  ArrowDownToLine,
+  ChevronDown
+} from 'lucide-react';
 
 interface DashboardProps {
   user: User;
@@ -50,13 +79,9 @@ const Dashboard: React.FC<DashboardProps> = ({
     return findDownline(user.id);
   }, [users, user.id]);
 
-  const stats = [
-    { label: 'Recharge Wallet', val: `₹${(user.recharge_wallet || 0).toFixed(2)}`, color: 'text-blue-600' },
-    { label: 'Main Wallet', val: `₹${(user.wallet_balance || 0).toFixed(2)}`, color: 'text-slate-900' },
-    { label: 'Commission', val: `₹${(user.earning_wallet || 0).toFixed(2)}`, color: 'text-green-600' },
-    { label: 'Total Earnings', val: `₹${((user.earning_wallet || 0) + (user.wallet_balance || 0)).toFixed(2)}`, color: 'text-indigo-600' },
-    { label: 'Team Size', val: myDownline.length.toString(), color: 'text-orange-600' },
-  ];
+  const activeDownlineCount = useMemo(() => {
+    return myDownline.filter(u => u.is_active || u.isActivated).length;
+  }, [myDownline]);
 
   const shareText = `Join SmartPay 360 and earn from 10 levels of referrals! Use my referral code: ${(user.referralCode || user.id.slice(0,8))}. Sign up now!`;
   const shareUrl = window.location.origin;
@@ -87,7 +112,6 @@ const Dashboard: React.FC<DashboardProps> = ({
     const amt = parseFloat(addMoneyData.amount);
     if (isNaN(amt) || amt <= 0) return alert('Enter valid amount');
     
-    // UTR and Screenshot are optional
     const finalUtr = addMoneyData.utr.trim() || 'N/A';
     const finalScreenshot = addMoneyData.screenshot || '';
     
@@ -116,313 +140,663 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const initiateRecharge = (service: string) => {
-    const amt = prompt(`Enter ${service} amount:`);
+    const amt = prompt(`Enter ${service} recharge amount (₹):`);
     if (!amt) return;
-    const pin = prompt(`Enter 4-digit Transaction PIN to confirm:`);
-    if (!pin || pin.length !== 4) return alert('Valid Transaction PIN is required for recharges.');
+    const pin = prompt(`Enter your 4-digit UPI Transaction PIN to confirm transaction:`);
+    if (!pin || pin.length !== 4) return alert('Valid 4-digit Transaction PIN is required.');
     onRecharge(user.id, parseFloat(amt), service, pin);
   };
 
   return (
-    <div className="space-y-6">
-      {!user.is_active && (
-        <div className="bg-orange-50 border border-orange-200 p-6 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
-           <div>
-              <h3 className="text-orange-800 font-bold text-lg">Account Inactive</h3>
-              <p className="text-orange-600 text-sm">Purchase Activation Package for ₹{packagePrice}. Add money to Recharge wallet first.</p>
-           </div>
-           <button onClick={() => onActivate(user.id)} className="bg-orange-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:bg-orange-600 transition-colors">Activate Now</button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-        {stats.map(s => (
-          <div key={s.label} className="bg-white p-4 rounded-xl shadow-sm border border-slate-100">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{s.label}</p>
-            <p className={`text-xl font-black mt-1 ${s.color}`}>{s.val}</p>
+    <div className="space-y-6 max-w-5xl mx-auto px-1 sm:px-4 pb-12 font-sans text-slate-900 selection:bg-violet-100 selection:text-violet-900">
+      
+      {/* 🚀 HEADER: PhonePe style User Context Profile Area */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-[#1a1438] text-white p-6 rounded-3xl border border-[#ffffff0f] shadow-xl relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#5f259f] rounded-full blur-[110px] opacity-25 pointer-events-none"></div>
+        
+        <div className="flex items-center gap-4 relative z-10 w-full sm:w-auto">
+          <div className="relative">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-violet-600 via-indigo-600 to-purple-600 flex items-center justify-center border-2 border-white/20 text-white font-extrabold text-2xl uppercase shadow-md">
+              {user.email[0]}
+            </div>
+            <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-2 border-[#1a1438] flex items-center justify-center text-[10px]" title="Network Active Status">
+              {user.is_active ? <CheckCircle2 className="w-4 h-4 text-white" /> : <AlertCircle className="w-4 h-3.5 text-white" />}
+            </div>
           </div>
-        ))}
+          <div>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <h2 className="text-lg font-black tracking-tight">{user.username || user.email.split('@')[0]}</h2>
+              <span className={`px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${
+                user.is_active ? 'bg-amber-400 text-slate-900 shadow-sm' : 'bg-slate-700 text-slate-300'
+              }`}>
+                {user.is_active ? '🌟 Premium Active' : 'Basic Tier'}
+              </span>
+            </div>
+            <p className="text-xs text-violet-200 mt-1 font-semibold">{user.email}</p>
+            <p className="text-[10px] text-slate-400 mt-0.5">Sponsor: {user.sponsor_id || "None"}</p>
+          </div>
+        </div>
+
+        {/* Dynamic Balance Badging */}
+        <div className="flex mt-2 sm:mt-0 w-full sm:w-auto gap-4 self-stretch sm:self-center border-t border-white/10 sm:border-0 pt-4 sm:pt-0 justify-around sm:justify-end">
+          <div className="text-center sm:text-right">
+            <p className="text-[10px] font-bold text-violet-300 uppercase tracking-widest">Main Wallet</p>
+            <p className="text-xl sm:text-2xl font-black text-white mt-1">₹{(user.wallet_balance || 0).toFixed(2)}</p>
+          </div>
+          <div className="h-10 w-[1px] bg-white/10 self-center"></div>
+          <div className="text-center sm:text-right">
+            <p className="text-[10px] font-bold text-violet-300 uppercase tracking-widest">Recharge Wallet</p>
+            <p className="text-xl sm:text-2xl font-black text-amber-400 mt-1">₹{(user.recharge_wallet || 0).toFixed(2)}</p>
+          </div>
+        </div>
       </div>
 
-      <nav className="flex gap-1 bg-white p-1 rounded-xl shadow-sm border w-fit overflow-x-auto max-w-full no-scrollbar">
-        {['home', 'add_money', 'withdraw', 'utility', 'shop', 'transfer', 'mlm', 'support'].map(t => (
+      {/* ⚠️ INACTIVE ACTION PROMPT */}
+      {!user.is_active && (
+        <div className="bg-gradient-to-r from-violet-900 to-indigo-900 text-white p-5 rounded-3xl border border-violet-500/20 flex flex-col md:flex-row items-center justify-between gap-4 shadow-lg relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500 rounded-full blur-3xl opacity-20 pointer-events-none"></div>
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Sparkles className="w-5 h-5 text-amber-400 animate-pulse" />
+              <h3 className="font-extrabold text-base tracking-tight text-white">Unlock Rank Earnings & Premium Recharges</h3>
+            </div>
+            <p className="text-xs text-violet-200 leading-relaxed max-w-xl">
+              Purchase our lifetime dynamic membership license bundle for just <strong className="text-amber-400 text-sm">₹{packagePrice}</strong>. Unlock multilevel downline rankings, instant auto-recharge utility triggers, and direct bank payouts.
+            </p>
+          </div>
           <button 
-            key={t} onClick={() => setTab(t as any)}
-            className={`px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${tab === t ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50'}`}
+            type="button" 
+            onClick={() => onActivate(user.id)} 
+            className="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-slate-950 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl transition-all block text-center whitespace-nowrap"
           >
-            {t.replace('_', ' ').toUpperCase()}
+            Activate Instant Bundle
           </button>
-        ))}
-      </nav>
-
-      {tab === 'home' && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
-            <h3 className="text-lg font-bold mb-4">Transaction Logs</h3>
-            <div className="space-y-3">
-              {transactions.slice(0, 8).map(tx => (
-                <div key={tx.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${tx.amount > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                      {((tx.type || tx.transaction_type || 'U')[0]).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-800">{tx.description || tx.remark}</p>
-                      <p className="text-[9px] text-slate-400">{new Date(tx.createdAt || tx.created_at || Date.now()).toLocaleString()}</p>
-                    </div>
-                  </div>
-                  <p className={`text-sm font-black ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>₹{tx.amount.toFixed(2)}</p>
-                </div>
-              ))}
-              {transactions.length === 0 && <p className="text-center py-10 text-slate-400 text-xs">No transactions yet.</p>}
-            </div>
-          </div>
-          <div className="space-y-6">
-            <div className="bg-gradient-to-br from-blue-600 to-cyan-600 p-6 rounded-2xl text-white shadow-lg">
-              <h4 className="font-bold mb-1">Referral Link</h4>
-              <p className="text-[10px] text-blue-100 mb-4">Earn from 10 levels of active downline.</p>
-              <div className="bg-white/10 p-3 rounded-lg flex justify-between items-center border border-white/20 mb-4">
-                <span className="font-mono font-bold text-sm">{(user.referralCode || user.id.slice(0,8))}</span>
-                <button onClick={() => {navigator.clipboard.writeText((user.referralCode || user.id.slice(0,8))); alert('Copied!');}} className="text-[10px] font-bold px-3 py-1 bg-white text-blue-600 rounded">COPY</button>
-              </div>
-              <div className="flex items-center gap-3 justify-center">
-                 <button onClick={() => handleShare('whatsapp')} className="w-10 h-10 bg-[#25D366] rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform">
-                   <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .015 5.398.015 12.03c0 2.123.553 4.197 1.603 6.034L0 24l6.135-1.61a11.787 11.787 0 005.912 1.64h.005c6.635 0 12.034-5.399 12.034-12.03 0-3.212-1.25-6.232-3.52-8.504z"/></svg>
-                 </button>
-                 <button onClick={() => handleShare('telegram')} className="w-10 h-10 bg-[#0088cc] rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform">
-                   <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.891 8.146l-2.003 9.464c-.149.659-.539.822-1.091.511l-3.051-2.25-1.47 1.416c-.163.163-.3.298-.615.298l.221-3.137 5.711-5.159c.247-.22-.054-.341-.383-.122l-7.06 4.444-3.041-.951c-.661-.204-.674-.661.139-.98l11.879-4.579c.55-.204 1.03.127.859.936z"/></svg>
-                 </button>
-                 <button onClick={() => handleShare('facebook')} className="w-10 h-10 bg-[#1877F2] rounded-full flex items-center justify-center shadow-md hover:scale-110 transition-transform">
-                   <svg className="w-6 h-6 fill-white" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-                 </button>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
-      {tab === 'withdraw' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          <div className="bg-white p-8 rounded-3xl border shadow-sm">
-            <h3 className="text-lg font-black mb-6 text-slate-800">Bank Details</h3>
-            <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onUpdateBankDetails(bankForm); }}>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Account Holder Name</label>
-                <input type="text" className="w-full px-4 py-2 bg-slate-50 border rounded-xl text-sm" value={bankForm.holderName} onChange={e => setBankForm({...bankForm, holderName: e.target.value})} required />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Bank Name</label>
-                <input type="text" className="w-full px-4 py-2 bg-slate-50 border rounded-xl text-sm" value={bankForm.bankName} onChange={e => setBankForm({...bankForm, bankName: e.target.value})} required />
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Account Number</label>
-                  <input type="text" className="w-full px-4 py-2 bg-slate-50 border rounded-xl text-sm" value={bankForm.accountNumber} onChange={e => setBankForm({...bankForm, accountNumber: e.target.value})} required />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">IFSC Code</label>
-                  <input type="text" className="w-full px-4 py-2 bg-slate-50 border rounded-xl text-sm" value={bankForm.ifscCode} onChange={e => setBankForm({...bankForm, ifscCode: e.target.value})} required />
-                </div>
-              </div>
-              <button type="submit" className="w-full py-3 bg-slate-800 text-white text-xs font-bold rounded-xl hover:bg-black transition-all">SAVE BANK DETAILS</button>
-            </form>
+      {/* 💳 MOBILE APP COGNITIVE WALLET CARDS */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Passbook Commission Card */}
+        <div className="bg-gradient-to-tr from-violet-600 to-purple-800 text-white p-6 rounded-3xl border border-white/10 shadow-lg relative overflow-hidden">
+          <div className="absolute top-[-30%] right-[-20%] w-32 h-32 bg-indigo-500 rounded-full blur-[40px] opacity-40"></div>
+          <div className="flex justify-between items-start">
+            <p className="text-[10px] font-black text-violet-200 uppercase tracking-widest">Active Commissions</p>
+            <ArrowUpRight className="w-5 h-5 text-violet-200" />
           </div>
-
-          <div className="bg-white p-8 rounded-3xl border shadow-sm">
-            <h3 className="text-lg font-black mb-2 text-slate-800">Withdraw Funds</h3>
-            <p className="text-xs text-slate-400 mb-6 font-medium tracking-tight uppercase">Min Withdrawal: ₹50 | Commission Wallet</p>
-            <form onSubmit={handleWithdrawalSubmit} className="space-y-4">
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Amount to Withdraw (₹)</label>
-                <input type="number" min="50" className="w-full px-5 py-3 bg-slate-50 border rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:outline-none font-bold" value={withdrawalAmount} onChange={e => setWithdrawalAmount(e.target.value)} required />
-              </div>
-              <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Transaction PIN</label>
-                <input type="password" maxLength={4} inputMode="numeric" pattern="\d{4}" className="w-full px-5 py-3 bg-slate-50 border rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:outline-none font-bold text-center tracking-[0.5em]" placeholder="0000" value={withdrawalPin} onChange={e => setWithdrawalPin(e.target.value.replace(/\D/g, '').slice(0, 4))} required />
-              </div>
-              <button type="submit" className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl hover:bg-blue-700 transition-all">SUBMIT WITHDRAWAL</button>
-            </form>
+          <p className="text-2xl font-black text-white mt-2">₹{(user.earning_wallet || 0).toFixed(2)}</p>
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-[10px] text-violet-200 font-bold">10 Levels dynamic payout ready</span>
+            <button 
+              type="button" 
+              onClick={() => setTab('withdraw')} 
+              className="px-3 py-1 bg-white hover:bg-violet-50 text-violet-700 text-[10px] font-black rounded-lg uppercase tracking-wide shadow-xs transition-colors"
+            >
+              Withdraw
+            </button>
           </div>
         </div>
-      )}
 
-      {tab === 'transfer' && (
-        <div className="max-w-md mx-auto bg-white p-8 rounded-3xl border shadow-sm">
-          <h3 className="text-lg font-black mb-2 text-slate-800 text-center">Fund Transfer</h3>
-          <p className="text-xs text-slate-400 mb-8 text-center uppercase font-bold tracking-widest">Main Wallet to Main Wallet</p>
-          <form onSubmit={handleTransferSubmit} className="space-y-5">
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Recipient Email</label>
-              <input type="email" required className="w-full px-5 py-3 bg-slate-50 border rounded-2xl font-bold" value={transferData.email} onChange={e => setTransferData({...transferData, email: e.target.value})} placeholder="recipient@spay.com" />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Amount (₹)</label>
-              <input type="number" required className="w-full px-5 py-3 bg-slate-50 border rounded-2xl font-bold" value={transferData.amount} onChange={e => setTransferData({...transferData, amount: e.target.value})} placeholder="0.00" />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1 ml-1">Transaction PIN</label>
-              <input type="password" maxLength={4} inputMode="numeric" pattern="\d{4}" className="w-full px-5 py-3 bg-slate-50 border rounded-2xl font-bold text-center tracking-[0.5em]" value={transferData.pin} onChange={e => setTransferData({...transferData, pin: e.target.value.replace(/\D/g, '').slice(0, 4)})} placeholder="0000" required />
-            </div>
-            <button type="submit" className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl hover:bg-blue-700">TRANSFER NOW</button>
-          </form>
+        {/* Passbook Recharge Wallet Card */}
+        <div className="bg-gradient-to-tr from-indigo-800 to-slate-950 text-white p-6 rounded-3xl border border-white/5 shadow-lg relative overflow-hidden">
+          <div className="absolute bottom-[-30%] right-[-10%] w-32 h-32 bg-blue-500 rounded-full blur-[40px] opacity-25"></div>
+          <div className="flex justify-between items-start">
+            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Recharge Balance</p>
+            <Smartphone className="w-5 h-5 text-violet-400" />
+          </div>
+          <p className="text-2xl font-black text-amber-400 mt-2">₹{(user.recharge_wallet || 0).toFixed(2)}</p>
+          <div className="mt-4 flex items-center justify-between">
+            <span className="text-[10px] text-slate-400 font-bold">Instantly pay utility bills</span>
+            <button 
+              type="button" 
+              onClick={() => setTab('add_money')} 
+              className="px-3 py-1 bg-gradient-to-r from-blue-500 to-violet-600 text-white hover:opacity-90 text-[10px] font-black rounded-lg uppercase tracking-wide shadow-xs transition-colors"
+            >
+              Add Cash
+            </button>
+          </div>
         </div>
-      )}
 
-      {tab === 'utility' && (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        {/* Network & Downline Size Card */}
+        <div className="bg-gradient-to-tr from-slate-900 to-slate-950 text-white p-6 rounded-3xl border border-white/5 shadow-lg relative overflow-hidden">
+          <div className="absolute top-[-30%] left-[-20%] w-32 h-32 bg-amber-500 rounded-full blur-[40px] opacity-20"></div>
+          <div className="flex justify-between items-start">
+            <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Network Business</p>
+            <Network className="w-5 h-5 text-amber-400" />
+          </div>
+          <p className="text-2xl font-black text-white mt-2">{myDownline.length} <span className="text-xs text-slate-400 font-bold">Members</span></p>
+          <div className="mt-4 flex items-center justify-between">
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span className="text-[10px] text-emerald-400 font-black">{activeDownlineCount} Active Users</span>
+            </div>
+            <button 
+              type="button" 
+              onClick={() => setTab('mlm')} 
+              className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[10px] font-black rounded-lg uppercase tracking-wide transition-colors"
+            >
+              My Tree
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 🔮 PHONEPE MOBILE QUICK ACTIONS INTERACTIVE CORES */}
+      <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
+        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Transfer Money</h3>
+        <div className="grid grid-cols-4 gap-2 text-center">
           {[
-            { name: 'Mobile', icon: '📱', color: 'bg-blue-100' },
-            { name: 'DTH', icon: '📡', color: 'bg-orange-100' },
-            { name: 'Electricity', icon: '⚡', color: 'bg-yellow-100' },
-            { name: 'Water', icon: '💧', color: 'bg-cyan-100' },
-            { name: 'FASTag', icon: '🚗', color: 'bg-emerald-100' },
-            { name: 'Broadband', icon: '🌐', color: 'bg-indigo-100' },
-          ].map(s => (
-            <button key={s.name} disabled={!user.is_active} onClick={() => initiateRecharge(s.name)}
-              className={`bg-white p-6 rounded-2xl border shadow-sm text-center ${!user.is_active ? 'opacity-50 grayscale' : 'hover:border-blue-300'}`}>
-              <div className={`w-12 h-12 ${s.color} rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl`}>{s.icon}</div>
-              <p className="text-xs font-bold text-slate-700">{s.name}</p>
+            { id: 'add_money', name: 'Add Wallet Money', desc: 'Scan & Load Cash', color: 'from-blue-50 to-indigo-50 text-indigo-700 ring-indigo-100/50', icon: <ArrowDownToLine className="w-6 h-6 stroke-[1.8]" /> },
+            { id: 'transfer', name: 'To Bank / Self', desc: 'Send via Mail', color: 'from-violet-50 to-purple-50 text-violet-700 ring-violet-100/50', icon: <Send className="w-6 h-6 stroke-[1.8]" /> },
+            { id: 'withdraw', name: 'Withdraw Cash', desc: 'Settle to Bank', color: 'from-amber-50 to-orange-50 text-orange-700 ring-orange-100/50', icon: <Landmark className="w-6 h-6 stroke-[1.8]" /> },
+            { id: 'mlm', name: 'Downline Tree', desc: '10 level Network', color: 'from-emerald-50 to-teal-50 text-emerald-700 ring-emerald-100/50', icon: <Network className="w-6 h-6 stroke-[1.8]" /> }
+          ].map(action => (
+            <button 
+              type="button"
+              key={action.id} 
+              onClick={() => setTab(action.id as any)}
+              className="flex flex-col items-center group transition-transform active:scale-95"
+            >
+              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${action.color} flex items-center justify-center mb-2 shadow-sm ring-4 group-hover:shadow-md transition-all`}>
+                {action.icon}
+              </div>
+              <p className="text-[11px] font-black text-slate-800 group-hover:text-violet-700 transition-colors leading-tight max-w-[80px]">{action.name}</p>
+              <p className="text-[8px] text-slate-400 mt-0.5 hidden sm:block">{action.desc}</p>
             </button>
           ))}
         </div>
+      </div>
+
+      {/* 🧭 PREMIUM FLAT APP NAV/TAB SLIDER */}
+      <div className="bg-[#110c24] p-1.5 rounded-2xl border border-white/[0.05] block overflow-x-auto no-scrollbar shadow-inner">
+        <div className="flex gap-1.5 float-none">
+          {[
+            { id: 'home', name: '🏠 Home / Logs' },
+            { id: 'add_money', name: '📥 Add Cash' },
+            { id: 'withdraw', name: '🏛️ Withdraw' },
+            { id: 'utility', name: '⚡ Recharges' },
+            { id: 'shop', name: '🛍️ Shop Items' },
+            { id: 'transfer', name: '💸 Transfers' },
+            { id: 'mlm', name: '👥 Network MLM' },
+            { id: 'support', name: '💬 Helpdesk' },
+          ].map(t => (
+            <button 
+              type="button"
+              key={t.id} 
+              onClick={() => setTab(t.id as any)}
+              className={`px-4.5 py-2.5 rounded-xl text-xs font-black transition-all duration-300 whitespace-nowrap flex items-center gap-1.5 ${
+                tab === t.id 
+                  ? 'bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg' 
+                  : 'text-slate-400 hover:text-white hover:bg-white/[0.04]'
+              }`}
+            >
+              {t.name.toUpperCase()}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ⚡ TAB VIEW CONTROLLERS */}
+
+      {/* VIEW: HOME & BANKING PASSBOOK LOGS */}
+      {tab === 'home' && (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          
+          {/* Main Transaction Logs (Passbook Feed) */}
+          <div className="lg:col-span-2 bg-white rounded-3xl p-5 sm:p-7 border border-slate-100 shadow-sm">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h3 className="font-extrabold text-base text-slate-800 flex items-center gap-2">
+                  <History className="w-5 h-5 text-violet-600 shrink-0" />
+                  Banking Transaction History
+                </h3>
+                <p className="text-[10px] text-slate-400 font-bold uppercase mt-0.5">Live passbook stream updates</p>
+              </div>
+              <span className="text-[10px] bg-slate-100 font-bold px-3 py-1 text-slate-600 rounded-full">
+                {transactions.length} Logs
+              </span>
+            </div>
+
+            <div className="space-y-3 max-h-[460px] overflow-y-auto pr-1 no-scrollbar">
+              {transactions.map(tx => {
+                const isCredit = tx.amount > 0;
+                return (
+                  <div key={tx.id} className="flex items-center justify-between p-4 bg-slate-50/50 hover:bg-slate-50 transition-colors rounded-2xl border border-slate-100">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm shrink-0 ${
+                        isCredit ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'
+                      }`}>
+                        {isCredit ? <ArrowDownLeft className="w-5 h-5" /> : <ArrowUpRight className="w-5 h-5" />}
+                      </div>
+                      <div>
+                        <p className="text-[11px] sm:text-xs font-black text-slate-800 leading-tight">
+                          {tx.description || tx.remark || 'Internal Transfer log'}
+                        </p>
+                        <p className="text-[9px] text-slate-400 mt-1 font-semibold">
+                          {new Date(tx.createdAt || tx.created_at || Date.now()).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className={`text-xs sm:text-sm font-black ${isCredit ? 'text-emerald-600' : 'text-slate-800'}`}>
+                        {isCredit ? '+' : '-'}₹{Math.abs(tx.amount).toFixed(2)}
+                      </p>
+                      <span className="text-[8px] uppercase tracking-wider font-extrabold bg-slate-100 text-slate-400 px-1.5 py-0.5 rounded mt-1 inline-block">
+                        SUCCESS
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+              {transactions.length === 0 && (
+                <div className="text-center py-24 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
+                  <p className="text-slate-400 text-xs font-bold leading-normal">No recent transactions processed.</p>
+                  <p className="text-[10px] text-slate-300 uppercase font-black mt-1">Initiate recharges or add money to start</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Side Panel Widgets (Promo and share) */}
+          <div className="space-y-6">
+            
+            {/* Refer & Earn Premium Banner */}
+            <div className="bg-[#110c24] text-white p-6 rounded-3xl border border-white/[0.05] shadow-lg relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600 rounded-full blur-[70px] opacity-25"></div>
+              
+              <div className="flex items-center gap-2 mb-2">
+                <Sparkles className="w-5 h-5 text-amber-400" />
+                <h4 className="font-extrabold text-sm uppercase tracking-wide text-amber-400">Refer & Earn Big</h4>
+              </div>
+              <p className="text-xs text-violet-200 leading-normal">
+                Share your unique code to build your own 10-level binary matrix network tree. Earn points on every activation log.
+              </p>
+
+              <div className="bg-[#1e1742] p-4 rounded-2xl border border-white/5 mt-4 flex justify-between items-center">
+                <div>
+                  <p className="text-[8px] font-bold uppercase text-slate-400 tracking-widest">My Referral Code</p>
+                  <span className="font-mono font-black text-base text-white tracking-widest mt-1 block">
+                    {(user.referralCode || user.id.slice(0,8))}
+                  </span>
+                </div>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    navigator.clipboard.writeText((user.referralCode || user.id.slice(0,8))); 
+                    alert('Referral identity copied to system successfully.');
+                  }} 
+                  className="px-3.5 py-2 hover:opacity-90 bg-gradient-to-r from-violet-600 to-purple-600 text-white text-[10px] font-black rounded-xl uppercase tracking-widest transition-opacity shadow-sm"
+                >
+                  COPY CODE
+                </button>
+              </div>
+
+              <div className="mt-5 border-t border-white/10 pt-4">
+                <p className="text-[9px] font-black text-slate-400 text-center uppercase tracking-wider mb-3">Instant Social Sharing</p>
+                <div className="flex items-center gap-3 justify-center">
+                   <button 
+                     type="button"
+                     onClick={() => handleShare('whatsapp')} 
+                     className="w-10 h-10 bg-[#25D366] hover:scale-105 transition-transform flex items-center justify-center rounded-2xl text-white shadow-md shadow-green-900/10"
+                   >
+                     <svg className="w-5 h-5 fill-white" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.414 0 .015 5.398.015 12.03c0 2.123.553 4.197 1.603 6.034L0 24l6.135-1.61a11.787 11.787 0 005.912 1.64h.005c6.635 0 12.034-5.399 12.034-12.03 0-3.212-1.25-6.232-3.52-8.504z"/></svg>
+                   </button>
+                   <button 
+                     type="button"
+                     onClick={() => handleShare('telegram')} 
+                     className="w-10 h-10 bg-[#0088cc] hover:scale-105 transition-transform flex items-center justify-center rounded-2xl text-white shadow-md shadow-blue-900/10"
+                   >
+                     <svg className="w-5.5 h-5.5 fill-white" viewBox="0 0 24 24"><path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm5.891 8.146l-2.003 9.464c-.149.659-.539.822-1.091.511l-3.051-2.25-1.47 1.416c-.163.163-.3.298-.615.298l.221-3.137 5.711-5.159c.247-.22-.054-.341-.383-.122l-7.06 4.444-3.041-.951c-.661-.204-.674-.661.139-.98l11.879-4.579c.55-.204 1.03.127.859.936z"/></svg>
+                   </button>
+                   <button 
+                     type="button"
+                     onClick={() => handleShare('facebook')} 
+                     className="w-10 h-10 bg-[#1877F2] hover:scale-105 transition-transform flex items-center justify-center rounded-2xl text-white shadow-md shadow-indigo-900/10"
+                   >
+                     <svg className="w-5.5 h-5.5 fill-white" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                   </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
       )}
-      
+
+      {/* VIEW: ADD MONEY SCREEN */}
       {tab === 'add_money' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
-          <div className="bg-white p-8 rounded-3xl border shadow-sm text-center flex flex-col items-center justify-center border-slate-100">
-            <h3 className="text-lg font-black mb-6 text-slate-800">Scan & Pay to Add Money</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {/* QR Code display */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm text-center flex flex-col items-center justify-center">
+            <h3 className="text-sm font-black text-slate-500 uppercase tracking-widest mb-4">Direct Merchant QR Pay</h3>
             {qrCode ? (
-              <div className="p-4 bg-white border border-slate-100 rounded-3xl shadow-xs mb-6">
-                 <img src={qrCode} alt="Payment QR" className="w-64 h-64 object-contain" />
+              <div className="p-4 bg-white border-2 border-dashed border-violet-100 rounded-2xl shadow-xs mb-5">
+                 <img src={qrCode} alt="Receiver payment wallet code" className="w-48 h-48 sm:w-56 sm:h-56 object-contain" />
               </div>
             ) : (
-              <div className="w-64 h-64 bg-slate-100 rounded-3xl flex items-center justify-center text-slate-400 text-xs font-bold border border-dashed mb-6 p-4 text-center">
-                 Admin hasn't uploaded QR code yet. Please contact support.
+              <div className="w-48 h-48 sm:w-56 sm:h-56 bg-slate-100 rounded-3xl flex flex-col items-center justify-center text-slate-400 text-xs font-bold border border-dashed mb-5 p-4 text-center">
+                 <ShieldAlert className="w-8 h-8 text-slate-300 mb-2" />
+                 Admin receiver QR isn't configured yet. Please request help desk.
               </div>
             )}
-            <p className="text-xs text-slate-500 font-bold max-w-xs leading-relaxed uppercase tracking-wider">
-               Scan the code above, complete the payment, and submit the details on the right to receive funds.
+            <p className="text-[11px] text-slate-500 font-extrabold max-w-xs leading-relaxed uppercase tracking-wider">
+               Instantly Scan the QR with GPay, PhonePe or Paytm. Submit the payment reference to receive immediate wallet replenishment.
             </p>
           </div>
-          <div className="bg-white p-8 rounded-3xl border shadow-sm border-slate-100">
-            <h3 className="text-lg font-black mb-6 text-slate-800">Payment Proof Details</h3>
-            <form onSubmit={handleAddMoneySubmit} className="space-y-5">
+
+          {/* Form proof submission */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm">
+            <h3 className="text-base font-black text-[#110c24] mb-4">Submit Payment Reference</h3>
+            <form onSubmit={handleAddMoneySubmit} className="space-y-4">
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">Deposit Amount (₹) <span className="text-red-500">*</span></label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-0.5">Amount Transferred (₹) *</label>
                 <input 
-                  type="number" required placeholder="0.00"
-                  className="w-full px-5 py-3 bg-slate-50 border rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:outline-none font-bold"
+                  type="number" required placeholder="E.g. 500" min="1"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-violet-500 focus:bg-white text-slate-800 font-extrabold text-sm outline-none transition-all placeholder:text-slate-400"
                   value={addMoneyData.amount} onChange={e => setAddMoneyData({...addMoneyData, amount: e.target.value})}
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">UTR / Transaction ID <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-0.5">UTR / UPI Transaction ID (Optional)</label>
                 <input 
-                  type="text" placeholder="12-digit UPI Transaction ID (Optional)"
-                  className="w-full px-5 py-3 bg-slate-50 border rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:outline-none font-mono text-sm"
+                  type="text" placeholder="12-digit payment index code"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-[#673ab7] focus:bg-white text-slate-800 font-bold text-xs outline-none transition-all placeholder:text-slate-505"
                   value={addMoneyData.utr} onChange={e => setAddMoneyData({...addMoneyData, utr: e.target.value})}
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-slate-400 uppercase mb-1.5 ml-1">Upload Details Screenshot <span className="text-slate-400 font-normal">(Optional)</span></label>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-1.5 ml-0.5">Proof Screenshot (Optional)</label>
                 <input 
                   type="file" accept="image/*"
-                  className="w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:bg-violet-50 file:text-violet-700 hover:file:bg-violet-100 cursor-pointer"
                   onChange={handleScreenshotChange}
                 />
               </div>
-              <button type="submit" className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl hover:bg-blue-700 active:scale-[0.98] transition-all">
-                SUBMIT FOR APPROVAL
+              <button 
+                type="submit" 
+                className="w-full py-3 bg-gradient-to-r from-violet-600 to-purple-800 hover:opacity-95 text-white font-black rounded-xl shadow-lg shadow-violet-950/20 uppercase tracking-widest text-xs"
+              >
+                SUBMIT FOR ADMIN AUDIT
               </button>
             </form>
 
-            <div className="mt-8 border-t pt-6">
-              <h4 className="text-[10px] font-bold text-slate-400 uppercase mb-4 tracking-wider font-bold">Recent Requests</h4>
-              <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+            {/* Recent deposit timeline requests logs */}
+            <div className="mt-6 border-t border-slate-100 pt-4">
+              <h4 className="text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">Recent Cash Flow Orders</h4>
+              <div className="space-y-2 max-h-32 overflow-y-auto pr-1 no-scrollbar">
                 {paymentRequests.map(r => (
                   <div key={r.id} className="p-3 bg-slate-50 rounded-xl border flex justify-between items-center text-[10px] border-slate-100">
                     <div>
-                      <p className="font-bold text-slate-700">₹{r.amount} - UTR: {r.utr || 'N/A'}</p>
-                      <p className="text-slate-400">{new Date(r.createdAt).toLocaleDateString()}</p>
+                      <p className="font-extrabold text-slate-700">₹{r.amount} - Ref: {r.utr || 'N/A'}</p>
+                      <p className="text-slate-400 font-bold">{new Date(r.createdAt).toLocaleDateString()}</p>
                     </div>
-                    <span className={`px-2 py-0.5 rounded-full font-black uppercase text-[8px] ${
+                    <span className={`px-2 py-0.5 rounded-full font-black uppercase text-[8px] tracking-wider ${
                       r.status === 'approved' ? 'bg-emerald-100 text-emerald-600' : 
-                      r.status === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-red-100 text-red-600'
+                      r.status === 'pending' ? 'bg-amber-100 text-amber-600' : 'bg-rose-100 text-rose-600'
                     }`}>
                       {r.status}
                     </span>
                   </div>
                 ))}
-                {paymentRequests.length === 0 && <p className="text-center text-slate-300 text-[10px] py-4 italic">No previous requests found.</p>}
+                {paymentRequests.length === 0 && <p className="text-center text-slate-400 text-[9px] py-4 italic uppercase tracking-wider font-bold">No previous deposits found.</p>}
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {tab === 'shop' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {products.map(p => (
-            <div key={p.id} className="bg-white rounded-2xl border overflow-hidden shadow-sm group border-slate-100 hover:border-blue-200 transition-all">
-              <div className="h-40 bg-slate-50 flex items-center justify-center text-4xl">{p.image}</div>
-              <div className="p-4">
-                <h4 className="font-bold text-sm text-slate-800">{p.name}</h4>
-                <p className="text-xs text-slate-400 mt-1 line-clamp-2">{p.description}</p>
-                <div className="flex items-center justify-between mt-4">
-                  <span className="text-sm font-black text-slate-900">₹{p.price}</span>
-                  <button onClick={() => onOrder(user.id, p.id)} className="px-4 py-2 bg-blue-600 text-white text-[10px] font-bold rounded-lg hover:bg-blue-700 transition-all uppercase tracking-wider">BUY NOW</button>
+      {/* VIEW: WITHDRAW SYSTEM SETTLEMENTS */}
+      {tab === 'withdraw' && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          {/* Bank updates form */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm">
+            <h3 className="text-base font-black text-[#110c24] mb-4">Settle Bank Account Credentials</h3>
+            <form className="space-y-3.5" onSubmit={(e) => { e.preventDefault(); onUpdateBankDetails(bankForm); alert('Settle bank details configured successfully!'); }}>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-0.5">Account holder Name</label>
+                <input type="text" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs focus:bg-white focus:border-violet-500 outline-none" value={bankForm.holderName} onChange={e => setBankForm({...bankForm, holderName: e.target.value})} required />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-0.5">Bank Name</label>
+                <input type="text" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs focus:bg-white focus:border-violet-500 outline-none" value={bankForm.bankName} onChange={e => setBankForm({...bankForm, bankName: e.target.value})} required />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-0.5">Account Number</label>
+                  <input type="text" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs focus:bg-white focus:border-violet-500 outline-none" value={bankForm.accountNumber} onChange={e => setBankForm({...bankForm, accountNumber: e.target.value})} required />
+                </div>
+                <div>
+                  <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-0.5">IFSC Code</label>
+                  <input type="text" className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs focus:bg-white focus:border-violet-500 outline-none" value={bankForm.ifscCode} onChange={e => setBankForm({...bankForm, ifscCode: e.target.value})} required />
                 </div>
               </div>
-            </div>
-          ))}
-          {products.length === 0 && (
-             <div className="col-span-full text-center py-10 text-slate-400 text-xs">No products listed.</div>
-          )}
+              <button 
+                type="submit" 
+                className="w-full py-3 bg-slate-900 shadow-md text-white text-xs font-black rounded-xl hover:bg-black transition-all uppercase tracking-widest"
+              >
+                SAVE BANK CONFIGURATION
+              </button>
+            </form>
+          </div>
+
+          {/* Settle Money transfer block */}
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm">
+            <h3 className="text-base font-black text-slate-800 mb-1">Instant Bank Cash-out</h3>
+            <p className="text-[10px] text-slate-400 mb-4 uppercase font-black tracking-widest">Commission Wallet | Min ₹50 settlement</p>
+            
+            <form onSubmit={handleWithdrawalSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-0.5">Withdrawal Amount (₹)</label>
+                <input type="number" min="50" className="w-full px-4 py-2.5 bg-slate-50 border-2 border-violet-100 rounded-xl focus:border-violet-500 focus:bg-white font-extrabold text-[#110c24] outline-none" value={withdrawalAmount} onChange={e => setWithdrawalAmount(e.target.value)} required />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-0.5">Secure Transaction Pin</label>
+                <input 
+                  type="password" maxLength={4} inputMode="numeric" pattern="\d{4}" 
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:border-violet-500 focus:bg-white font-black text-center tracking-[0.4em] outline-none" 
+                  placeholder="0000" value={withdrawalPin} onChange={e => setWithdrawalPin(e.target.value.replace(/\D/g, '').slice(0, 4))} required 
+                />
+              </div>
+              <button 
+                type="submit" 
+                className="w-full py-3.5 bg-gradient-to-r from-violet-600 via-indigo-600 to-purple-600 text-white font-black rounded-xl shadow-lg shadow-violet-900/30 hover:opacity-95 uppercase tracking-widest text-xs"
+              >
+                DISPATCH SETTLEMENT REQUEST
+              </button>
+            </form>
+          </div>
         </div>
       )}
 
-      {tab === 'support' && (
-        <div className="max-w-3xl mx-auto bg-white rounded-3xl border shadow-sm flex flex-col h-[500px] overflow-hidden border-slate-100">
-          <div className="p-4 border-b bg-slate-50 border-slate-100">
-            <h3 className="font-bold text-slate-800 flex items-center gap-2">
-              <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
-              Admin Support Chat Helpdesk
-            </h3>
+      {/* VIEW: PEER TRANSFER */}
+      {tab === 'transfer' && (
+        <div className="max-w-md mx-auto bg-white p-6 sm:p-8 rounded-3xl border border-slate-100 shadow-sm">
+          <h3 className="text-base font-black mb-1 text-slate-800 text-center">To Wallet Transfer</h3>
+          <p className="text-[10px] text-slate-400 mb-6 text-center uppercase font-black tracking-widest">Main Wallet to Main Wallet instant lookup</p>
+          
+          <form onSubmit={handleTransferSubmit} className="space-y-4">
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-0.5">Recipient Account Email</label>
+              <input type="email" required className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl font-bold text-xs" value={transferData.email} onChange={e => setTransferData({...transferData, email: e.target.value})} placeholder="E.g. member@spay.com" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-0.5">Transfer Amount (₹)</label>
+              <input type="number" required className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl font-black text-xs" value={transferData.amount} onChange={e => setTransferData({...transferData, amount: e.target.value})} placeholder="0.00" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-400 uppercase mb-1 ml-0.5">4-digit Secure Transaction PIN</label>
+              <input 
+                type="password" maxLength={4} inputMode="numeric" pattern="\d{4}" 
+                className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl font-black text-center tracking-[0.4em] text-xs" 
+                value={transferData.pin} onChange={e => setTransferData({...transferData, pin: e.target.value.replace(/\D/g, '').slice(0, 4)})} placeholder="0000" required 
+              />
+            </div>
+            <button 
+              type="submit" 
+              className="w-full py-3.5 bg-gradient-to-r from-violet-600 to-purple-600 text-white font-black rounded-xl shadow-lg uppercase tracking-widest text-xs"
+            >
+              COMPLETE PEER TRANSFER
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* VIEW: UTILITY RECHARGES */}
+      {tab === 'utility' && (
+        <div className="space-y-4">
+          <div className="bg-white p-5 rounded-3xl border border-slate-100 shadow-xs">
+            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Recharges & Utility Bills</h3>
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+              {[
+                { name: 'Mobile', desc: 'Prepaid/Postpaid', icon: <Smartphone className="w-5 h-5" />, color: 'bg-blue-50 text-blue-600' },
+                { name: 'DTH', desc: 'Satellite TV', icon: <Tv className="w-5 h-5" />, color: 'bg-orange-50 text-orange-600' },
+                { name: 'Electricity', desc: 'Power grids', icon: <Zap className="w-5 h-5" />, color: 'bg-amber-50 text-amber-500' },
+                { name: 'Water', desc: 'Sewer/Tap', icon: <Droplet className="w-5 h-5" />, color: 'bg-cyan-50 text-cyan-600' },
+                { name: 'FASTag', desc: 'Toll highway', icon: <Car className="w-5 h-5" />, color: 'bg-emerald-50 text-emerald-600' },
+                { name: 'Broadband', desc: 'FTTH fiber', icon: <Globe className="w-5 h-5" />, color: 'bg-indigo-50 text-indigo-600' },
+              ].map(s => (
+                <button 
+                  type="button"
+                  key={s.name} 
+                  disabled={!user.is_active} 
+                  onClick={() => initiateRecharge(s.name)}
+                  className={`p-4 bg-slate-50 hover:bg-slate-100/80 rounded-2xl border border-slate-100 text-center flex flex-col items-center justify-center transition-all ${
+                    !user.is_active ? 'opacity-50 grayscale cursor-not-allowed' : 'hover:border-violet-300 active:scale-95'
+                  }`}
+                >
+                  <div className={`w-10 h-10 ${s.color} rounded-xl flex items-center justify-center mb-2.5 shadow-xs`}>
+                    {s.icon}
+                  </div>
+                  <p className="text-[11px] font-black text-slate-800 leading-tight">{s.name}</p>
+                  <p className="text-[7.5px] text-slate-400 mt-0.5 tracking-tight">{s.desc}</p>
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex-1 overflow-y-auto p-6 space-y-4 no-scrollbar">
+        </div>
+      )}
+
+      {/* VIEW: E-COMMERCE PRODUCTS */}
+      {tab === 'shop' && (
+        <div className="space-y-4">
+          <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-slate-100">
+            <h3 className="font-extrabold text-sm text-[#110c24] flex items-center gap-1.5">
+              <ShoppingBag className="w-4 h-4 text-violet-600" />
+              Member Direct Products Shop
+            </h3>
+            <span className="text-[10px] text-slate-500 font-bold uppercase">Redeem via recharge funds</span>
+          </div>
+          
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {products.map(p => (
+              <div key={p.id} className="bg-white rounded-2.5xl border border-slate-100 overflow-hidden shadow-sm hover:border-violet-200 transition-all flex flex-col justify-between group">
+                <div className="h-32 bg-slate-50 flex items-center justify-center text-3xl group-hover:scale-103 transition-transform">{p.image}</div>
+                <div className="p-3.5 flex-1 flex flex-col justify-between">
+                  <div>
+                    <h4 className="font-black text-xs text-slate-800 leading-tight">{p.name}</h4>
+                    <p className="text-[10px] text-slate-400 mt-1 line-clamp-2 leading-snug">{p.description}</p>
+                  </div>
+                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-slate-50">
+                    <span className="text-xs font-black text-indigo-700">₹{p.price}</span>
+                    <button 
+                      type="button"
+                      onClick={() => onOrder(user.id, p.id)} 
+                      className="px-3 py-1.5 bg-violet-600 hover:bg-violet-700 text-white text-[9px] font-extrabold rounded-lg tracking-wider transition-colors"
+                    >
+                      REDEEM
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            {products.length === 0 && (
+               <div className="col-span-full text-center py-16 bg-slate-50 rounded-3xl border border-dashed text-slate-400 text-xs font-bold uppercase tracking-wider">
+                  No Direct partner products listed.
+               </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* VIEW: HELPDESK CHAT */}
+      {tab === 'support' && (
+        <div className="max-w-2xl mx-auto bg-white rounded-3xl border border-slate-100 shadow-sm flex flex-col h-[480px] overflow-hidden">
+          <div className="p-4 border-b bg-slate-50 border-slate-150 flex items-center justify-between">
+            <h3 className="font-black text-slate-800 text-xs flex items-center gap-2 uppercase tracking-wider">
+              <span className="w-2 h-2 bg-emerald-500 rounded-full animate-ping"></span>
+              24x7 Customer Assist Chat
+            </h3>
+            <span className="text-[8px] bg-slate-200 px-2 py-0.5 rounded font-black text-slate-500">SECURE SHELL</span>
+          </div>
+          
+          <div className="flex-1 overflow-y-auto p-4 space-y-3.5 no-scrollbar bg-slate-50/50">
             {chatMessages.map(m => (
               <div key={m.id} className={`flex ${m.senderId === user.id ? 'justify-end' : 'justify-start'}`}>
-                <div className={`max-w-[80%] p-3 rounded-2xl text-xs font-semibold shadow-sm ${
-                  m.senderId === user.id ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-slate-100 text-slate-800 rounded-tl-none border'
+                <div className={`max-w-[80%] p-3 rounded-2xl text-xs font-semibold shadow-xs ${
+                  m.senderId === user.id ? 'bg-indigo-600 text-white rounded-tr-none' : 'bg-white text-slate-800 rounded-tl-none border border-slate-100'
                 }`}>
-                  <p className="mb-1 opacity-70 text-[9px] uppercase font-bold">{m.senderName || (m.senderId === 'admin-0' ? 'ADMIN' : 'SUPPORT')}</p>
-                  <p>{m.message}</p>
-                  <p className="mt-1 opacity-50 text-[8px] text-right">{new Date(m.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</p>
+                  <p className="mb-0.5 opacity-65 text-[8px] uppercase font-bold tracking-widest">
+                    {m.senderName || (m.senderId === 'admin-0' ? 'ADMIN' : 'REPRESENTATIVE')}
+                  </p>
+                  <p className="leading-relaxed">{m.message}</p>
+                  <p className="mt-1 opacity-50 text-[7px] text-right">
+                    {new Date(m.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  </p>
                 </div>
               </div>
             ))}
             {chatMessages.length === 0 && (
-               <div className="text-center py-20 text-slate-400 text-xs">No chat history. Start a conversation below.</div>
+               <div className="text-center py-24 text-slate-400 text-[11px] font-extrabold uppercase tracking-widest leading-loose">
+                 <ChatEmptyState />
+               </div>
             )}
           </div>
-          <form className="p-4 border-t bg-white flex gap-2 border-slate-100" onSubmit={(e) => { e.preventDefault(); if(!chatInput.trim()) return; onSendMessage(chatInput, 'admin-0'); setChatInput(''); }}>
-             <input type="text" className="flex-1 px-4 py-2 bg-slate-50 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-600/10 font-bold" placeholder="Type your support message here..." value={chatInput} onChange={e => setChatInput(e.target.value)} />
-             <button type="submit" className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all text-xs uppercase tracking-wider">SEND</button>
+
+          <form 
+            className="p-3 border-t bg-white flex gap-2 border-slate-100" 
+            onSubmit={(e) => { e.preventDefault(); if(!chatInput.trim()) return; onSendMessage(chatInput, 'admin-0'); setChatInput(''); }}
+          >
+             <input type="text" className="flex-1 px-4 py-2.5 bg-slate-50 focus:bg-white border rounded-xl text-xs focus:ring-4 focus:ring-violet-500/10 focus:border-violet-500 outline-none font-bold" placeholder="Discuss balance queries or UTR confirmations here..." value={chatInput} onChange={e => chatInput.length < 220 && setChatInput(e.target.value)} />
+             <button type="submit" className="px-5 py-2 bg-slate-900 hover:bg-black text-white font-black rounded-xl transition-all text-xs uppercase tracking-widest">SEND</button>
           </form>
         </div>
       )}
+
+      {/* VIEW: MULTILEVEL NETWORK TREE */}
       {tab === 'mlm' && (
-        <div className="bg-white p-6 rounded-2xl shadow-sm border">
-          <h3 className="text-lg font-bold mb-6">Downline Tree (10 Levels)</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white p-6 sm:p-8 rounded-3xl shadow-sm border border-slate-100">
+          <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center border-b pb-4 border-slate-100 gap-2">
+            <div>
+              <h3 className="text-base font-black text-slate-800">10-Level Downline Business Matrix</h3>
+              <p className="text-[10px] text-slate-400 font-extrabold uppercase mt-0.5 tracking-wider">Expand your network to unlock passive residuals</p>
+            </div>
+            <div className="text-left sm:text-right">
+              <span className="text-[10px] bg-slate-100 font-black px-3 py-1 text-slate-600 rounded-full block sm:inline">
+                TOTAL TEAM: {myDownline.length} MEMBER(S)
+              </span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             {[...Array(10)].map((_, i) => {
               const levelMembers = myDownline.filter(u => (u.level || 1) === ((user.level || 1) + i + 1));
+              const activeCount = levelMembers.filter(u => u.is_active || u.isActivated).length;
+              const percentActive = levelMembers.length ? Math.round((activeCount / levelMembers.length) * 100) : 0;
+              
               return (
-                <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border">
-                  <span className="font-black text-slate-400 text-xs">Level {i+1}</span>
+                <div key={i} className="flex items-center justify-between p-4 bg-slate-50 hover:bg-slate-100/55 rounded-2xl border border-slate-100 transition-colors">
+                  <div className="flex items-center gap-2.5">
+                    <span className="w-8 h-8 rounded-xl bg-violet-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+                      L{i+1}
+                    </span>
+                    <div>
+                      <span className="font-extrabold text-xs text-slate-800">Level {i+1} tier</span>
+                      <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5">PV volume accumulation</p>
+                    </div>
+                  </div>
+                  
                   <div className="text-right">
-                    <p className="font-bold text-sm">{levelMembers.length} Members</p>
-                    <p className="text-[10px] text-green-600 font-bold">{levelMembers.filter(u => u.is_active || u.isActivated).length} Active</p>
+                    <p className="font-black text-xs text-slate-800">{levelMembers.length} <span className="text-[9px] text-slate-400 font-bold">Users</span></p>
+                    <p className="text-[9.5px] text-emerald-600 font-black mt-0.5">{activeCount} Premium Active ({percentActive}%)</p>
                   </div>
                 </div>
               );
@@ -430,8 +804,18 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
       )}
+
     </div>
   );
 };
+
+// Simple visual assist icon for support
+const ChatEmptyState = () => (
+  <div className="flex flex-col items-center justify-center text-center p-8">
+    <HelpCircle className="w-12 h-12 text-slate-300 mb-2 animate-bounce" />
+    <span className="text-slate-400 text-xs font-bold block">No support issues submitted.</span>
+    <span className="text-[9px] text-slate-300 font-semibold uppercase tracking-wider block mt-1">Our support staff is ready to assist you instantly.</span>
+  </div>
+);
 
 export default Dashboard;
