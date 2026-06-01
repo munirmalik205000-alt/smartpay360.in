@@ -320,19 +320,6 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
             {view === 'login' ? "Join the network → Sign Up" : "Back to Security → Login"}
           </button>
         </div>
-        
-        {view === 'login' && (
-          <div className="mt-10 p-6 bg-blue-50 rounded-[2rem] border-2 border-dashed border-blue-200 relative z-10">
-            <div className="flex items-center gap-2 mb-3">
-               <span className="w-2 h-2 bg-orange-500 rounded-full animate-ping"></span>
-               <p className="text-[10px] font-black text-blue-800 uppercase tracking-widest">Administrator Login Data</p>
-            </div>
-            <div className="space-y-2">
-              <p className="text-xs text-slate-700 font-bold">Email ID: <span className="text-blue-600 select-all font-mono">admin@spay.com</span></p>
-              <p className="text-xs text-slate-700 font-bold">Password: <span className="text-blue-600 select-all font-mono">admin123</span></p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

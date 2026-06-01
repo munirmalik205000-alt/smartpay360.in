@@ -14,6 +14,7 @@ export default function App() {
   const [session, setSession] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   // Fallback states for Dashboard UI compatibility (simulated backend for non-core features)
   const [users, setUsers] = useState<User[]>([]);
@@ -24,10 +25,18 @@ export default function App() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const safetyTimeout = setTimeout(() => {
+      setLoading(false);
+    }, 3000);
+
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) throw error;
       setSession(session);
       if (session?.user) fetchUserProfile(session.user);
       else setLoading(false);
+    }).catch(err => {
+      console.error("Auth error:", err);
+      setLoading(false);
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -37,25 +46,53 @@ export default function App() {
     });
     
     // Load local users fallback to avoid breaking UI (if needed)
-    const localUsers = JSON.parse(localStorage.getItem('spay_users') || '[]');
-    setUsers(localUsers);
+    try {
+      const localUsers = JSON.parse(localStorage.getItem('spay_users') || '[]');
+      setUsers(localUsers);
+    } catch (e) {}
 
-    return () => authListener.subscription.unsubscribe();
+    return () => {
+      clearTimeout(safetyTimeout);
+      authListener.subscription.unsubscribe();
+    };
   }, []);
 
   const fetchUserProfile = async (authUser: any) => {
     try {
+      setProfileError(null);
       const { data, error } = await supabase.from('users').select('*').eq('id', authUser.id).single();
-      if (data) {
+      
+      if (error && error.code === 'PGRST116') {
+         // Auto-create missing profile
+         const { data: newData, error: insertError } = await supabase
+          .from('users')
+          .insert([{ 
+             id: authUser.id,
+             email: authUser.email,
+             username: authUser.user_metadata?.username || 'User',
+             role: 'USER',
+             is_active: true
+          }])
+          .select()
+          .single();
+          
+         if (!insertError && newData) {
+           setUserProfile(newData as User);
+           setUsers(prev => prev.find(u => u.id === newData.id) ? prev : [...prev, newData as User]);
+         } else {
+           console.error("Auto-create profile failed:", insertError);
+           setProfileError("Could not auto-create your user profile. Please contact support.");
+         }
+      } else if (data) {
         setUserProfile(data as User);
-        // Ensure this user exists in the local `users` array for the Downline Tree calculation
-        setUsers(prev => {
-          if (!prev.find(u => u.id === data.id)) return [...prev, data];
-          return prev.map(u => u.id === data.id ? data : u);
-        });
+        setUsers(prev => prev.find(u => u.id === data.id) ? prev.map(u => u.id === data.id ? data : u) : [...prev, data]);
+      } else if (error) {
+        console.error("Profile fetch error:", error);
+        setProfileError(error.message);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setProfileError(err.message || 'An error occurred loading your profile');
     } finally {
       setLoading(false);
     }
@@ -66,12 +103,33 @@ export default function App() {
   };
 
   if (loading) {
-    return <div className="flex items-center justify-center min-h-screen bg-gray-900 text-white">Loading...</div>;
+    return <div className="flex items-center justify-center min-h-screen bg-slate-50 text-slate-900 font-bold">Loading...</div>;
   }
 
-  if (!session || !userProfile) {
+  if (!session) {
     return <Auth onLogin={() => {}} onSignup={() => {}} onRecover={() => null} />; // Auth is now handling its own Supabase logic
   }
+
+  // Fallback dashboard if userProfile is not found or failed to load
+  const activeUserProfile = userProfile || {
+    id: session?.user?.id || 'guest',
+    email: session?.user?.email || 'guest@spay.com',
+    username: session?.user?.user_metadata?.username || 'Guest User',
+    role: 'USER',
+    wallet_balance: 0,
+    earning_wallet: 0,
+    recharge_wallet: 0,
+    total_pv: 0,
+    self_pv: 0,
+    team_pv: 0,
+    direct_count: 0,
+    team_count: 0,
+    rank_name: 'Starter',
+    is_active: true,
+    sponsor_id: null,
+    mobile: '',
+    created_at: new Date().toISOString()
+  } as User;
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -85,17 +143,23 @@ export default function App() {
           </div>
           <div className="flex items-center gap-4">
              <div className="text-right hidden sm:block">
-              <p className="text-sm font-bold text-slate-900">{userProfile.username}</p>
-              <p className="text-xs text-slate-500 font-medium">{userProfile.email}</p>
+              <p className="text-sm font-bold text-slate-900">{activeUserProfile.username}</p>
+              <p className="text-xs text-slate-500 font-medium">{activeUserProfile.email}</p>
             </div>
             <button onClick={handleLogout} className="px-5 py-2 text-xs font-bold text-slate-500 hover:bg-slate-100 rounded-xl border transition-all uppercase tracking-wider">Logout</button>
           </div>
         </div>
       </header>
+      
+      {profileError && (
+         <div className="bg-red-50 border-b border-red-200 p-4 text-center">
+            <p className="text-sm font-bold text-red-600">Warning: Profile synchronization issue - {profileError}</p>
+         </div>
+      )}
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Dashboard 
-          user={userProfile}
+          user={activeUserProfile}
           users={users}
           products={products}
           transactions={transactions}
