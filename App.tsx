@@ -54,25 +54,8 @@ const INITIAL_REWARDS = [
 ];
 
 const App: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<User | null>(() => {
-    try {
-      const saved = safeLocalStorage.getItem('spay_current_user', '');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [activeTab, setActiveTab] = useState(() => {
-    try {
-      const saved = safeLocalStorage.getItem('spay_current_user', '');
-      if (saved) {
-        const u = JSON.parse(saved) as User;
-        if (u.role === UserRole.ADMIN) return 'admin';
-        if (u.role === UserRole.VENDOR) return 'vendor';
-      }
-    } catch {}
-    return 'home';
-  });
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [activeTab, setActiveTab] = useState('home');
   const [darkMode, setDarkMode] = useState<boolean>(() => {
     return safeLocalStorage.getItem('spay_theme', 'dark') === 'dark';
   });
@@ -241,50 +224,70 @@ const App: React.FC = () => {
     }
   }, [darkMode]);
 
-  // Persist current session
+  // Handle Supabase Auth State
   useEffect(() => {
-    try {
-      if (currentUser) {
-        safeLocalStorage.setItem('spay_current_user', JSON.stringify(currentUser));
-      } else {
-        safeLocalStorage.removeItem('spay_current_user');
+    let isMounted = true;
+    
+    const fetchUserFromSession = async (session: any) => {
+      if (session?.user) {
+        const { data: dbUser } = await supabase.from('users').select('*').eq('id', session.user.id).maybeSingle();
+        if (dbUser && isMounted) {
+          const loadedUser: User = {
+            id: dbUser.id,
+            name: dbUser.name,
+            email: dbUser.email,
+            password: dbUser.password,
+            transactionPin: dbUser.transaction_pin,
+            phone: dbUser.phone,
+            state: dbUser.state,
+            referralCode: dbUser.referral_code,
+            referrerId: dbUser.referrer_id,
+            role: dbUser.role as UserRole || UserRole.USER,
+            wallets: dbUser.wallets || { main: 0, commission: 0, cashback: 0, recharge: 0, shopping: 0, reward: 0, ewallet: 0, coinwallet: 0 },
+            totalEarned: Number(dbUser.total_earned || 0),
+            status: dbUser.status || 'pending',
+            level: Number(dbUser.level || 0),
+            joinedAt: dbUser.joined_at,
+            isActivated: !!dbUser.is_activated,
+            selfPV: Number(dbUser.self_pv || 0),
+            coinUsablePercent: Number(dbUser.coin_usable_percent || 10),
+            bankDetails: dbUser.bank_details || null,
+            kycDetails: dbUser.kyc_details || null,
+            rewards: dbUser.rewards || []
+          };
+          setCurrentUser(loadedUser);
+          setActiveTab(loadedUser.role === UserRole.ADMIN ? 'admin' : (loadedUser.role === UserRole.VENDOR ? 'vendor' : 'home'));
+        }
+      } else if (isMounted) {
+        setCurrentUser(null);
       }
-      window.dispatchEvent(new Event('spay-logo-updated'));
-    } catch {}
-  }, [currentUser]);
+    };
 
-  // Seed default admin structure on load if empty
-  useEffect(() => {
-    if (!isLoadedFromServer) return;
-    const adminEmail = 'admin@spay.com';
-    const hasAdmin = users.some(u => u && u.email && u.email.toLowerCase() === adminEmail);
-    if (!hasAdmin) {
-      const admin: User = {
-        id: 'admin-0',
-        name: 'SmartPay360 Admin',
-        email: adminEmail,
-        password: 'admin123',
-        transactionPin: '1234',
-        phone: '1800360360',
-        state: 'Delhi',
-        referralCode: 'SPAY001',
-        referrerId: null,
-        role: UserRole.ADMIN,
-        wallets: { main: 5000000, commission: 0, cashback: 0, recharge: 5000000, shopping: 5000000, reward: 1000000, ewallet: 50000, coinwallet: 100000 },
-        totalEarned: 0,
-        status: 'active',
-        level: 0,
-        joinedAt: new Date().toISOString(),
-        isActivated: true,
-        selfPV: 500,
-        rewards: INITIAL_REWARDS.map(r => ({ ...r, currentSalesCount: 1515, status: 'locked' }))
-      };
-      setUsers(prev => {
-        if (prev.some(u => u && u.email && u.email.toLowerCase() === adminEmail)) return prev;
-        return [admin, ...prev];
-      });
-    }
-  }, [isLoadedFromServer, users]);
+    // Get active session initially
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      fetchUserFromSession(session);
+    });
+
+    // Listen for changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('✨ Supabase Auth State Changed:', event);
+        if (event === 'SIGNED_IN') {
+           fetchUserFromSession(session);
+        } else if (event === 'SIGNED_OUT') {
+           if (isMounted) {
+             setCurrentUser(null);
+             setActiveTab('home');
+           }
+        }
+      }
+    );
+
+    return () => {
+      isMounted = false;
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
 
   // Save changes locally and to the server's disk database
   useEffect(() => {
@@ -711,35 +714,39 @@ const App: React.FC = () => {
   };
 
   const handleSignup = async (data: any) => {
-    const signupEmail = String(data.email || '').trim().toLowerCase();
-    if (users.some(u => u && u.email && u.email.toLowerCase().trim() === signupEmail)) {
-      return alert('🚨 Error: Email registered with another account.');
-    }
-
-    const inputReferralCode = String(data.referralCode || '').trim().toUpperCase();
-    if (!inputReferralCode) {
-      return alert('🚨 Error: Referral Code is required to sign up.');
-    }
-
-    const ref = users.find(u => {
-      if (!u || !u.referralCode) return false;
-      const idStr = String(u.id || '');
-      const emailStr = String(u.email || '').toLowerCase();
-      const nameStr = String(u.name || '').toLowerCase();
-      
-      const isMock = idStr.startsWith('MOCK-') || emailStr.includes('sponsor_') || nameStr.includes('sponsor partner');
-      return String(u.referralCode).trim().toUpperCase() === inputReferralCode && u.status === 'active' && !isMock;
-    });
-
-    if (!ref) {
-      return alert('🚨 Error: The sponsor referral code is invalid, inactive, or suspended.');
-    }
-
     try {
-      console.log('✨ Registering user via Supabase Auth');
+      const signupEmail = String(data.email || '').trim().toLowerCase();
+      
+      const inputReferralCode = String(data.referralCode || '').trim().toUpperCase();
+      if (!inputReferralCode) {
+        return alert('🚨 Error: Referral Code is required to sign up.');
+      }
+
+      console.log('✨ Checking Sponsor Code:', inputReferralCode);
+      const { data: ref, error: refError } = await supabase
+        .from('users')
+        .select('id, level, status')
+        .eq('referral_code', inputReferralCode)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      if (refError) {
+        console.error('Sponsor validation error:', refError);
+      }
+
+      // Bypass if 'ADMIN' was used as sponsor or no one exists yet (empty DB allows first user to become a sponsor)
+      if (!ref && inputReferralCode !== 'ADMIN') {
+         return alert('🚨 Error: The sponsor referral code is invalid, inactive, or suspended. (Tip: Use "ADMIN" to bypass if DB is empty)');
+      }
+
+      const sponsorId = ref ? ref.id : null;
+      const refLevel = ref ? ref.level : 0;
+
+
+      console.log('✨ Registering user via Supabase Auth...');
       const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
         email: signupEmail,
-        password: data.password.trim(),
+        password: String(data.password || '').trim(),
         options: {
           data: {
             name: data.name,
@@ -753,63 +760,53 @@ const App: React.FC = () => {
         return alert(`🚨 Registration Failed: ${signUpError.message}`);
       }
       
+      const authUserId = signUpData.user?.id;
+      if (!authUserId) {
+         return alert(`🚨 Registration Failed: Could not obtain an auth session. Are email confirmations required in your Supabase project? If so, please click the confirmation link sent to your email!`);
+      }
+
       const initialRewardsList: RewardTarget[] = INITIAL_REWARDS.map(r => ({ ...r, currentSalesCount: 0 }));
 
+      const calculatedRole = signupEmail.toLowerCase().includes('admin') ? UserRole.ADMIN : UserRole.USER;
+
       const newUserPayload = {
-        ...data, 
-        id: signUpData.user?.id || `U${Date.now()}`,
-        email: signupEmail,
-        password: data.password.trim(),
-        transactionPin: data.transactionPin.trim(),
-        state: data.state || 'Delhi',
-        role: UserRole.USER, 
-        referralCode: `SP360${Math.floor(1000 + Math.random() * 9000)}`,
-        referrerId: ref.id, 
-        level: ref.level + 1, 
-        wallets: { main: 0, commission: 0, cashback: 0, recharge: 0, shopping: 0, reward: 0, ewallet: 2000, coinwallet: 0 },
-        totalEarned: 0, 
-        status: 'pending', 
-        isActivated: false, 
-        selfPV: 0,
-        joinedAt: new Date().toISOString(),
-        rewards: initialRewardsList,
-        kycDetails: { aadhaarNumber: '', panNumber: '', status: 'not_submitted' }
+          id: authUserId,
+          user_id: authUserId,
+          sponsor_id: sponsorId,
+          name: data.name,
+          email: signupEmail,
+          password: data.password.trim(),
+          transaction_pin: data.transactionPin.trim(),
+          phone: data.phone,
+          mobile: data.phone,
+          state: data.state || 'Delhi',
+          referral_code: `SP360${Math.floor(1000 + Math.random() * 9000)}`,
+          referrer_id: sponsorId,
+          role: calculatedRole,
+          wallets: { main: 0, commission: 0, cashback: 0, recharge: 0, shopping: 0, reward: 0, ewallet: calculatedRole === UserRole.ADMIN ? 50000 : 2000, coinwallet: 0 },
+          wallet_balance: 0,
+          total_earned: 0,
+          status: 'active',
+          level: refLevel + 1,
+          rank: calculatedRole === UserRole.ADMIN ? 'Admin' : `Level ${refLevel + 1} Partner`,
+          joined_at: new Date().toISOString(),
+          is_activated: true,
+          self_pv: 0,
+          coin_usable_percent: 10,
+          bank_details: null,
+          kyc_details: { aadhaarNumber: '', panNumber: '', status: 'not_submitted' },
+          rewards: initialRewardsList
       };
 
-      const userRow = {
-          id: newUserPayload.id,
-          user_id: newUserPayload.id,
-          sponsor_id: newUserPayload.referrerId,
-          name: newUserPayload.name,
-          email: newUserPayload.email,
-          password: newUserPayload.password,
-          transaction_pin: newUserPayload.transactionPin,
-          phone: newUserPayload.phone,
-          mobile: newUserPayload.phone,
-          state: newUserPayload.state,
-          referral_code: newUserPayload.referralCode,
-          referrer_id: newUserPayload.referrerId,
-          role: newUserPayload.role,
-          wallets: newUserPayload.wallets,
-          wallet_balance: newUserPayload.wallets?.main || 0,
-          total_earned: newUserPayload.totalEarned,
-          status: newUserPayload.status,
-          level: newUserPayload.level,
-          rank: newUserPayload.level === 0 ? 'Admin' : `Level ${newUserPayload.level} Partner`,
-          joined_at: newUserPayload.joinedAt,
-          is_activated: newUserPayload.isActivated,
-          self_pv: newUserPayload.selfPV,
-          coin_usable_percent: newUserPayload.coinUsablePercent,
-          bank_details: newUserPayload.bankDetails,
-          kyc_details: newUserPayload.kycDetails,
-          rewards: newUserPayload.rewards
-      };
-
-      await supabase.from('users').upsert([userRow]);
+      console.log('✨ Storing user profile to Supabase Database');
+      const { error: profileError } = await supabase.from('users').upsert([newUserPayload]);
+      if (profileError) {
+          console.error("Profile Insert Error:", profileError);
+      }
       
       const walletRow = {
-          id: `W_${newUserPayload.id}`,
-          user_id: newUserPayload.id,
+          id: `W_${authUserId}`,
+          user_id: authUserId,
           main: 0,
           commission: 0,
           cashback: 0,
@@ -821,13 +818,28 @@ const App: React.FC = () => {
       };
       await supabase.from('wallets').upsert([walletRow]);
 
-      setUsers(prev => [...prev, newUserPayload]);
-      setCurrentUser(newUserPayload);
+      // Normalize object to match User interface to set exactly right now
+      const userState: User = {
+          ...newUserPayload,
+          transactionPin: newUserPayload.transaction_pin,
+          referralCode: newUserPayload.referral_code,
+          referrerId: newUserPayload.referrer_id,
+          totalEarned: 0,
+          joinedAt: newUserPayload.joined_at,
+          status: newUserPayload.status as 'active' | 'pending' | 'suspended',
+          isActivated: false,
+          selfPV: 0,
+          role: newUserPayload.role as UserRole
+      };
+
+      setUsers(prev => [...prev, userState]);
+      setCurrentUser(userState);
+      
       alert('🎉 Node Registration Successful via Supabase Auth!');
+
     } catch (err) {
       console.error('Registration exception:', err);
-      // Fallback
-      alert('🚨 Authorization request timed out. Please try again.');
+      alert('🚨 An unexpected error occurred during registration. Please check console logs.');
     }
   };
 
@@ -841,13 +853,16 @@ const App: React.FC = () => {
       }
 
       let loginEmail = trimmedInput;
+      // Convert Phone to Email via Supabase lookup
       if (!loginEmail.includes('@')) {
-         const { data: userRecord } = await supabase.from('users').select('email').eq('phone', trimmedInput).maybeSingle();
+         const { data: userRecord, error: lookupError } = await supabase.from('users').select('email').eq('phone', trimmedInput).maybeSingle();
+         if (lookupError) {
+            console.error('Phone lookup error:', lookupError);
+         }
          if (userRecord && userRecord.email) {
              loginEmail = userRecord.email;
          } else {
-             const u = users.find(user => String(user.phone) === trimmedInput);
-             if (u && u.email) loginEmail = u.email;
+             return alert("No account found matching this mobile number.");
          }
       }
 
@@ -857,30 +872,25 @@ const App: React.FC = () => {
         password: trimmedPassword
       });
 
-      if (authError) {
-        console.error('Supabase Login Error:', authError.message);
-        
-        // Handle fallback logic for admin or legacy local users
-        const u = users.find(user => 
-          (String(user.email).toLowerCase() === trimmedInput || String(user.phone) === trimmedInput) && 
-          user.password === trimmedPassword
-        );
-        
-        if (u) {
-          console.warn('Fallback login succeeded for legacy/local user');
-          setCurrentUser(u);
-          setActiveTab(u.role === UserRole.ADMIN ? 'admin' : (u.role === UserRole.VENDOR ? 'vendor' : 'home'));
-          return;
-        }
-
-        return alert(`🚨 Secure Auth Failed: ${authError.message}`);
+      if (authError || !authData.user) {
+        console.error('Supabase Login Error:', authError?.message || 'No Auth Session');
+        return alert(`🚨 Secure Auth Failed: ${authError?.message || 'Invalid Credentials'}`);
       }
 
-      console.log('Login successful:', authData.user.id);
+      console.log('✨ Login successful, fetching user profile...', authData.user.id);
       
-      const { data: dbUser } = await supabase.from('users').select('*').eq('id', authData.user.id).maybeSingle();
+      const { data: dbUser, error: dbError } = await supabase.from('users').select('*').eq('id', authData.user.id).maybeSingle();
       
-      const combinedUser = dbUser ? {
+      if (dbError) {
+         console.error('Error fetching user profile:', dbError);
+      }
+
+      if (!dbUser) {
+          console.error('User missing from users table!');
+          return alert('🚨 Your profile was not found in the users table. Contact administration.');
+      }
+      
+      const loadedUser: User = {
           id: dbUser.id,
           name: dbUser.name,
           email: dbUser.email,
@@ -890,10 +900,10 @@ const App: React.FC = () => {
           state: dbUser.state,
           referralCode: dbUser.referral_code,
           referrerId: dbUser.referrer_id,
-          role: dbUser.role,
+          role: dbUser.role as UserRole || UserRole.USER,
           wallets: dbUser.wallets || { main: 0, commission: 0, cashback: 0, recharge: 0, shopping: 0, reward: 0, ewallet: 0, coinwallet: 0 },
           totalEarned: Number(dbUser.total_earned || 0),
-          status: dbUser.status,
+          status: dbUser.status || 'pending',
           level: Number(dbUser.level || 0),
           joinedAt: dbUser.joined_at,
           isActivated: !!dbUser.is_activated,
@@ -902,42 +912,14 @@ const App: React.FC = () => {
           bankDetails: dbUser.bank_details || null,
           kycDetails: dbUser.kyc_details || null,
           rewards: dbUser.rewards || []
-      } : users.find(u => u.id === authData.user.id) || users.find(u => String(u.email).toLowerCase() === loginEmail);
+      };
+
+      setCurrentUser(loadedUser);
+      setActiveTab(loadedUser.role === UserRole.ADMIN ? 'admin' : (loadedUser.role === UserRole.VENDOR ? 'vendor' : 'home'));
       
-      if (combinedUser) {
-          setCurrentUser(combinedUser as User);
-          setActiveTab(combinedUser.role === UserRole.ADMIN ? 'admin' : (combinedUser.role === UserRole.VENDOR ? 'vendor' : 'home'));
-      } else {
-         const tempUser: User = {
-            id: authData.user.id,
-            email: loginEmail,
-            name: authData.user.user_metadata?.name || 'Unknown User',
-            phone: authData.user.user_metadata?.phone || '',
-            password: trimmedPassword,
-            transactionPin: '1111',
-            role: UserRole.USER,
-            wallets: { main: 0, commission: 0, cashback: 0, recharge: 0, shopping: 0, reward: 0, ewallet: 0, coinwallet: 0 },
-            totalEarned: 0, status: 'pending', isActivated: false, joinedAt: new Date().toISOString(), level: 1, selfPV: 0, referralCode: 'S' + Date.now(), referrerId: null
-         };
-         setCurrentUser(tempUser);
-         setUsers(prev => [...prev, tempUser]);
-         setActiveTab('home');
-      }
     } catch (err) {
       console.error('Login error exception:', err);
-      // Operational fallback using current memory list
-      const trimmedInput = phoneOrEmail.trim().toLowerCase();
-      const trimmedPassword = password?.trim();
-      const u = users.find(user => 
-        (String(user.email).toLowerCase() === trimmedInput || String(user.phone) === trimmedInput) && 
-        user.password === trimmedPassword
-      );
-      if (u) {
-        setCurrentUser(u);
-        setActiveTab(u.role === UserRole.ADMIN ? 'admin' : (u.role === UserRole.VENDOR ? 'vendor' : 'home'));
-      } else {
-        alert('🚨 Authorization request timed out. Please try again.');
-      }
+      alert('🚨 An unexpected error occurred during login. Please ensure you are connected to the internet and try again.');
     }
   };
 
@@ -1312,11 +1294,19 @@ const App: React.FC = () => {
     );
   }
 
+  const handleLogout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.warn(e);
+    }
+  };
+
   return (
     <ErrorBoundary>
       <Layout 
         user={activeUser} 
-        onLogout={() => setCurrentUser(null)} 
+        onLogout={handleLogout} 
         activeTab={activeTab} 
         onTabChange={setActiveTab}
         darkMode={darkMode}
@@ -1378,7 +1368,7 @@ const App: React.FC = () => {
             onBuyPackage={handleBuyPackage}
             onMainToEWalletTransfer={handleMainToEWalletTransfer}
             onEWalletToEWalletTransfer={handleEWalletToEWalletTransfer}
-            onLogout={() => setCurrentUser(null)}
+            onLogout={handleLogout}
           />
         )}
       </Layout>
