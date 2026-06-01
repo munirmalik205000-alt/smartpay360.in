@@ -122,26 +122,35 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    // 1. Instantly nullify React session and profile states so UI logged out immediately
+    setSession(null);
+    setUserProfile(null);
+    setSidebarOpen(false);
+
+    // 2. Robust clearance of local storage and Supabase keys
     try {
-      await supabase.auth.signOut();
+      const keysToClear = Object.keys(localStorage);
+      for (const key of keysToClear) {
+        if (key.includes('supabase') || key.startsWith('sb-') || key.includes('auth')) {
+          localStorage.removeItem(key);
+        }
+      }
+      localStorage.removeItem('supabase.auth.token');
+    } catch (storageErr) {
+      console.warn('LocalStorage clear error:', storageErr);
+    }
+
+    // 3. Dispatch sign out to Supabase asynchronously inside try/catch (non-blocking)
+    try {
+      supabase.auth.signOut().catch(e => console.warn("Supabase async signOut error:", e));
     } catch (err) {
       console.error('Logout error:', err);
-    } finally {
-      // Robust local storage clearance for sandboxed iframes
-      try {
-        for (const key of Object.keys(localStorage)) {
-          if (key.includes('supabase.auth') || key.startsWith('sb-')) {
-            localStorage.removeItem(key);
-          }
-        }
-        localStorage.removeItem('supabase.auth.token');
-      } catch (storageErr) {
-        console.warn('LocalStorage clear error:', storageErr);
-      }
-      setSession(null);
-      setUserProfile(null);
-      window.location.reload();
     }
+
+    // 4. Reload page after a brief timeout to secure a fresh clean environment
+    setTimeout(() => {
+      window.location.reload();
+    }, 150);
   };
 
   if (loading) {

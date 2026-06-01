@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { cn, compressImage, getApiUrl } from '../services/utils';
 import { Camera } from 'lucide-react';
 import { safeLocalStorage } from '../services/storage';
+import { supabase } from '../services/supabaseClient';
 
 interface LogoProps {
   className?: string;
@@ -19,16 +20,29 @@ export const Logo: React.FC<LogoProps> = ({
   customLogo,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [currentLogo, setCurrentLogo] = useState<string | undefined>(customLogo);
-  const [systemName, setSystemName] = useState<string>('');
+  const [currentLogo, setCurrentLogo] = useState<string | undefined>(customLogo || localStorage.getItem('spay_custom_logo') || undefined);
+  const [systemName, setSystemName] = useState<string>(localStorage.getItem('spay_system_name') || '');
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
-  const checkAdminRole = () => {
+  const checkAdminRole = async () => {
     try {
       const userStr = safeLocalStorage.getItem('spay_current_user', '');
       if (userStr) {
         const user = JSON.parse(userStr);
         if (user && user.role === 'ADMIN') {
+          setIsAdmin(true);
+          return;
+        }
+      }
+
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        if (session.user.email === 'admin@spay.com') {
+          setIsAdmin(true);
+          return;
+        }
+        const { data: u } = await supabase.from('users').select('role').eq('id', session.user.id).single();
+        if (u && (u.role === 'ADMIN' || u.role === 'admin')) {
           setIsAdmin(true);
           return;
         }
@@ -52,19 +66,32 @@ export const Logo: React.FC<LogoProps> = ({
 
   const loadFromLocalStorage = async () => {
     try {
+      // 1. Fast fallback from localStorage so we render instantly
+      const localLogo = localStorage.getItem('spay_custom_logo');
+      const localName = localStorage.getItem('spay_system_name');
+      if (localLogo) {
+        setCurrentLogo(localLogo);
+      }
+      if (localName) {
+        setSystemName(localName);
+      }
+
+      // 2. Load from server database API config
       const res = await fetch(getApiUrl('/api/config'));
       if (res.ok) {
         const parsed = await res.json();
         if (parsed) {
           if (parsed.customLogo) {
             setCurrentLogo(parsed.customLogo);
+            localStorage.setItem('spay_custom_logo', parsed.customLogo);
           } else {
-            setCurrentLogo(undefined);
+            if (!localLogo) setCurrentLogo(undefined);
           }
           if (parsed.systemName) {
             setSystemName(parsed.systemName);
+            localStorage.setItem('spay_system_name', parsed.systemName);
           } else {
-            setSystemName('');
+            if (!localName) setSystemName('');
           }
         }
       }
@@ -113,6 +140,9 @@ export const Logo: React.FC<LogoProps> = ({
           }
 
           const config = { customLogo: base64Data };
+          
+          // Instantly sync to local storage for zero-delay visual updates across components
+          localStorage.setItem('spay_custom_logo', base64Data);
           
           // Save to server-side persistent system configuration
           fetch(getApiUrl('/api/config'), {

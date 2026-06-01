@@ -337,6 +337,8 @@ const AdminPanel: React.FC<AdminProps> = ({
                   reader.onloadend = () => {
                     const result = reader.result as string;
                     onUpdateConfig({ ...config, customLogo: result });
+                    localStorage.setItem('spay_custom_logo', result);
+                    window.dispatchEvent(new Event('spay-logo-updated'));
                   };
                   reader.readAsDataURL(file);
                 }
@@ -434,6 +436,15 @@ const AdminPanel: React.FC<AdminProps> = ({
                    body: JSON.stringify(payload)
                  });
                } catch (err) {}
+               
+               if (config.customLogo) {
+                 localStorage.setItem('spay_custom_logo', config.customLogo);
+               }
+               if (config.systemName) {
+                 localStorage.setItem('spay_system_name', config.systemName);
+               } else if (config.businessName) {
+                 localStorage.setItem('spay_system_name', config.businessName);
+               }
                
                // Update global logo explicitly
                if (typeof (window as any).spay_update_logo === 'function' && config.customLogo) {
