@@ -6,6 +6,7 @@ import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
 import AdminPanel from './components/AdminPanel';
 import { Logo } from './components/Logo';
+import { Menu, X, Home, PlusCircle, ArrowUpRight, Zap, ShoppingBag, Send, Users, MessageSquare, LogOut } from 'lucide-react';
 
 const INITIAL_PRODUCTS: Product[] = [
   { id: 'p1', vendorId: 'v1', name: 'Premium Herbal Tea', description: 'Natural detox tea', price: 499, mrp: 699, category: 'Herbal', stock: 100, image: '☕', mlmPoints: 100 },
@@ -27,11 +28,29 @@ export default function App() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [config, setConfig] = useState<any>({ qrCode: '', systemCoinValue: 1, levels: [] });
   const [joiningPackages, setJoiningPackages] = useState<any[]>([{ id: '1', name: 'Starter', price: 249, coin: 50, pv: 10 }]);
+  const [dashboardTab, setDashboardTab] = useState<'home' | 'utility' | 'shop' | 'transfer' | 'mlm' | 'add_money' | 'withdraw' | 'support'>('home');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const safetyTimeout = setTimeout(() => {
       setLoading(false);
     }, 3000);
+
+    // Fetch persistent configurations
+    fetch('/api/config')
+      .then(res => {
+        if (res.ok) return res.json();
+        throw new Error('Config load error');
+      })
+      .then(data => {
+        if (data && Object.keys(data).length > 0) {
+          setConfig(prev => ({ ...prev, ...data }));
+          if (data.joiningPackages) {
+            setJoiningPackages(data.joiningPackages);
+          }
+        }
+      })
+      .catch(err => console.warn("Error fetching configuration on mount:", err));
 
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) throw error;
@@ -147,7 +166,16 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 flex flex-col">
        <header className="bg-white border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+             {!(activeUserProfile.email === 'admin@spay.com' || activeUserProfile.role === 'ADMIN') && (
+               <button 
+                 onClick={() => setSidebarOpen(true)}
+                 className="p-2 -ml-2 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-all"
+                 title="Toggle Navigation Menu"
+               >
+                 <Menu className="w-5 h-5" />
+               </button>
+             )}
              <Logo size="sm" />
           </div>
           <div className="flex items-center gap-4">
@@ -207,9 +235,101 @@ export default function App() {
             onWithdrawal={() => alert('Simulated Withdrawal')}
             onUpdateBankDetails={() => alert('Simulated Update Bank')}
             onSendMessage={() => alert('Simulated Chat')}
+            activeTab={dashboardTab}
+            setActiveTab={setDashboardTab}
           />
         )}
       </main>
+
+      {/* Sliding Sidebar Drawer */}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-50 overflow-hidden" role="dialog" aria-modal="true">
+          {/* Backdrop overlay */}
+          <div 
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity duration-300 ease-in-out"
+            onClick={() => setSidebarOpen(false)}
+          ></div>
+
+          <div className="absolute inset-y-0 left-0 max-w-full flex">
+            {/* Panel */}
+            <div className="w-80 max-w-md bg-white shadow-2xl flex flex-col h-full transform transition-all duration-300 ease-in-out animate-slide-in-left">
+              {/* Drawer Header */}
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div className="flex items-center gap-3">
+                  <Logo size="sm" />
+                </div>
+                <button 
+                  onClick={() => setSidebarOpen(false)} 
+                  className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-200/50 rounded-xl transition-all"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Drawer Content - Menu List */}
+              <div className="flex-1 overflow-y-auto px-4 py-6 space-y-2">
+                {[
+                  { id: 'home', label: 'Ecosystem Dashboard', icon: Home },
+                  { id: 'add_money', label: 'Add Money / Deposit', icon: PlusCircle },
+                  { id: 'withdraw', label: 'Withdrawal Request', icon: ArrowUpRight },
+                  { id: 'utility', label: 'Utility Bill Recharges', icon: Zap },
+                  { id: 'shop', label: 'Product Shopping Mall', icon: ShoppingBag },
+                  { id: 'transfer', label: 'P2P Wallet Transfer', icon: Send },
+                  { id: 'mlm', label: 'MLM Referral Tree & Family', icon: Users },
+                  { id: 'support', label: 'Contact Support Helpdesk', icon: MessageSquare },
+                ].map(item => {
+                  const Icon = item.icon;
+                  const isSelected = dashboardTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setDashboardTab(item.id as any);
+                        setSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl text-xs font-bold tracking-wide transition-all ${
+                        isSelected 
+                          ? 'bg-blue-600 text-white shadow-lg' 
+                          : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                      }`}
+                    >
+                      <Icon className={`w-4 h-4 ${isSelected ? 'text-white' : 'text-slate-400'}`} />
+                      <span className="uppercase">{item.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* User Profile Card Footer */}
+              <div className="p-4 border-t border-slate-100 bg-slate-50">
+                <div className="flex items-center justify-between gap-3 p-2 bg-white rounded-xl border border-slate-200/60 shadow-xs mb-3">
+                  <div>
+                    <p className="text-xs font-bold text-slate-800 uppercase tracking-wide truncate max-w-[150px]">
+                      {activeUserProfile.username || activeUserProfile.name}
+                    </p>
+                    <p className="text-[10px] text-slate-400 font-medium truncate max-w-[150px]">
+                      {activeUserProfile.email}
+                    </p>
+                  </div>
+                  <span className={`px-2 py-0.5 text-[8px] font-black rounded ${activeUserProfile.is_active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                    {activeUserProfile.is_active ? 'ACTIVE' : 'INACTIVE'}
+                  </span>
+                </div>
+                <button 
+                  onClick={() => {
+                    setSidebarOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-red-200/50"
+                >
+                  <LogOut className="w-4 h-4" />
+                  LOGOUT ACCOUNT
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

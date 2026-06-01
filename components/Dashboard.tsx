@@ -20,14 +20,19 @@ interface DashboardProps {
   onUpdateBankDetails: (details: BankDetails) => void;
   chatMessages: ChatMessage[];
   onSendMessage: (msg: string, receiverId: string) => void;
+  activeTab?: 'home' | 'utility' | 'shop' | 'transfer' | 'mlm' | 'add_money' | 'withdraw' | 'support';
+  setActiveTab?: (tab: 'home' | 'utility' | 'shop' | 'transfer' | 'mlm' | 'add_money' | 'withdraw' | 'support') => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
   user, users, products, transactions, onRecharge, onOrder, onTransfer, 
   onActivate, packagePrice, qrCode, onAddMoney, paymentRequests,
-  withdrawalRequests, onWithdrawal, onUpdateBankDetails, chatMessages, onSendMessage
+  withdrawalRequests, onWithdrawal, onUpdateBankDetails, chatMessages, onSendMessage,
+  activeTab, setActiveTab
 }) => {
-  const [tab, setTab] = useState<'home' | 'utility' | 'shop' | 'transfer' | 'mlm' | 'add_money' | 'withdraw' | 'support'>('home');
+  const [localTab, setLocalTab] = useState<'home' | 'utility' | 'shop' | 'transfer' | 'mlm' | 'add_money' | 'withdraw' | 'support'>('home');
+  const tab = activeTab || localTab;
+  const setTab = setActiveTab || setLocalTab;
   const [transferData, setTransferData] = useState({ email: '', amount: '', pin: '' });
   const [addMoneyData, setAddMoneyData] = useState({ amount: '', utr: '', screenshot: '' });
   const [withdrawalAmount, setWithdrawalAmount] = useState('');

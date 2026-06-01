@@ -424,10 +424,14 @@ const AdminPanel: React.FC<AdminProps> = ({
             onClick={async () => {
                // Persist via API
                try {
+                 const payload = {
+                   ...config,
+                   joiningPackages: joiningPackages
+                 };
                  await fetch(getApiUrl('/api/config'), {
                    method: 'POST',
                    headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify({ customLogo: config.customLogo, systemName: config.businessName })
+                   body: JSON.stringify(payload)
                  });
                } catch (err) {}
                
