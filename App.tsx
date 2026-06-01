@@ -9,6 +9,7 @@ import { Layout } from './components/Layout';
 import { safeLocalStorage } from './services/storage';
 import { getApiUrl } from './services/utils';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { supabase } from './services/supabaseClient';
 
 const DEFAULT_LEVEL_PERCENTAGES_20 = [
   0.15, 0.08, 0.05, 0.03, 0.02, 0.02, 0.01, 0.01, 0.01, 0.01,
@@ -715,7 +716,6 @@ const App: React.FC = () => {
       return alert('🚨 Error: Email registered with another account.');
     }
 
-    // Check sponsor ID - strictly require valid & active code
     const inputReferralCode = String(data.referralCode || '').trim().toUpperCase();
     if (!inputReferralCode) {
       return alert('🚨 Error: Referral Code is required to sign up.');
@@ -734,94 +734,207 @@ const App: React.FC = () => {
     if (!ref) {
       return alert('🚨 Error: The sponsor referral code is invalid, inactive, or suspended.');
     }
-    
-    const initialRewardsList: RewardTarget[] = INITIAL_REWARDS.map(r => ({ ...r, currentSalesCount: 0 }));
-
-    const newUserPayload = {
-      ...data, 
-      email: data.email.trim(),
-      password: data.password.trim(),
-      transactionPin: data.transactionPin.trim(),
-      state: data.state || 'Delhi',
-      role: UserRole.USER, 
-      referralCode: `SP360${Math.floor(1000 + Math.random() * 9000)}`,
-      referrerId: ref.id, 
-      level: ref.level + 1, 
-      wallets: { main: 0, commission: 0, cashback: 0, recharge: 0, shopping: 0, reward: 0, ewallet: 2000, coinwallet: 0 },
-      totalEarned: 0, 
-      status: 'pending', 
-      isActivated: false, 
-      selfPV: 0,
-      joinedAt: new Date().toISOString(),
-      rewards: initialRewardsList,
-      kycDetails: { aadhaarNumber: '', panNumber: '', status: 'not_submitted' }
-    };
 
     try {
-      const resp = await fetch(getApiUrl('/api/auth/register'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(newUserPayload)
+      console.log('✨ Registering user via Supabase Auth');
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: signupEmail,
+        password: data.password.trim(),
+        options: {
+          data: {
+            name: data.name,
+            phone: data.phone
+          }
+        }
       });
-      const resData = await resp.json();
-      if (resData.success && resData.user) {
-        setUsers(prev => [...prev, resData.user]);
-        setCurrentUser(resData.user);
-        alert('🎉 Node Registration Successful via Supabase Auth!');
-      } else {
-        alert(`🚨 Registration Failed: ${resData.error || 'Server error'}`);
+
+      if (signUpError) {
+        console.error('Supabase signup error:', signUpError);
+        return alert(`🚨 Registration Failed: ${signUpError.message}`);
       }
+      
+      const initialRewardsList: RewardTarget[] = INITIAL_REWARDS.map(r => ({ ...r, currentSalesCount: 0 }));
+
+      const newUserPayload = {
+        ...data, 
+        id: signUpData.user?.id || `U${Date.now()}`,
+        email: signupEmail,
+        password: data.password.trim(),
+        transactionPin: data.transactionPin.trim(),
+        state: data.state || 'Delhi',
+        role: UserRole.USER, 
+        referralCode: `SP360${Math.floor(1000 + Math.random() * 9000)}`,
+        referrerId: ref.id, 
+        level: ref.level + 1, 
+        wallets: { main: 0, commission: 0, cashback: 0, recharge: 0, shopping: 0, reward: 0, ewallet: 2000, coinwallet: 0 },
+        totalEarned: 0, 
+        status: 'pending', 
+        isActivated: false, 
+        selfPV: 0,
+        joinedAt: new Date().toISOString(),
+        rewards: initialRewardsList,
+        kycDetails: { aadhaarNumber: '', panNumber: '', status: 'not_submitted' }
+      };
+
+      const userRow = {
+          id: newUserPayload.id,
+          user_id: newUserPayload.id,
+          sponsor_id: newUserPayload.referrerId,
+          name: newUserPayload.name,
+          email: newUserPayload.email,
+          password: newUserPayload.password,
+          transaction_pin: newUserPayload.transactionPin,
+          phone: newUserPayload.phone,
+          mobile: newUserPayload.phone,
+          state: newUserPayload.state,
+          referral_code: newUserPayload.referralCode,
+          referrer_id: newUserPayload.referrerId,
+          role: newUserPayload.role,
+          wallets: newUserPayload.wallets,
+          wallet_balance: newUserPayload.wallets?.main || 0,
+          total_earned: newUserPayload.totalEarned,
+          status: newUserPayload.status,
+          level: newUserPayload.level,
+          rank: newUserPayload.level === 0 ? 'Admin' : `Level ${newUserPayload.level} Partner`,
+          joined_at: newUserPayload.joinedAt,
+          is_activated: newUserPayload.isActivated,
+          self_pv: newUserPayload.selfPV,
+          coin_usable_percent: newUserPayload.coinUsablePercent,
+          bank_details: newUserPayload.bankDetails,
+          kyc_details: newUserPayload.kycDetails,
+          rewards: newUserPayload.rewards
+      };
+
+      await supabase.from('users').upsert([userRow]);
+      
+      const walletRow = {
+          id: `W_${newUserPayload.id}`,
+          user_id: newUserPayload.id,
+          main: 0,
+          commission: 0,
+          cashback: 0,
+          recharge: 0,
+          shopping: 0,
+          reward: 0,
+          ewallet: 2000,
+          coinwallet: 0
+      };
+      await supabase.from('wallets').upsert([walletRow]);
+
+      setUsers(prev => [...prev, newUserPayload]);
+      setCurrentUser(newUserPayload);
+      alert('🎉 Node Registration Successful via Supabase Auth!');
     } catch (err) {
       console.error('Registration exception:', err);
-      // Operational fallback
-      const fallbackUser = { ...newUserPayload, id: `U${Date.now()}` };
-      setUsers(prev => [...prev, fallbackUser]);
-      setCurrentUser(fallbackUser);
+      // Fallback
+      alert('🚨 Authorization request timed out. Please try again.');
     }
   };
 
   const handleLogin = async (phoneOrEmail: string, password?: string) => {
     try {
-      const resp = await fetch(getApiUrl('/api/auth/login'), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ emailOrPhone: phoneOrEmail, password })
+      const trimmedInput = phoneOrEmail.trim().toLowerCase();
+      const trimmedPassword = String(password || '').trim();
+
+      if (!trimmedInput || !trimmedPassword) {
+        return alert("Email/Phone and password are required.");
+      }
+
+      let loginEmail = trimmedInput;
+      if (!loginEmail.includes('@')) {
+         const { data: userRecord } = await supabase.from('users').select('email').eq('phone', trimmedInput).maybeSingle();
+         if (userRecord && userRecord.email) {
+             loginEmail = userRecord.email;
+         } else {
+             const u = users.find(user => String(user.phone) === trimmedInput);
+             if (u && u.email) loginEmail = u.email;
+         }
+      }
+
+      console.log(`✨ Authenticating via Supabase Auth: ${loginEmail}`);
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: loginEmail,
+        password: trimmedPassword
       });
-      const data = await resp.json();
-      if (data.success && data.user) {
-        setCurrentUser(data.user);
-        if (data.user.role === UserRole.ADMIN) {
-          setActiveTab('admin');
-        } else if (data.user.role === UserRole.VENDOR) {
-          setActiveTab('vendor');
-        } else {
-          setActiveTab('home');
+
+      if (authError) {
+        console.error('Supabase Login Error:', authError.message);
+        
+        // Handle fallback logic for admin or legacy local users
+        const u = users.find(user => 
+          (String(user.email).toLowerCase() === trimmedInput || String(user.phone) === trimmedInput) && 
+          user.password === trimmedPassword
+        );
+        
+        if (u) {
+          console.warn('Fallback login succeeded for legacy/local user');
+          setCurrentUser(u);
+          setActiveTab(u.role === UserRole.ADMIN ? 'admin' : (u.role === UserRole.VENDOR ? 'vendor' : 'home'));
+          return;
         }
+
+        return alert(`🚨 Secure Auth Failed: ${authError.message}`);
+      }
+
+      console.log('Login successful:', authData.user.id);
+      
+      const { data: dbUser } = await supabase.from('users').select('*').eq('id', authData.user.id).maybeSingle();
+      
+      const combinedUser = dbUser ? {
+          id: dbUser.id,
+          name: dbUser.name,
+          email: dbUser.email,
+          password: dbUser.password,
+          transactionPin: dbUser.transaction_pin,
+          phone: dbUser.phone,
+          state: dbUser.state,
+          referralCode: dbUser.referral_code,
+          referrerId: dbUser.referrer_id,
+          role: dbUser.role,
+          wallets: dbUser.wallets || { main: 0, commission: 0, cashback: 0, recharge: 0, shopping: 0, reward: 0, ewallet: 0, coinwallet: 0 },
+          totalEarned: Number(dbUser.total_earned || 0),
+          status: dbUser.status,
+          level: Number(dbUser.level || 0),
+          joinedAt: dbUser.joined_at,
+          isActivated: !!dbUser.is_activated,
+          selfPV: Number(dbUser.self_pv || 0),
+          coinUsablePercent: Number(dbUser.coin_usable_percent || 10),
+          bankDetails: dbUser.bank_details || null,
+          kycDetails: dbUser.kyc_details || null,
+          rewards: dbUser.rewards || []
+      } : users.find(u => u.id === authData.user.id) || users.find(u => String(u.email).toLowerCase() === loginEmail);
+      
+      if (combinedUser) {
+          setCurrentUser(combinedUser as User);
+          setActiveTab(combinedUser.role === UserRole.ADMIN ? 'admin' : (combinedUser.role === UserRole.VENDOR ? 'vendor' : 'home'));
       } else {
-        alert(`🚨 Secure Auth Failed: ${data.error || 'Check password and credentials.'}`);
+         const tempUser: User = {
+            id: authData.user.id,
+            email: loginEmail,
+            name: authData.user.user_metadata?.name || 'Unknown User',
+            phone: authData.user.user_metadata?.phone || '',
+            password: trimmedPassword,
+            transactionPin: '1111',
+            role: UserRole.USER,
+            wallets: { main: 0, commission: 0, cashback: 0, recharge: 0, shopping: 0, reward: 0, ewallet: 0, coinwallet: 0 },
+            totalEarned: 0, status: 'pending', isActivated: false, joinedAt: new Date().toISOString(), level: 1, selfPV: 0, referralCode: 'S' + Date.now(), referrerId: null
+         };
+         setCurrentUser(tempUser);
+         setUsers(prev => [...prev, tempUser]);
+         setActiveTab('home');
       }
     } catch (err) {
-      console.error('Login error:', err);
+      console.error('Login error exception:', err);
       // Operational fallback using current memory list
       const trimmedInput = phoneOrEmail.trim().toLowerCase();
       const trimmedPassword = password?.trim();
       const u = users.find(user => 
-        (user.email.toLowerCase() === trimmedInput || user.phone === trimmedInput) && 
+        (String(user.email).toLowerCase() === trimmedInput || String(user.phone) === trimmedInput) && 
         user.password === trimmedPassword
       );
       if (u) {
         setCurrentUser(u);
-        if (u.role === UserRole.ADMIN) {
-          setActiveTab('admin');
-        } else if (u.role === UserRole.VENDOR) {
-          setActiveTab('vendor');
-        } else {
-          setActiveTab('home');
-        }
+        setActiveTab(u.role === UserRole.ADMIN ? 'admin' : (u.role === UserRole.VENDOR ? 'vendor' : 'home'));
       } else {
         alert('🚨 Authorization request timed out. Please try again.');
       }
