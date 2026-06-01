@@ -1,4 +1,16 @@
+const fs = require('fs');
 
+const currentApp = fs.readFileSync('App.tsx', 'utf8');
+const oldApp = fs.readFileSync('restored/App.tsx', 'utf8');
+
+// oldApp has:
+// const [currentUser, setCurrentUser] = useState<User | null>(null);
+// We want to replace it with the Supabase auth flow!
+// And we want `users`, `products`, `transactions` to persist.
+// This is somewhat complex.
+// How about we just write a brand new App.tsx that merges both?
+
+const mergedAppContent = `
 import React, { useState, useEffect } from 'react';
 import { supabase } from './services/supabaseClient';
 import { User, UserRole, Transaction, Product, WithdrawalRequest, PaymentRequest, ChatMessage } from './types';
@@ -48,7 +60,7 @@ export default function App() {
       const { data, error } = await supabase.from('users').select('*').eq('id', authUser.id).single();
       if (data) {
         setUserProfile(data as User);
-        // Ensure this user exists in the local `users` array for the Downline Tree calculation
+        // Ensure this user exists in the local \`users\` array for the Downline Tree calculation
         setUsers(prev => {
           if (!prev.find(u => u.id === data.id)) return [...prev, data];
           return prev.map(u => u.id === data.id ? data : u);
@@ -117,3 +129,7 @@ export default function App() {
     </div>
   );
 }
+`;
+
+fs.writeFileSync('App.tsx', mergedAppContent);
+console.log('Created merged App.tsx');
