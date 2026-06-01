@@ -4,6 +4,7 @@ import { supabase } from './services/supabaseClient';
 import { User, UserRole, Transaction, Product, WithdrawalRequest, PaymentRequest, ChatMessage } from './types';
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
+import AdminPanel from './components/AdminPanel';
 
 const INITIAL_PRODUCTS: Product[] = [
   { id: 'p1', vendorId: 'v1', name: 'Premium Herbal Tea', description: 'Natural detox tea', price: 499, mrp: 699, category: 'Herbal', stock: 100, image: '☕', mlmPoints: 100 },
@@ -23,6 +24,7 @@ export default function App() {
   const [paymentRequests, setPaymentRequests] = useState<PaymentRequest[]>([]);
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [config, setConfig] = useState<any>({ qrCode: '', systemCoinValue: 1, levels: [] });
 
   useEffect(() => {
     const safetyTimeout = setTimeout(() => {
@@ -158,25 +160,46 @@ export default function App() {
       )}
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Dashboard 
-          user={activeUserProfile}
-          users={users}
-          products={products}
-          transactions={transactions}
-          paymentRequests={paymentRequests}
-          withdrawalRequests={withdrawalRequests}
-          chatMessages={chatMessages}
-          packagePrice={249}
-          qrCode={""}
-          onRecharge={() => alert('Simulated Recharge')}
-          onOrder={() => alert('Simulated Order')}
-          onTransfer={() => alert('Simulated Transfer')}
-          onActivate={() => alert('Simulated Activate')}
-          onAddMoney={() => alert('Simulated Add Money')}
-          onWithdrawal={() => alert('Simulated Withdrawal')}
-          onUpdateBankDetails={() => alert('Simulated Update Bank')}
-          onSendMessage={() => alert('Simulated Chat')}
-        />
+        {(activeUserProfile.email === 'admin@spay.com' || activeUserProfile.role === 'ADMIN') ? (
+          <AdminPanel
+            users={users}
+            transactions={transactions}
+            config={config}
+            onUpdateConfig={setConfig}
+            paymentRequests={paymentRequests}
+            onApprovePayment={(id) => {
+              setPaymentRequests(prev => prev.map(p => p.id === id ? { ...p, status: 'approved' } : p));
+              alert('Payment Approved!');
+            }}
+            withdrawalRequests={withdrawalRequests}
+            onApproveWithdrawal={(id) => {
+              setWithdrawalRequests(prev => prev.map(p => p.id === id ? { ...p, status: 'approved' } : p));
+              alert('Withdrawal Approved!');
+            }}
+            chatMessages={chatMessages}
+            onSendMessage={() => {}}
+          />
+        ) : (
+          <Dashboard 
+            user={activeUserProfile}
+            users={users}
+            products={products}
+            transactions={transactions}
+            paymentRequests={paymentRequests}
+            withdrawalRequests={withdrawalRequests}
+            chatMessages={chatMessages}
+            packagePrice={249}
+            qrCode={config?.qrCode || ""}
+            onRecharge={() => alert('Simulated Recharge')}
+            onOrder={() => alert('Simulated Order')}
+            onTransfer={() => alert('Simulated Transfer')}
+            onActivate={() => alert('Simulated Activate')}
+            onAddMoney={() => alert('Simulated Add Money')}
+            onWithdrawal={() => alert('Simulated Withdrawal')}
+            onUpdateBankDetails={() => alert('Simulated Update Bank')}
+            onSendMessage={() => alert('Simulated Chat')}
+          />
+        )}
       </main>
     </div>
   );

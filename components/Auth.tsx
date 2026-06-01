@@ -150,11 +150,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
           <form onSubmit={handleSubmit} className="space-y-4 relative z-10">
             {view === 'signup' && (
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Full Name</label>
+                <label className="block text-[11px] font-semibold text-blue-950 uppercase tracking-widest mb-1 ml-1">Full Name</label>
                 <input
                   type="text"
                   required
-                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:outline-none transition-all font-bold text-sm"
+                  className="w-full px-5 py-3.5 bg-white border border-blue-900 text-blue-950 rounded-2xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-600 focus:outline-none transition-all font-medium text-sm shadow-sm"
                   placeholder="Full Name"
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -163,11 +163,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
             )}
             
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">User ID / Email</label>
+              <label className="block text-[11px] font-semibold text-blue-950 uppercase tracking-widest mb-1 ml-1">User ID / Email</label>
               <input
                 type="email"
                 required
-                className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:outline-none transition-all font-bold text-sm"
+                className="w-full px-5 py-3.5 bg-white border border-blue-900 text-blue-950 rounded-2xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-600 focus:outline-none transition-all font-medium text-sm shadow-sm"
                 placeholder="user@smartpay.com"
                 value={formData.email}
                 onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -177,11 +177,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
             {(view === 'signup' || view === 'recover-password' || view === 'recover-pin') && (
               <div className="grid grid-cols-2 gap-4">
                  <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Mobile</label>
+                  <label className="block text-[11px] font-semibold text-blue-950 uppercase tracking-widest mb-1 ml-1">Mobile</label>
                   <input
                     type="tel"
                     required
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:outline-none transition-all font-bold text-sm"
+                    className="w-full px-5 py-3.5 bg-white border border-blue-900 text-blue-950 rounded-2xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-600 focus:outline-none transition-all font-medium text-sm shadow-sm"
                     placeholder="+91"
                     value={formData.phone}
                     onChange={(e) => setFormData({...formData, phone: e.target.value})}
@@ -189,18 +189,18 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
                 </div>
                 {view === 'signup' && (
                   <div className="relative">
-                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">State</label>
+                    <label className="block text-[11px] font-semibold text-blue-950 uppercase tracking-widest mb-1 ml-1">State</label>
                     <div 
-                      className="w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl cursor-pointer font-bold text-xs truncate"
+                      className="w-full px-4 py-3.5 bg-white border border-blue-900 text-blue-950 rounded-2xl cursor-pointer font-medium text-xs truncate shadow-sm focus:ring-4 focus:ring-purple-500/20 focus:border-purple-600 transition-all"
                       onClick={() => setIsStateOpen(!isStateOpen)}
                     >
                       {formData.state || "Select State"}
                     </div>
                     {isStateOpen && (
-                      <div className="absolute bottom-full left-0 w-full mb-2 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 overflow-hidden">
+                      <div className="absolute bottom-full left-0 w-full mb-2 bg-white border border-blue-900 rounded-2xl shadow-xl z-50 overflow-hidden">
                         <input 
                           type="text"
-                          className="w-full px-4 py-3 border-b border-slate-100 text-xs focus:outline-none bg-slate-50 font-bold"
+                          className="w-full px-4 py-3 border-b border-blue-900/20 text-xs focus:outline-none bg-white font-medium text-blue-950"
                           placeholder="Search state..."
                           value={stateSearch}
                           onChange={(e) => setStateSearch(e.target.value)}
@@ -231,11 +231,11 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
             {view === 'login' && (
               <div className="space-y-2">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Password</label>
+                  <label className="block text-[11px] font-semibold text-blue-950 uppercase tracking-widest mb-1 ml-1">Password</label>
                   <input
                     type="password"
                     required
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:outline-none transition-all font-bold text-sm"
+                    className="w-full px-5 py-3.5 bg-white border border-blue-900 text-blue-950 rounded-2xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-600 focus:outline-none transition-all font-medium text-sm shadow-sm"
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
@@ -263,24 +263,24 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
             {view === 'signup' && (
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Password</label>
+                  <label className="block text-[11px] font-semibold text-blue-950 uppercase tracking-widest mb-1 ml-1">Password</label>
                   <input
                     type="password"
                     required
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:outline-none transition-all font-bold text-sm"
+                    className="w-full px-5 py-3.5 bg-white border border-blue-900 text-blue-950 rounded-2xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-600 focus:outline-none transition-all font-medium text-sm shadow-sm"
                     placeholder="••••••••"
                     value={formData.password}
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Trans. PIN</label>
+                  <label className="block text-[11px] font-semibold text-blue-950 uppercase tracking-widest mb-1 ml-1">Trans. PIN</label>
                   <input
                     type="password"
                     required
                     inputMode="numeric"
                     pattern="\d{4}"
-                    className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:outline-none transition-all font-bold text-sm text-center tracking-[0.5em]"
+                    className="w-full px-5 py-3.5 bg-white border border-blue-900 text-blue-950 rounded-2xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-600 focus:outline-none transition-all font-medium text-sm text-center tracking-[0.5em] shadow-sm"
                     placeholder="0000"
                     value={formData.transactionPin}
                     onChange={handlePinChange}
@@ -291,10 +291,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
 
             {view === 'signup' && (
               <div>
-                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 ml-1">Referral Code</label>
+                <label className="block text-[11px] font-semibold text-blue-950 uppercase tracking-widest mb-1 ml-1">Referral Code</label>
                 <input
                   type="text"
-                  className="w-full px-5 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:outline-none transition-all font-bold text-sm"
+                  className="w-full px-5 py-3.5 bg-white border border-blue-900 text-blue-950 rounded-2xl focus:ring-4 focus:ring-purple-500/20 focus:border-purple-600 focus:outline-none transition-all font-medium text-sm shadow-sm"
                   placeholder="SPAY123"
                   value={formData.referralCode}
                   onChange={(e) => setFormData({...formData, referralCode: e.target.value})}
@@ -304,7 +304,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
 
             <button
               type="submit"
-              className="w-full py-5 bg-blue-600 text-white font-black rounded-3xl hover:bg-blue-700 active:scale-[0.97] transition-all shadow-2xl shadow-blue-200 mt-4 uppercase tracking-widest text-sm"
+              className="w-full py-5 bg-gradient-to-r from-purple-700 to-indigo-600 text-white font-bold rounded-3xl hover:from-purple-800 hover:to-indigo-700 active:scale-[0.97] transition-all shadow-xl shadow-purple-500/30 mt-4 uppercase tracking-widest text-sm"
             >
               {view === 'login' ? 'Access Account' : 
                view === 'signup' ? 'Register Now' : 'Verify Identity'}
@@ -315,7 +315,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
         <div className="mt-8 text-center relative z-10">
           <button
             onClick={() => { setView(view === 'login' ? 'signup' : 'login'); setRecoveryResult(null); }}
-            className="text-slate-400 text-[10px] font-black hover:text-blue-600 transition-colors uppercase tracking-[0.2em]"
+            className="text-slate-500 text-[10px] font-semibold hover:text-purple-700 transition-colors uppercase tracking-[0.2em]"
           >
             {view === 'login' ? "Join the network → Sign Up" : "Back to Security → Login"}
           </button>
