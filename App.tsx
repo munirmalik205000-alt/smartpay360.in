@@ -5,6 +5,7 @@ import { User, UserRole, Transaction, Product, WithdrawalRequest, PaymentRequest
 import Auth from './components/Auth';
 import Dashboard from './components/Dashboard';
 import AdminPanel from './components/AdminPanel';
+import { Logo } from './components/Logo';
 
 const INITIAL_PRODUCTS: Product[] = [
   { id: 'p1', vendorId: 'v1', name: 'Premium Herbal Tea', description: 'Natural detox tea', price: 499, mrp: 699, category: 'Herbal', stock: 100, image: '☕', mlmPoints: 100 },
@@ -102,8 +103,15 @@ export default function App() {
   };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.reload();
+    try {
+      await supabase.auth.signOut();
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      setSession(null);
+      setUserProfile(null);
+      window.location.reload();
+    }
   };
 
   if (loading) {
@@ -139,11 +147,8 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 flex flex-col">
        <header className="bg-white border-b sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">S</span>
-            </div>
-            <span className="text-xl font-black tracking-tight text-slate-800">SmartPay 360</span>
+          <div className="flex items-center gap-4">
+             <Logo size="sm" />
           </div>
           <div className="flex items-center gap-4">
              <div className="text-right hidden sm:block">

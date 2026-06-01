@@ -1,4 +1,5 @@
 import { supabase } from '../services/supabaseClient';
+import { Logo } from './Logo';
 
 import React, { useState, useMemo } from 'react';
 
@@ -114,16 +115,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
         
         <div className="text-center mb-10 relative z-10">
           <div className="mb-6 flex justify-center">
-             <div className="relative w-24 h-24">
-               <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-2xl">
-                 <polygon points="50,5 95,25 95,75 50,95 5,75 5,25" fill="#0077C0" />
-                 <path d="M30 40 C 30 30, 70 30, 70 40 L 70 45 C 70 55, 30 55, 30 65 L 30 70 C 30 80, 70 80, 70 70" fill="none" stroke="white" strokeWidth="12" strokeLinecap="round" transform="translate(0, -2)"/>
-               </svg>
-             </div>
-          </div>
-          <div className="flex flex-col items-center">
-            <h1 className="text-4xl font-black text-[#003B73] tracking-tight leading-none">SmartPay</h1>
-            <span className="text-2xl font-bold text-[#4DB8E5] tracking-[0.1em] mt-1">360</span>
+             <Logo size="lg" />
           </div>
           <p className="text-slate-400 mt-4 font-bold text-[10px] uppercase tracking-[0.2em]">
             {view === 'login' ? 'Secure Network Login' : 
