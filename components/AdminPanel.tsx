@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, Transaction, MLMConfig, UserRole, PaymentRequest, WithdrawalRequest, ChatMessage, JoiningPackage } from '../types';
-import { getApiUrl } from '../services/utils';
+import { getApiUrl, compressImage } from '../services/utils';
 
 interface AdminProps {
   users: User[];
@@ -34,7 +34,23 @@ const AdminPanel: React.FC<AdminProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => onUpdateConfig({ ...config, qrCode: reader.result as string });
+      reader.onloadend = async () => {
+        const rawResult = reader.result as string;
+        try {
+          // Compress for readable yet lightweight QR scanning
+          const compressedResult = await compressImage(rawResult, 512, 512);
+          onUpdateConfig({ ...config, qrCode: compressedResult });
+          
+          // Auto-save immediately to server configuration
+          await fetch(getApiUrl('/api/config'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...config, qrCode: compressedResult })
+          });
+        } catch (err) {
+          console.error("Error auto-saving QR code:", err);
+        }
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -334,11 +350,24 @@ const AdminPanel: React.FC<AdminProps> = ({
                 const file = e.target.files?.[0];
                 if (file) {
                   const reader = new FileReader();
-                  reader.onloadend = () => {
-                    const result = reader.result as string;
-                    onUpdateConfig({ ...config, customLogo: result });
-                    localStorage.setItem('spay_custom_logo', result);
-                    window.dispatchEvent(new Event('spay-logo-updated'));
+                  reader.onloadend = async () => {
+                    const rawResult = reader.result as string;
+                    try {
+                      // Compress to uniform landscape logo dimension
+                      const compressedLogo = await compressImage(rawResult, 360, 100);
+                      onUpdateConfig({ ...config, customLogo: compressedLogo });
+                      localStorage.setItem('spay_custom_logo', compressedLogo);
+                      window.dispatchEvent(new Event('spay-logo-updated'));
+                      
+                      // Auto-save immediately to server configuration
+                      await fetch(getApiUrl('/api/config'), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ ...config, customLogo: compressedLogo })
+                      });
+                    } catch (err) {
+                      console.error("Error auto-saving Logo:", err);
+                    }
                   };
                   reader.readAsDataURL(file);
                 }

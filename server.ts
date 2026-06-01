@@ -18,6 +18,101 @@ async function startServer() {
     fs.mkdirSync(path.join(process.cwd(), "data"), { recursive: true });
   }
 
+  const PAYMENTS_FILE = path.join(process.cwd(), "data", "payment_requests.json");
+  const WITHDRAWALS_FILE = path.join(process.cwd(), "data", "withdrawal_requests.json");
+  const CHATS_FILE = path.join(process.cwd(), "data", "chat_messages.json");
+
+  // Helper to read JSON file or return empty array
+  const readJsonFileSync = (filePath: string) => {
+    try {
+      if (fs.existsSync(filePath)) {
+        return JSON.parse(fs.readFileSync(filePath, "utf-8"));
+      }
+    } catch (e) {
+      console.error("Error reading file:", filePath, e);
+    }
+    return [];
+  };
+
+  // Helper to write JSON file safely
+  const writeJsonFileSync = (filePath: string, data: any) => {
+    try {
+      fs.writeFileSync(filePath, JSON.stringify(data, null, 2), "utf-8");
+    } catch (e) {
+      console.error("Error writing file:", filePath, e);
+    }
+  };
+
+  // GET and POST payment requests
+  app.get("/api/payment-requests", (req, res) => {
+    return res.json(readJsonFileSync(PAYMENTS_FILE));
+  });
+
+  app.post("/api/payment-requests", (req, res) => {
+    const list = readJsonFileSync(PAYMENTS_FILE);
+    const newReq = {
+      id: `PAY${Date.now()}`,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      ...req.body
+    };
+    list.unshift(newReq);
+    writeJsonFileSync(PAYMENTS_FILE, list);
+    return res.json(newReq);
+  });
+
+  // UPDATE payment request status
+  app.post("/api/payment-requests/update", (req, res) => {
+    const { id, status } = req.body;
+    let list = readJsonFileSync(PAYMENTS_FILE);
+    list = list.map((item: any) => item.id === id ? { ...item, status } : item);
+    writeJsonFileSync(PAYMENTS_FILE, list);
+    return res.json({ success: true, list });
+  });
+
+  // GET and POST withdrawal requests
+  app.get("/api/withdrawal-requests", (req, res) => {
+    return res.json(readJsonFileSync(WITHDRAWALS_FILE));
+  });
+
+  app.post("/api/withdrawal-requests", (req, res) => {
+    const list = readJsonFileSync(WITHDRAWALS_FILE);
+    const newReq = {
+      id: `WITH${Date.now()}`,
+      status: "pending",
+      createdAt: new Date().toISOString(),
+      ...req.body
+    };
+    list.unshift(newReq);
+    writeJsonFileSync(WITHDRAWALS_FILE, list);
+    return res.json(newReq);
+  });
+
+  app.post("/api/withdrawal-requests/update", (req, res) => {
+    const { id, status } = req.body;
+    let list = readJsonFileSync(WITHDRAWALS_FILE);
+    list = list.map((item: any) => item.id === id ? { ...item, status } : item);
+    writeJsonFileSync(WITHDRAWALS_FILE, list);
+    return res.json({ success: true, list });
+  });
+
+  // GET and POST chat messages
+  app.get("/api/chat-messages", (req, res) => {
+    return res.json(readJsonFileSync(CHATS_FILE));
+  });
+
+  app.post("/api/chat-messages", (req, res) => {
+    const list = readJsonFileSync(CHATS_FILE);
+    const newMsg = {
+      id: `MSG${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      ...req.body
+    };
+    list.push(newMsg);
+    writeJsonFileSync(CHATS_FILE, list);
+    return res.json(newMsg);
+  });
+
   // GET config
   app.get("/api/config", (req, res) => {
     try {
