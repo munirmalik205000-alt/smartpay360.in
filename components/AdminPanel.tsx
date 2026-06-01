@@ -375,6 +375,27 @@ const AdminPanel: React.FC<AdminProps> = ({
               <label htmlFor="logo-input" className="block text-center w-full py-3 bg-indigo-600 text-white font-bold rounded-xl cursor-pointer hover:bg-indigo-700 transition-colors shadow-sm">
                 Upload Custom Logo
               </label>
+              {config.customLogo && (
+                <button 
+                  type="button"
+                  onClick={async () => {
+                    if (confirm("Are you sure you want to restore the default logo?")) {
+                      onUpdateConfig({ ...config, customLogo: "" });
+                      localStorage.removeItem("spay_custom_logo");
+                      window.dispatchEvent(new Event("spay-logo-updated"));
+                      await fetch(getApiUrl("/api/config"), {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ removeLogo: true })
+                      });
+                      alert("Default logo restored successfully.");
+                    }
+                  }} 
+                  className="block text-center w-full py-2 bg-rose-50 text-rose-600 border border-rose-150 mt-2 hover:bg-rose-100 font-bold rounded-xl transition-colors text-xs"
+                >
+                  Reset To Default Logo
+                </button>
+              )}
             </div>
 
             <div className="space-y-4 pt-4 border-t">
@@ -384,8 +405,27 @@ const AdminPanel: React.FC<AdminProps> = ({
               </div>
               <input type="file" accept="image/*" onChange={handleQRUpload} className="hidden" id="qr-input" />
               <label htmlFor="qr-input" className="block text-center w-full py-3 bg-blue-600 text-white font-bold rounded-xl cursor-pointer hover:bg-blue-700 transition-colors shadow-sm">
-                {config.qrCode ? 'Update QR Code' : 'Upload QR Code'}
+                {config.qrCode ? "Update QR Code" : "Upload QR Code"}
               </label>
+              {config.qrCode && (
+                <button 
+                  type="button"
+                  onClick={async () => {
+                    if (confirm("Are you sure you want to clear the receiver QR code?")) {
+                      onUpdateConfig({ ...config, qrCode: "" });
+                      await fetch(getApiUrl("/api/config"), {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ removeQr: true })
+                      });
+                      alert("Receiver QR code cleared.");
+                    }
+                  }} 
+                  className="block text-center w-full py-2 bg-rose-50 text-rose-600 border border-rose-150 mt-2 hover:bg-rose-100 font-bold rounded-xl transition-colors text-xs"
+                >
+                  Clear QR Code
+                </button>
+              )}
             </div>
             
             <div className="space-y-3 pt-4 border-t">

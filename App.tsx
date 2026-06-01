@@ -271,9 +271,13 @@ export default function App() {
       }
 
       const newBalance = Number(targetUser.wallet_balance || 0) + Number(req.amount);
+      const newRecharge = Number(targetUser.recharge_wallet || 0) + Number(req.amount);
       const { error: updateErr } = await supabase
         .from('users')
-        .update({ wallet_balance: newBalance })
+        .update({ 
+          wallet_balance: newBalance,
+          recharge_wallet: newRecharge
+        })
         .eq('id', req.userId);
 
       if (updateErr) {

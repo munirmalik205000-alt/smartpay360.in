@@ -131,16 +131,37 @@ async function startServer() {
   // POST config (merges with existing config)
   app.post("/api/config", (req, res) => {
     try {
-      let currentConfig = {};
+      let currentConfig: any = {};
       if (fs.existsSync(CONFIG_FILE)) {
         try {
           currentConfig = JSON.parse(fs.readFileSync(CONFIG_FILE, "utf-8"));
         } catch (_) {}
       }
       
-      const updatedConfig = { ...currentConfig, ...req.body };
+      const updatedConfig = { ...currentConfig };
+
+      // Apply incoming body parameters, ignoring undefined or empty values for logo/qrCode if currentConfig has them
+      for (const key of Object.keys(req.body)) {
+        const val = req.body[key];
+        
+        // Specially protect logo/qrCode: don't overwrite existing values with empty/null/undefined
+        if ((key === 'customLogo' || key === 'qrCode') && !val && currentConfig[key]) {
+          // Keep existing
+          continue;
+        }
+
+        updatedConfig[key] = val;
+      }
+
+      // Handle explicit removals
+      if (req.body.removeLogo === true) {
+        updatedConfig.customLogo = "";
+      }
+      if (req.body.removeQr === true) {
+        updatedConfig.qrCode = "";
+      }
       
-      // If client sent businessName, also make sure we map is as needed or vice versa
+      // If client sent businessName, also make sure we map it as needed or vice versa
       if (req.body.businessName && !req.body.systemName) {
         updatedConfig.systemName = req.body.businessName;
       } else if (req.body.systemName && !req.body.businessName) {
