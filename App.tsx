@@ -25,6 +25,7 @@ export default function App() {
   const [withdrawalRequests, setWithdrawalRequests] = useState<WithdrawalRequest[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [config, setConfig] = useState<any>({ qrCode: '', systemCoinValue: 1, levels: [] });
+  const [joiningPackages, setJoiningPackages] = useState<any[]>([{ id: '1', name: 'Starter', price: 249, coin: 50, pv: 10 }]);
 
   useEffect(() => {
     const safetyTimeout = setTimeout(() => {
@@ -102,6 +103,7 @@ export default function App() {
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
+    window.location.reload();
   };
 
   if (loading) {
@@ -178,6 +180,8 @@ export default function App() {
             }}
             chatMessages={chatMessages}
             onSendMessage={() => {}}
+            joiningPackages={joiningPackages}
+            onUpdatePackages={setJoiningPackages}
           />
         ) : (
           <Dashboard 

@@ -37,6 +37,12 @@ export interface MLMConfig {
   tdsRate: number;
   serviceCharge: number;
   qrCode: string; // Admin QR for Add Money
+  customLogo?: string;
+  systemName?: string;
+  businessName?: string;
+  supportContact?: string;
+  systemCoinValue?: number;
+  levels?: number[];
 }
 
 export interface User {
@@ -119,6 +125,14 @@ export interface PaymentRequest {
   screenshot: string; // Base64
   status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
+}
+
+export interface JoiningPackage {
+  id: string;
+  name: string;
+  price: number;
+  coin: number;
+  pv: number;
 }
 
 export interface ChatMessage {
