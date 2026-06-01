@@ -187,7 +187,7 @@ export default function App() {
                  <Menu className="w-5 h-5" />
                </button>
              )}
-             <Logo size="sm" />
+             <Logo size="sm" lightText={false} />
           </div>
           <div className="flex items-center gap-4">
              <div className="text-right hidden sm:block">
@@ -267,7 +267,7 @@ export default function App() {
               {/* Drawer Header */}
               <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50">
                 <div className="flex items-center gap-3">
-                  <Logo size="sm" />
+                  <Logo size="sm" lightText={false} />
                 </div>
                 <button 
                   onClick={() => setSidebarOpen(false)} 

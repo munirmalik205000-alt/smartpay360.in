@@ -117,7 +117,10 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
           <div className="mb-6 flex justify-center">
              <Logo size="lg" />
           </div>
-          <p className="text-slate-400 mt-4 font-bold text-[10px] uppercase tracking-[0.2em]">
+          <h2 className="text-xl font-black text-slate-800 uppercase tracking-widest mt-3 mb-1">
+             WELCOME TO SMARTPAY360
+          </h2>
+          <p className="text-slate-400 mt-2 font-bold text-[10px] uppercase tracking-[0.2em]">
             {view === 'login' ? 'Secure Network Login' : 
              view === 'signup' ? 'Create Network Account' :
              view === 'recover-password' ? 'Password Recovery' : 'Transaction PIN Recovery'}
