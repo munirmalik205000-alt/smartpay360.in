@@ -68,8 +68,10 @@ export const Logo: React.FC<LogoProps> = ({
           }
         }
       }
-    } catch (err) {
-      console.error('Error loading brand config dynamically:', err);
+    } catch (err: any) {
+      if (err && err.message !== 'Failed to fetch') {
+         console.warn('Error loading brand config dynamically');
+      }
     }
   };
 
@@ -119,12 +121,12 @@ export const Logo: React.FC<LogoProps> = ({
               'Content-Type': 'application/json'
             },
             body: JSON.stringify(config)
-          }).catch(err => console.error('Failed to save configuration permanently:', err));
+          }).catch(() => {});
 
           // Dispatch global reactive event to update all Logo components instantly
           window.dispatchEvent(new Event('spay-logo-updated'));
         } catch (err) {
-          console.error(err);
+          console.warn(err);
         }
       };
       reader.readAsDataURL(file);

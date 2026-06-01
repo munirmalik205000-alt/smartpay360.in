@@ -103,7 +103,7 @@ async function startServer() {
         ]);
 
         if (usersErr || prodErr || ordErr || txErr || payErr || wdErr || chatErr || pkgErr) {
-          console.warn("⚠️ SUPABASE: Some queries returned error, falling back to local files if tables are not fully seeded:", { usersErr, prodErr, ordErr, txErr });
+          // silently handle if tables don't exist
           throw new Error("Supabase tables not fully ready");
         }
 
@@ -221,7 +221,7 @@ async function startServer() {
         });
 
       } catch (err) {
-        console.error("🔴 SUPABASE Error reading table data, falling back to JSON filesystem:", err);
+        // silently fallback
       }
     }
 
