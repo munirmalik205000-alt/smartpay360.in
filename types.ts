@@ -4,11 +4,39 @@ export enum UserRole {
   VENDOR = 'VENDOR'
 }
 
+export interface Wallets {
+  main: number;
+  commission: number;
+  cashback: number;
+  recharge: number;
+  vendor?: number;
+}
+
 export interface BankDetails {
   accountNumber: string;
   bankName: string;
   ifscCode: string;
   holderName: string;
+}
+
+export interface Order {
+  id: string;
+  userId: string;
+  vendorId: string;
+  productId: string;
+  amount: number;
+  status: 'pending' | 'shipped' | 'delivered' | 'cancelled';
+  createdAt: string;
+}
+
+export interface MLMConfig {
+  rechargeCommission: number[];
+  productCommission: number[];
+  packageCommission: number[];
+  packagePrice: number;
+  tdsRate: number;
+  serviceCharge: number;
+  qrCode: string; // Admin QR for Add Money
 }
 
 export interface User {
@@ -33,9 +61,14 @@ export interface User {
   created_at: string;
   
   // legacy missing fields
+  name?: string;
+  phone?: string;
+  totalEarned?: number;
   bankDetails?: BankDetails;
   referralCode?: string;
   level?: number;
+  isActivated?: boolean;
+  wallets?: Wallets;
 }
 
 export interface Transaction {
@@ -45,6 +78,13 @@ export interface Transaction {
   transaction_type: string;
   remark: string;
   created_at: string;
+
+  // legacy fields
+  type?: 'recharge' | 'commission' | 'shopping' | 'withdrawal' | 'add_funds' | 'activation';
+  description?: string;
+  createdAt?: string;
+  walletType?: 'main' | 'commission' | 'recharge' | 'cashback';
+  status?: string;
 }
 
 export interface Product {

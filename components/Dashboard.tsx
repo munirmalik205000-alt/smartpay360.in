@@ -46,10 +46,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   }, [users, user.id]);
 
   const stats = [
-    { label: 'Recharge Wallet', val: `₹${user.recharge_wallet.toFixed(2)}`, color: 'text-blue-600' },
-    { label: 'Main Wallet', val: `₹${user.wallet_balance.toFixed(2)}`, color: 'text-slate-900' },
-    { label: 'Commission', val: `₹${user.earning_wallet.toFixed(2)}`, color: 'text-green-600' },
-    { label: 'Total Earnings', val: `₹${(user.earning_wallet + user.wallet_balance).toFixed(2)}`, color: 'text-indigo-600' },
+    { label: 'Recharge Wallet', val: `₹${(user.recharge_wallet || 0).toFixed(2)}`, color: 'text-blue-600' },
+    { label: 'Main Wallet', val: `₹${(user.wallet_balance || 0).toFixed(2)}`, color: 'text-slate-900' },
+    { label: 'Commission', val: `₹${(user.earning_wallet || 0).toFixed(2)}`, color: 'text-green-600' },
+    { label: 'Total Earnings', val: `₹${((user.earning_wallet || 0) + (user.wallet_balance || 0)).toFixed(2)}`, color: 'text-indigo-600' },
     { label: 'Team Size', val: myDownline.length.toString(), color: 'text-orange-600' },
   ];
 
@@ -156,11 +156,11 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <div key={tx.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs ${tx.amount > 0 ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-                      {tx.type[0].toUpperCase()}
+                      {((tx.type || tx.transaction_type || 'U')[0]).toUpperCase()}
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-800">{tx.description}</p>
-                      <p className="text-[9px] text-slate-400">{new Date(tx.createdAt).toLocaleString()}</p>
+                      <p className="text-xs font-bold text-slate-800">{tx.description || tx.remark}</p>
+                      <p className="text-[9px] text-slate-400">{new Date(tx.createdAt || tx.created_at || Date.now()).toLocaleString()}</p>
                     </div>
                   </div>
                   <p className={`text-sm font-black ${tx.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>₹{tx.amount.toFixed(2)}</p>
@@ -291,7 +291,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <span className="font-black text-slate-400 text-xs">Level {i+1}</span>
                   <div className="text-right">
                     <p className="font-bold text-sm">{levelMembers.length} Members</p>
-                    <p className="text-[10px] text-green-600 font-bold">{levelMembers.filter(u => u.isActivated).length} Active</p>
+                    <p className="text-[10px] text-green-600 font-bold">{levelMembers.filter(u => u.is_active || u.isActivated).length} Active</p>
                   </div>
                 </div>
               );

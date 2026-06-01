@@ -59,7 +59,38 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
         alert('Please select your state.');
         return;
       }
-      onSignup(formData);
+      try {
+        const { error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              username: formData.name
+            }
+          }
+        });
+        if (error) throw error;
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('users').update({
+            mobile: formData.phone,
+            sponsor_id: formData.referralCode || null,
+            rank_name: 'Starter',
+            wallet_balance: 0,
+            earning_wallet: 0,
+            recharge_wallet: 0,
+            self_pv: 0,
+            team_pv: 0,
+            direct_count: 0,
+            is_active: false
+          }).eq('id', user.id);
+        }
+        alert('Registration successful! Check your email or try logging in.');
+        setView('login');
+      } catch (err:any) {
+        alert("Signup failed: " + err.message);
+      }
     } else {
       const result = onRecover(formData.email, formData.phone, view === 'recover-password' ? 'password' : 'pin');
       if (result) {

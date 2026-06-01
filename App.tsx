@@ -70,7 +70,7 @@ export default function App() {
   }
 
   if (!session || !userProfile) {
-    return <Auth onLogin={() => {}} onSignup={() => {}} />; // Auth is now handling its own Supabase logic
+    return <Auth onLogin={() => {}} onSignup={() => {}} onRecover={() => null} />; // Auth is now handling its own Supabase logic
   }
 
   return (
