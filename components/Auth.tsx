@@ -475,7 +475,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
                   onClick={() => setView('recover-pin')}
                   className="hover:text-[#00baf2] transition-colors"
                 >
-                  Forgot UPI PIN?
+                  Forgot PIN?
                 </button>
               </div>
             )}
@@ -514,7 +514,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
               onClick={() => { setView('signup'); setRecoveryResult(null); }}
               className="inline-flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-[#00baf2] transition-colors uppercase tracking-wider"
             >
-              <span>New to Gateway?</span>
+              <span>Welcome To Smartpay360?</span>
               <span className="text-amber-400 underline underline-offset-4 font-black">Open account</span>
             </button>
           </div>
