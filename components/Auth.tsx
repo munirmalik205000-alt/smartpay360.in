@@ -198,7 +198,7 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
           <div className="mt-2 flex items-center justify-center gap-1 bg-[#231a4c] w-fit mx-auto px-3 py-1 rounded-full border border-violet-500/30 shadow-inner">
             <Sparkles className="w-3 h-3 text-amber-400 animate-pulse" />
             <span className="text-[9px] text-[#00baf2] font-black uppercase tracking-widest">
-              {view === 'login' ? 'SECURE UPI PAYMENTS' : view === 'signup' ? 'EARN LEVEL PENALTIES & CASH' : 'CREDENTIALS LOOKUP'}
+              {view === 'login' ? 'WELCOME TO SMARTPAY360' : view === 'signup' ? 'EARN LEVEL PENALTIES & CASH' : 'CREDENTIALS LOOKUP'}
             </span>
           </div>
 
