@@ -10,8 +10,10 @@ interface AdminProps {
   onUpdateConfig: (c: MLMConfig) => void;
   paymentRequests: PaymentRequest[];
   onApprovePayment: (id: string) => void;
+  onRejectPayment?: (id: string) => void;
   withdrawalRequests: WithdrawalRequest[];
   onApproveWithdrawal: (id: string) => void;
+  onRejectWithdrawal?: (id: string) => void;
   chatMessages: ChatMessage[];
   onSendMessage: (msg: string, receiverId: string) => void;
   joiningPackages?: JoiningPackage[];
@@ -20,7 +22,7 @@ interface AdminProps {
 
 const AdminPanel: React.FC<AdminProps> = ({ 
   users, transactions, config, onUpdateConfig, paymentRequests, 
-  onApprovePayment, withdrawalRequests, onApproveWithdrawal,
+  onApprovePayment, onRejectPayment, withdrawalRequests, onApproveWithdrawal, onRejectWithdrawal,
   chatMessages, onSendMessage, joiningPackages = [], onUpdatePackages
 }) => {
   const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'packages' | 'payments' | 'withdrawals' | 'support' | 'config'>('stats');
@@ -232,7 +234,12 @@ const AdminPanel: React.FC<AdminProps> = ({
                     </td>
                     <td className="px-6 py-4 text-[10px]">{new Date(req.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
-                      <button onClick={() => onApprovePayment(req.id)} className="bg-green-500 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-green-600">APPROVE</button>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => onApprovePayment(req.id)} className="bg-green-600 hover:bg-green-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors">APPROVE</button>
+                        {onRejectPayment && (
+                          <button onClick={() => onRejectPayment(req.id)} className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors">REJECT</button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -275,7 +282,12 @@ const AdminPanel: React.FC<AdminProps> = ({
                     </td>
                     <td className="px-6 py-4 text-[10px]">{new Date(req.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
-                      <button onClick={() => onApproveWithdrawal(req.id)} className="bg-green-500 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-green-600">APPROVE</button>
+                      <div className="flex items-center gap-2">
+                        <button onClick={() => onApproveWithdrawal(req.id)} className="bg-green-600 hover:bg-green-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors">APPROVE</button>
+                        {onRejectWithdrawal && (
+                          <button onClick={() => onRejectWithdrawal(req.id)} className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors">REJECT</button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}

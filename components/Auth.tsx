@@ -1,6 +1,6 @@
 import { supabase } from '../services/supabaseClient';
 import { Logo } from './Logo';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   User, 
   Mail, 
@@ -42,6 +42,8 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
   const [recoveryResult, setRecoveryResult] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showPin, setShowPin] = useState(false);
+  const [sponsorName, setSponsorName] = useState<string>('');
+  const [isSearchingSponsor, setIsSearchingSponsor] = useState(false);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -52,6 +54,47 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
     state: '',
     referralCode: ''
   });
+
+  useEffect(() => {
+    const delayDebounce = setTimeout(async () => {
+      const code = formData.referralCode?.trim();
+      if (!code) {
+        setSponsorName('');
+        return;
+      }
+      setIsSearchingSponsor(true);
+      try {
+        const searchVal = code.toLowerCase();
+        // Look up all profiles to do an accurate client-side mapping for search flexibility
+        const { data, error } = await supabase
+          .from('users')
+          .select('id, username, email');
+          
+        if (data && data.length > 0) {
+          const matched = data.find(u => 
+            u.id.toLowerCase().startsWith(searchVal) || 
+            (u.username && u.username.toLowerCase() === searchVal) || 
+            (u.email && u.email.toLowerCase().includes(searchVal)) ||
+            (u.email && u.email.split('@')[0].toLowerCase() === searchVal)
+          );
+          if (matched) {
+            setSponsorName(matched.username || matched.email.split('@')[0]);
+          } else {
+            setSponsorName('Invalid Sponsor');
+          }
+        } else {
+          setSponsorName('Invalid Sponsor');
+        }
+      } catch (err) {
+        console.error("Referral Lookup failed:", err);
+        setSponsorName('');
+      } finally {
+        setIsSearchingSponsor(false);
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounce);
+  }, [formData.referralCode]);
 
   const filteredStates = useMemo(() => {
     return STATES.filter(s => s.toLowerCase().includes(stateSearch.toLowerCase()));
@@ -218,6 +261,38 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
         ) : (
           <form onSubmit={handleSubmit} className="space-y-2.5">
             
+            {/* Referral Code (Sponsor ID) at absolute top */}
+            {view === 'signup' && (
+              <div className="space-y-0.5">
+                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider ml-1">Referral Code (Sponsor ID)</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-[#00baf2] transition-colors">
+                    <UserPlus className="w-3.5 h-3.5" />
+                  </div>
+                  <input
+                    type="text"
+                    className="w-full pl-8.5 pr-24 py-1.5 bg-[#0b081c] border border-violet-500/10 focus:border-[#00baf2] text-white font-medium text-xs rounded-xl focus:ring-2 focus:ring-[#00baf2]/20 outline-none transition-all placeholder:text-slate-700 shadow-inner"
+                    placeholder="Sponsor ID / Referral Code"
+                    value={formData.referralCode}
+                    onChange={(e) => setFormData({...formData, referralCode: e.target.value})}
+                  />
+                  {formData.referralCode && (
+                    <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none z-10">
+                      {isSearchingSponsor ? (
+                        <span className="text-[9px] text-[#00baf2] font-semibold animate-pulse">Checking...</span>
+                      ) : sponsorName ? (
+                        <span className={`text-[8.5px] font-black px-1.5 py-0.5 rounded truncate max-w-[90px] ${
+                          sponsorName === 'Invalid Sponsor' ? 'text-rose-400 bg-rose-950/40 border border-rose-900/30' : 'text-emerald-400 bg-emerald-950/40 border border-emerald-900/30'
+                        }`}>
+                          👤 {sponsorName}
+                        </span>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+            
             {/* Full Name */}
             {view === 'signup' && (
               <div className="space-y-0.5">
@@ -355,54 +430,32 @@ const Auth: React.FC<AuthProps> = ({ onLogin, onSignup, onRecover }) => {
               </div>
             )}
 
-            {/* Transaction PIN & Sponsor ID */}
+            {/* Transaction PIN */}
             {view === 'signup' && (
-              <div className="grid grid-cols-2 gap-2">
-                
-                {/* Transaction PIN */}
-                <div className="space-y-0.5">
-                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider ml-1">UPI PIN (4 digit)</label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-[#00baf2] transition-colors">
-                      <KeyRound className="w-3.5 h-3.5" />
-                    </div>
-                    <input
-                      type={showPin ? "text" : "password"}
-                      required
-                      inputMode="numeric"
-                      pattern="\d{4}"
-                      className="w-full pl-7.5 pr-7 py-1.5 bg-[#0b081c] border border-violet-500/10 focus:border-[#00baf2] text-white font-bold text-xs rounded-xl focus:ring-2 focus:ring-[#00baf2]/20 outline-none transition-all placeholder:text-slate-700 tracking-[0.1em] shadow-inner text-center"
-                      placeholder="0000"
-                      value={formData.transactionPin}
-                      onChange={handlePinChange}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPin(!showPin)}
-                      className="absolute inset-y-0 right-0 pr-2 flex items-center text-slate-500 hover:text-slate-300"
-                    >
-                      {showPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                    </button>
+              <div className="space-y-0.5">
+                <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider ml-1">UPI PIN (4 digit)</label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-[#00baf2] transition-colors">
+                    <KeyRound className="w-3.5 h-3.5" />
                   </div>
+                  <input
+                    type={showPin ? "text" : "password"}
+                    required
+                    inputMode="numeric"
+                    pattern="\d{4}"
+                    className="w-full pl-8.5 pr-8 py-1.5 bg-[#0b081c] border border-violet-500/10 focus:border-[#00baf2] text-white font-bold text-xs rounded-xl focus:ring-2 focus:ring-[#00baf2]/20 outline-none transition-all placeholder:text-slate-700 tracking-[0.2em] shadow-inner text-center"
+                    placeholder="0000"
+                    value={formData.transactionPin}
+                    onChange={handlePinChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPin(!showPin)}
+                    className="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-500 hover:text-slate-300"
+                  >
+                    {showPin ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                  </button>
                 </div>
-
-                {/* Sponsor ID */}
-                <div className="space-y-0.5">
-                  <label className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider ml-1 truncate">Referral Code</label>
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none text-violet-400/70 group-focus-within:text-[#00baf2] transition-colors">
-                      <UserPlus className="w-3.5 h-3.5" />
-                    </div>
-                    <input
-                      type="text"
-                      className="w-full pl-7.5 pr-2 py-1.5 bg-[#0b081c] border border-violet-500/10 focus:border-[#00baf2] text-white font-medium text-xs rounded-xl focus:ring-2 focus:ring-[#00baf2]/20 outline-none transition-all placeholder:text-slate-700 shadow-inner"
-                      placeholder="Optional"
-                      value={formData.referralCode}
-                      onChange={(e) => setFormData({...formData, referralCode: e.target.value})}
-                    />
-                  </div>
-                </div>
-
               </div>
             )}
 

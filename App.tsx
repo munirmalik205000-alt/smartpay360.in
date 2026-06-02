@@ -316,6 +316,24 @@ export default function App() {
     }
   };
 
+  const handleRejectPayment = async (requestId: string) => {
+    try {
+      const updateRes = await fetch('/api/payment-requests/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: requestId, status: 'rejected' })
+      });
+
+      if (updateRes.ok) {
+        setPaymentRequests(prev => prev.map(p => p.id === requestId ? { ...p, status: 'rejected' } : p));
+        alert('Deposit request rejected.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error rejecting deposit payment.');
+    }
+  };
+
   const handleWithdrawalRequestSubmit = async (amount: number, pin: string) => {
     if (!session?.user || !activeUserProfile) return;
     try {
@@ -381,6 +399,62 @@ export default function App() {
     } catch (err) {
       console.error(err);
       alert('Error approving withdrawal request.');
+    }
+  };
+
+  const handleRejectWithdrawal = async (requestId: string) => {
+    try {
+      const req = withdrawalRequests.find(w => w.id === requestId);
+      if (!req || req.status !== 'pending') return;
+
+      const { data: targetUser, error: uErr } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', req.userId)
+        .single();
+      
+      if (uErr || !targetUser) {
+        alert('Could not locate target user profile inside database.');
+        return;
+      }
+
+      const returnedBalance = Number(targetUser.wallet_balance || 0) + Number(req.amount);
+      const { error: updateErr } = await supabase
+        .from('users')
+        .update({ wallet_balance: returnedBalance })
+        .eq('id', req.userId);
+
+      if (updateErr) {
+        alert('Failed to return wallet balance: ' + updateErr.message);
+        return;
+      }
+
+      await supabase.from('transactions').insert([{
+        user_id: req.userId,
+        amount: Number(req.amount),
+        transaction_type: 'withdrawal_refund',
+        remark: `Refunded: Rejected Withdrawal Request of ₹${req.amount}`
+      }]);
+
+      const updateRes = await fetch('/api/withdrawal-requests/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: requestId, status: 'rejected' })
+      });
+
+      if (updateRes.ok) {
+        setWithdrawalRequests(prev => prev.map(p => p.id === requestId ? { ...p, status: 'rejected' } : p));
+        
+        const { data: allUsers } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+        if (allUsers) setUsers(allUsers);
+        const { data: allTx } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
+        if (allTx) setTransactions(allTx);
+
+        alert('Withdrawal request rejected and amount refunded successfully!');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Error rejecting withdrawal request.');
     }
   };
 
@@ -649,8 +723,10 @@ export default function App() {
             onUpdateConfig={setConfig}
             paymentRequests={paymentRequests}
             onApprovePayment={handleApprovePayment}
+            onRejectPayment={handleRejectPayment}
             withdrawalRequests={withdrawalRequests}
             onApproveWithdrawal={handleApproveWithdrawal}
+            onRejectWithdrawal={handleRejectWithdrawal}
             chatMessages={chatMessages}
             onSendMessage={handleSendMessage}
             joiningPackages={joiningPackages}
