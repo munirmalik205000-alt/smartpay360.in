@@ -378,18 +378,16 @@ export default function App() {
         return;
       }
 
-      const newBalance = Number(targetUser.wallet_balance || 0) + Number(req.amount);
       const newRecharge = Number(targetUser.recharge_wallet || 0) + Number(req.amount);
       const { error: updateErr } = await supabase
         .from('users')
         .update({ 
-          wallet_balance: newBalance,
           recharge_wallet: newRecharge
         })
         .eq('id', req.userId);
 
       if (updateErr) {
-        alert('DB Error: Failed to update wallet balance: ' + updateErr.message);
+        alert('DB Error: Failed to update e-wallet balance: ' + updateErr.message);
         return;
       }
 
@@ -416,7 +414,7 @@ export default function App() {
         const { data: allTx } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
         if (allTx) setTransactions(allTx);
 
-        alert('Deposit request approved. User wallet balance credited!');
+        alert('Deposit request approved. User E-Wallet credited successfully!');
       }
     } catch (err) {
       console.error(err);
@@ -604,7 +602,7 @@ export default function App() {
     try {
       const currentRec = Number(activeUserProfile.recharge_wallet || 0);
       if (currentRec < amount) {
-        alert('Insufficient Recharge Wallet balance. Please deposit funds first.');
+        alert('Insufficient E-Wallet balance. Please deposit funds first.');
         return;
       }
 
@@ -732,7 +730,7 @@ export default function App() {
       const packageCost = 249;
       const currentRec = Number(activeUserProfile.recharge_wallet || 0);
       if (currentRec < packageCost) {
-        alert('Insufficient Recharge Wallet balance. Please Deposit at least ₹249 first!');
+        alert('Insufficient E-Wallet balance. Please Deposit at least ₹249 first!');
         return;
       }
 

@@ -82,7 +82,7 @@ CREATE POLICY "Users can view their own profile"
 
 CREATE POLICY "Admins can do everything on users" 
   ON public.users FOR ALL 
-  USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ADMIN'));
+  USING ((auth.jwt() ->> 'email') = 'admin@spay.com' OR COALESCE((auth.jwt() -> 'user_metadata' ->> 'role'), '') = 'ADMIN');
 
 CREATE POLICY "Users can update own profile" 
   ON public.users FOR UPDATE 
@@ -99,7 +99,7 @@ CREATE POLICY "Users can view own transactions"
 
 CREATE POLICY "Admins can view and manage all transactions" 
   ON public.transactions FOR ALL 
-  USING (EXISTS (SELECT 1 FROM public.users WHERE id = auth.uid() AND role = 'ADMIN'));
+  USING ((auth.jwt() ->> 'email') = 'admin@spay.com' OR COALESCE((auth.jwt() -> 'user_metadata' ->> 'role'), '') = 'ADMIN');
 
 CREATE POLICY "Users can insert own transactions"
   ON public.transactions FOR INSERT

@@ -186,7 +186,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
           <div className="h-8 w-[1px] bg-white/10 self-center"></div>
           <div className="text-center sm:text-right">
-            <p className="text-[8px] font-bold text-[#00baf2] uppercase tracking-widest">Recharge Wallet</p>
+            <p className="text-[8px] font-bold text-[#00baf2] uppercase tracking-widest">E-Wallet</p>
             <p className="text-lg sm:text-2xl font-black text-amber-400 mt-0.5">₹{(user.recharge_wallet || 0).toFixed(2)}</p>
           </div>
         </div>
@@ -237,11 +237,11 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* Passbook Recharge Wallet Card */}
+        {/* Passbook Recharge Wallet Card as E-Wallet */}
         <div className="bg-gradient-to-tr from-[#053c5e] to-slate-950 text-white p-4.5 rounded-2xl border border-white/10 shadow-md relative overflow-hidden">
           <div className="absolute bottom-[-30%] right-[-10%] w-32 h-32 bg-[#00baf2] rounded-full blur-[40px] opacity-25"></div>
           <div className="flex justify-between items-start">
-            <p className="text-[9px] font-black text-blue-300 uppercase tracking-wider">Recharge Balance</p>
+            <p className="text-[9px] font-black text-blue-300 uppercase tracking-wider">E-Wallet Balance</p>
             <Smartphone className="w-4 h-4 text-[#00baf2]" />
           </div>
           <p className="text-xl sm:text-2xl font-black text-amber-400 mt-1.5 font-mono">₹{(user.recharge_wallet || 0).toFixed(2)}</p>
@@ -391,7 +391,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               {transactions.length === 0 && (
                 <div className="text-center py-24 bg-slate-50 rounded-2xl border border-dashed border-slate-200">
                   <p className="text-slate-400 text-xs font-bold leading-normal">No recent transactions processed.</p>
-                  <p className="text-[10px] text-slate-300 uppercase font-black mt-1">Initiate recharges or add money to start</p>
+                  <p className="text-[10px] text-slate-300 uppercase font-black mt-1">Initiate utility pay or add money to start</p>
                 </div>
               )}
             </div>
@@ -684,7 +684,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               <ShoppingBag className="w-4 h-4 text-violet-600" />
               Member Direct Products Shop
             </h3>
-            <span className="text-[10px] text-slate-500 font-bold uppercase">Redeem via recharge funds</span>
+            <span className="text-[10px] text-slate-500 font-bold uppercase">Redeem via E-Wallet funds</span>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
