@@ -355,6 +355,9 @@ export default function App() {
         const newReq = await response.json();
         setPaymentRequests(prev => [newReq, ...prev]);
         alert('Deposit Request Submitted! The admin will verify and credit your wallet shortly.');
+      } else {
+        const errorText = await response.text();
+        alert(`Failed to submit request: ${errorText || 'Server Error (' + response.status + ')'}`);
       }
     } catch (err) {
       console.error(err);

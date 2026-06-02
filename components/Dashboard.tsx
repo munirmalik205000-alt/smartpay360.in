@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { User, Transaction, Product, PaymentRequest, WithdrawalRequest, ChatMessage, BankDetails } from '../types';
+import { compressImage } from '../services/utils';
 import { 
   User as UserIcon, 
   Smartphone, 
@@ -102,7 +103,15 @@ const Dashboard: React.FC<DashboardProps> = ({
     const file = e.target.files?.[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => setAddMoneyData({ ...addMoneyData, screenshot: reader.result as string });
+      reader.onloadend = async () => {
+        try {
+          const comp = await compressImage(reader.result as string, 600, 600);
+          setAddMoneyData((prev) => ({ ...prev, screenshot: comp }));
+        } catch (err) {
+          console.error("Compression abort:", err);
+          setAddMoneyData((prev) => ({ ...prev, screenshot: reader.result as string }));
+        }
+      };
       reader.readAsDataURL(file);
     }
   };
