@@ -141,6 +141,80 @@ export default function App() {
     };
   }, []);
 
+  // Poll server state every 3 key files/APIs to provide seamless real-time syncing across open admin and user tabs
+  useEffect(() => {
+    if (!session) return;
+
+    const pollServerState = () => {
+      // 1. Fetch payment requests
+      fetch('/api/payment-requests')
+        .then(res => res.ok ? res.json() : [])
+        .then(data => {
+          if (Array.isArray(data)) {
+            setPaymentRequests(data);
+          }
+        })
+        .catch(err => console.warn("Syncing payment requests failed:", err));
+
+      // 2. Fetch withdrawal requests
+      fetch('/api/withdrawal-requests')
+        .then(res => res.ok ? res.json() : [])
+        .then(data => {
+          if (Array.isArray(data)) {
+            setWithdrawalRequests(data);
+          }
+        })
+        .catch(err => console.warn("Syncing withdrawal requests failed:", err));
+
+      // 3. Fetch chat messages
+      fetch('/api/chat-messages')
+        .then(res => res.ok ? res.json() : [])
+        .then(data => {
+          if (Array.isArray(data)) {
+            setChatMessages(data);
+          }
+        })
+        .catch(err => console.warn("Syncing chat messages failed:", err));
+
+      // 4. Also fetch users list and transaction logs if user is Admin
+      const isAdminUser = activeUserProfile?.email === 'admin@spay.com' || activeUserProfile?.role === 'ADMIN';
+      if (isAdminUser) {
+        supabase.from('users').select('*').order('created_at', { ascending: false })
+          .then(({ data: allUsers }) => {
+            if (allUsers) {
+              const mappedUsers = allUsers.map((u: any) => {
+                try {
+                  const localBank = localStorage.getItem(`spay_bank_${u.id}`);
+                  if (localBank) u.bankDetails = JSON.parse(localBank);
+                } catch (_) {}
+                return u;
+              });
+              setUsers(prev => {
+                // simple deep equivalence comparison to prevent unnecessary state triggers
+                if (JSON.stringify(prev) === JSON.stringify(mappedUsers)) return prev;
+                return mappedUsers;
+              });
+            }
+          });
+
+        supabase.from('transactions').select('*').order('created_at', { ascending: false })
+          .then(({ data: allTx }) => {
+            if (allTx) {
+              setTransactions(prev => {
+                if (JSON.stringify(prev) === JSON.stringify(allTx)) return prev;
+                return allTx;
+              });
+            }
+          });
+      }
+    };
+
+    pollServerState();
+    const pollId = setInterval(pollServerState, 3500);
+
+    return () => clearInterval(pollId);
+  }, [session, activeUserProfile?.id, activeUserProfile?.role]);
+
   const fetchUserProfile = async (authUser: any) => {
     try {
       setProfileError(null);
