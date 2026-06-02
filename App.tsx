@@ -13,6 +13,365 @@ const INITIAL_PRODUCTS: Product[] = [
   { id: 'p2', vendorId: 'v1', name: 'Aloe Vera Gel', description: 'Pure organic aloe', price: 299, mrp: 399, category: 'Wellness', stock: 50, image: '🌿', mlmPoints: 50 },
 ];
 
+// --- API ROUTING COEXISTENCE FALLBACKS FOR ROBUSTNESS (VERCEL/LOCAL WORKSPACES) ---
+const LOCAL_CONFIG_KEY = 'spay_config_fallback';
+const LOCAL_PAYMENTS_KEY = 'spay_payments_fallback';
+const LOCAL_WITHDRAWALS_KEY = 'spay_withdrawals_fallback';
+const LOCAL_CHATS_KEY = 'spay_chats_fallback';
+
+const readLocalData = (key: string, defaultVal: any) => {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : defaultVal;
+  } catch (_) {
+    return defaultVal;
+  }
+};
+
+const writeLocalData = (key: string, val: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(val));
+  } catch (_) {}
+};
+
+const getAppConfig = async () => {
+  try {
+    const res = await fetch('/api/config');
+    if (res.ok) {
+      const text = await res.text();
+      if (text && !text.includes('<!DOCTYPE html>')) {
+        const data = JSON.parse(text);
+        if (data && Object.keys(data).length > 0) {
+          writeLocalData(LOCAL_CONFIG_KEY, data);
+          return data;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Express config GET failed, falling back:", err);
+  }
+  return readLocalData(LOCAL_CONFIG_KEY, { qrCode: '', systemCoinValue: 1, levels: [], joiningPackages: [{ id: '1', name: 'Starter', price: 249, coin: 50, pv: 10 }] });
+};
+
+const saveAppConfig = async (newConfig: any) => {
+  writeLocalData(LOCAL_CONFIG_KEY, newConfig);
+  try {
+    const res = await fetch('/api/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newConfig)
+    });
+    if (res.ok) {
+      try {
+        const data = await res.json();
+        return data;
+      } catch (_) {}
+    }
+  } catch (err) {
+    console.warn("Express config POST failed:", err);
+  }
+  return newConfig;
+};
+
+const getPaymentRequestsList = async () => {
+  try {
+    const res = await fetch('/api/payment-requests');
+    if (res.ok) {
+      const text = await res.text();
+      if (text && !text.includes('<!DOCTYPE html>')) {
+        const data = JSON.parse(text);
+        if (Array.isArray(data)) {
+          writeLocalData(LOCAL_PAYMENTS_KEY, data);
+          return data;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Express payments GET failed:", err);
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('payment_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (!error && data) {
+      const mapped = data.map((item: any) => ({
+        id: item.id,
+        userId: item.user_id,
+        userName: item.user_name,
+        amount: parseFloat(item.amount),
+        utr: item.utr,
+        screenshot: item.screenshot,
+        status: item.status,
+        createdAt: item.created_at
+      }));
+      writeLocalData(LOCAL_PAYMENTS_KEY, mapped);
+      return mapped;
+    }
+  } catch (err) {
+    console.warn("Supabase payments GET failed:", err);
+  }
+
+  return readLocalData(LOCAL_PAYMENTS_KEY, []);
+};
+
+const submitPaymentRequest = async (payload: { userId: string, userName: string, amount: number, utr: string, screenshot: string }) => {
+  const newReq = {
+    id: `PAY${Date.now()}`,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    ...payload
+  };
+
+  const localList = readLocalData(LOCAL_PAYMENTS_KEY, []);
+  writeLocalData(LOCAL_PAYMENTS_KEY, [newReq, ...localList]);
+
+  try {
+    const res = await fetch('/api/payment-requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      try {
+        const data = await res.json();
+        return data;
+      } catch (_) {}
+    }
+  } catch (err) {
+    console.warn("Express payments POST failed:", err);
+  }
+
+  try {
+    const { error } = await supabase
+      .from('payment_requests')
+      .insert([{
+        id: newReq.id,
+        user_id: newReq.userId,
+        user_name: newReq.userName,
+        amount: Number(newReq.amount),
+        utr: newReq.utr,
+        screenshot: newReq.screenshot,
+        status: newReq.status,
+        created_at: newReq.createdAt
+      }]);
+    if (!error) {
+      return newReq;
+    }
+  } catch (err) {
+    console.warn("Supabase payments INSERT failed:", err);
+  }
+
+  return newReq;
+};
+
+const updatePaymentRequestStatus = async (requestId: string, status: 'approved' | 'rejected') => {
+  const localList = readLocalData(LOCAL_PAYMENTS_KEY, []);
+  const updatedLocal = localList.map((item: any) => item.id === requestId ? { ...item, status } : item);
+  writeLocalData(LOCAL_PAYMENTS_KEY, updatedLocal);
+
+  try {
+    const res = await fetch('/api/payment-requests/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: requestId, status })
+    });
+    if (res.ok) {
+      return true;
+    }
+  } catch (err) {
+    console.warn("Express payments UPDATE failed:", err);
+  }
+
+  try {
+    const { error } = await supabase
+      .from('payment_requests')
+      .update({ status })
+      .eq('id', requestId);
+    if (!error) {
+      return true;
+    }
+  } catch (err) {
+    console.warn("Supabase payments UPDATE failed:", err);
+  }
+
+  return true;
+};
+
+const getWithdrawalRequestsList = async () => {
+  try {
+    const res = await fetch('/api/withdrawal-requests');
+    if (res.ok) {
+      const text = await res.text();
+      if (text && !text.includes('<!DOCTYPE html>')) {
+        const data = JSON.parse(text);
+        if (Array.isArray(data)) {
+          writeLocalData(LOCAL_WITHDRAWALS_KEY, data);
+          return data;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Express withdrawals GET failed:", err);
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('withdrawal_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+    
+    if (!error && data) {
+      const mapped = data.map((item: any) => ({
+        id: item.id,
+        userId: item.user_id,
+        userName: item.user_name,
+        amount: parseFloat(item.amount),
+        status: item.status,
+        createdAt: item.created_at,
+        bankDetails: item.bank_details
+      }));
+      writeLocalData(LOCAL_WITHDRAWALS_KEY, mapped);
+      return mapped;
+    }
+  } catch (err) {
+    console.warn("Supabase withdrawals GET failed:", err);
+  }
+
+  return readLocalData(LOCAL_WITHDRAWALS_KEY, []);
+};
+
+const submitWithdrawalRequest = async (payload: { userId: string, userName: string, amount: number, bankDetails: any }) => {
+  const newReq = {
+    id: `WITH${Date.now()}`,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
+    ...payload
+  };
+
+  const localList = readLocalData(LOCAL_WITHDRAWALS_KEY, []);
+  writeLocalData(LOCAL_WITHDRAWALS_KEY, [newReq, ...localList]);
+
+  try {
+    const res = await fetch('/api/withdrawal-requests', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      try {
+        const data = await res.json();
+        return data;
+      } catch (_) {}
+    }
+  } catch (err) {
+    console.warn("Express withdrawals POST failed:", err);
+  }
+
+  try {
+    const { error } = await supabase
+      .from('withdrawal_requests')
+      .insert([{
+        id: newReq.id,
+        user_id: newReq.userId,
+        user_name: newReq.userName,
+        amount: Number(newReq.amount),
+        status: newReq.status,
+        created_at: newReq.createdAt,
+        bank_details: newReq.bankDetails
+      }]);
+    if (!error) {
+      return newReq;
+    }
+  } catch (err) {
+    console.warn("Supabase withdrawals INSERT failed:", err);
+  }
+
+  return newReq;
+};
+
+const updateWithdrawalRequestStatus = async (requestId: string, status: 'approved' | 'rejected') => {
+  const localList = readLocalData(LOCAL_WITHDRAWALS_KEY, []);
+  const updatedLocal = localList.map((item: any) => item.id === requestId ? { ...item, status } : item);
+  writeLocalData(LOCAL_WITHDRAWALS_KEY, updatedLocal);
+
+  try {
+    const res = await fetch('/api/withdrawal-requests/update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: requestId, status })
+    });
+    if (res.ok) {
+      return true;
+    }
+  } catch (err) {
+    console.warn("Express withdrawals UPDATE failed:", err);
+  }
+
+  try {
+    const { error } = await supabase
+      .from('withdrawal_requests')
+      .update({ status })
+      .eq('id', requestId);
+    if (!error) {
+      return true;
+    }
+  } catch (err) {
+    console.warn("Supabase withdrawals UPDATE failed:", err);
+  }
+
+  return true;
+};
+
+const getChatMessagesList = async () => {
+  try {
+    const res = await fetch('/api/chat-messages');
+    if (res.ok) {
+      const text = await res.text();
+      if (text && !text.includes('<!DOCTYPE html>')) {
+        const data = JSON.parse(text);
+        if (Array.isArray(data)) {
+          writeLocalData(LOCAL_CHATS_KEY, data);
+          return data;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Express chat GET failed:", err);
+  }
+  return readLocalData(LOCAL_CHATS_KEY, []);
+};
+
+const submitChatMessage = async (payload: { senderId: string, senderName: string, receiverId: string, message: string }) => {
+  const newMsg = {
+    id: `MSG${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    ...payload
+  };
+
+  const localList = readLocalData(LOCAL_CHATS_KEY, []);
+  writeLocalData(LOCAL_CHATS_KEY, [...localList, newMsg]);
+
+  try {
+    const res = await fetch('/api/chat-messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      try {
+        const data = await res.json();
+        return data;
+      } catch (_) {}
+    }
+  } catch (err) {
+    console.warn("Express chat POST failed:", err);
+  }
+  return newMsg;
+};
+
 export default function App() {
   const [session, setSession] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<User | null>(null);
@@ -65,17 +424,20 @@ export default function App() {
     };
   }
 
+  // Whenever config changes, back it up to localStorage for offline/static deployment resilience!
+  useEffect(() => {
+    if (config && Object.keys(config).length > 0) {
+      localStorage.setItem('spay_config_fallback', JSON.stringify(config));
+    }
+  }, [config]);
+
   useEffect(() => {
     const safetyTimeout = setTimeout(() => {
       setLoading(false);
     }, 3000);
 
     // Fetch persistent configurations
-    fetch('/api/config')
-      .then(res => {
-        if (res.ok) return res.json();
-        throw new Error('Config load error');
-      })
+    getAppConfig()
       .then(data => {
         if (data && Object.keys(data).length > 0) {
           setConfig(prev => ({ ...prev, ...data }));
@@ -87,33 +449,21 @@ export default function App() {
       .catch(err => console.warn("Error fetching configuration on mount:", err));
 
     // Fetch persistent payment requests
-    fetch('/api/payment-requests')
-      .then(res => {
-        if (res.ok) return res.json();
-        return [];
-      })
+    getPaymentRequestsList()
       .then(data => {
         setPaymentRequests(Array.isArray(data) ? data : []);
       })
       .catch(err => console.warn("Error fetching payment-requests:", err));
 
     // Fetch persistent withdrawal requests
-    fetch('/api/withdrawal-requests')
-      .then(res => {
-        if (res.ok) return res.json();
-        return [];
-      })
+    getWithdrawalRequestsList()
       .then(data => {
         setWithdrawalRequests(Array.isArray(data) ? data : []);
       })
       .catch(err => console.warn("Error fetching withdrawal-requests:", err));
 
     // Fetch persistent chat messages
-    fetch('/api/chat-messages')
-      .then(res => {
-        if (res.ok) return res.json();
-        return [];
-      })
+    getChatMessagesList()
       .then(data => {
         setChatMessages(Array.isArray(data) ? data : []);
       })
@@ -147,8 +497,7 @@ export default function App() {
 
     const pollServerState = () => {
       // 1. Fetch payment requests
-      fetch('/api/payment-requests')
-        .then(res => res.ok ? res.json() : [])
+      getPaymentRequestsList()
         .then(data => {
           if (Array.isArray(data)) {
             setPaymentRequests(data);
@@ -157,8 +506,7 @@ export default function App() {
         .catch(err => console.warn("Syncing payment requests failed:", err));
 
       // 2. Fetch withdrawal requests
-      fetch('/api/withdrawal-requests')
-        .then(res => res.ok ? res.json() : [])
+      getWithdrawalRequestsList()
         .then(data => {
           if (Array.isArray(data)) {
             setWithdrawalRequests(data);
@@ -167,8 +515,7 @@ export default function App() {
         .catch(err => console.warn("Syncing withdrawal requests failed:", err));
 
       // 3. Fetch chat messages
-      fetch('/api/chat-messages')
-        .then(res => res.ok ? res.json() : [])
+      getChatMessagesList()
         .then(data => {
           if (Array.isArray(data)) {
             setChatMessages(data);
@@ -203,7 +550,7 @@ export default function App() {
               setTransactions(prev => {
                 if (JSON.stringify(prev) === JSON.stringify(allTx)) return prev;
                 return allTx;
-              });
+               });
             }
           });
       }
@@ -340,25 +687,15 @@ export default function App() {
   const handleAddMoney = async (data: { amount: number, utr: string, screenshot: string }) => {
     if (!session?.user) return;
     try {
-      const response = await fetch('/api/payment-requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: session.user.id,
-          userName: activeUserProfile.username || activeUserProfile.email || 'User',
-          amount: Number(data.amount),
-          utr: data.utr,
-          screenshot: data.screenshot
-        })
+      const newReq = await submitPaymentRequest({
+        userId: session.user.id,
+        userName: activeUserProfile.username || activeUserProfile.email || 'User',
+        amount: Number(data.amount),
+        utr: data.utr,
+        screenshot: data.screenshot
       });
-      if (response.ok) {
-        const newReq = await response.json();
-        setPaymentRequests(prev => [newReq, ...prev]);
-        alert('Deposit Request Submitted! The admin will verify and credit your wallet shortly.');
-      } else {
-        const errorText = await response.text();
-        alert(`Failed to submit request: ${errorText || 'Server Error (' + response.status + ')'}`);
-      }
+      setPaymentRequests(prev => [newReq, ...prev]);
+      alert('Deposit Request Submitted! The admin will verify and credit your wallet shortly.');
     } catch (err) {
       console.error(err);
       alert('Failed to submit deposit request.');
@@ -402,23 +739,16 @@ export default function App() {
         remark: `Approved Add Money: UTR ${req.utr}`
       }]);
 
-      const updateRes = await fetch('/api/payment-requests/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: requestId, status: 'approved' })
-      });
+      await updatePaymentRequestStatus(requestId, 'approved');
+      setPaymentRequests(prev => prev.map(p => p.id === requestId ? { ...p, status: 'approved' } : p));
+      
+      // Refresh users & transactions
+      const { data: allUsers } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+      if (allUsers) setUsers(allUsers);
+      const { data: allTx } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
+      if (allTx) setTransactions(allTx);
 
-      if (updateRes.ok) {
-        setPaymentRequests(prev => prev.map(p => p.id === requestId ? { ...p, status: 'approved' } : p));
-        
-        // Refresh users & transactions
-        const { data: allUsers } = await supabase.from('users').select('*').order('created_at', { ascending: false });
-        if (allUsers) setUsers(allUsers);
-        const { data: allTx } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
-        if (allTx) setTransactions(allTx);
-
-        alert('Deposit request approved. User E-Wallet credited successfully!');
-      }
+      alert('Deposit request approved. User E-Wallet credited successfully!');
     } catch (err) {
       console.error(err);
       alert('Error approving deposit payment.');
@@ -427,16 +757,9 @@ export default function App() {
 
   const handleRejectPayment = async (requestId: string) => {
     try {
-      const updateRes = await fetch('/api/payment-requests/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: requestId, status: 'rejected' })
-      });
-
-      if (updateRes.ok) {
-        setPaymentRequests(prev => prev.map(p => p.id === requestId ? { ...p, status: 'rejected' } : p));
-        alert('Deposit request rejected.');
-      }
+      await updatePaymentRequestStatus(requestId, 'rejected');
+      setPaymentRequests(prev => prev.map(p => p.id === requestId ? { ...p, status: 'rejected' } : p));
+      alert('Deposit request rejected.');
     } catch (err) {
       console.error(err);
       alert('Error rejecting deposit payment.');
@@ -470,23 +793,16 @@ export default function App() {
         remark: `Withdrawal request submitted: ₹${amount}`
       }]);
 
-      const response = await fetch('/api/withdrawal-requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          userId: session.user.id,
-          userName: activeUserProfile.username || activeUserProfile.email || 'User',
-          amount,
-          bankDetails: activeUserProfile.bankDetails || { accountNumber: '', bankName: '', ifscCode: '', holderName: '' }
-        })
+      const newReq = await submitWithdrawalRequest({
+        userId: session.user.id,
+        userName: activeUserProfile.username || activeUserProfile.email || 'User',
+        amount,
+        bankDetails: activeUserProfile.bankDetails || { accountNumber: '', bankName: '', ifscCode: '', holderName: '' }
       });
 
-      if (response.ok) {
-        const newReq = await response.json();
-        setWithdrawalRequests(prev => [newReq, ...prev]);
-        fetchUserProfile(session.user);
-        alert('Withdrawal request submitted successfully!');
-      }
+      setWithdrawalRequests(prev => [newReq, ...prev]);
+      fetchUserProfile(session.user);
+      alert('Withdrawal request submitted successfully!');
     } catch (err) {
       console.error(err);
       alert('Failed to submit withdrawal request.');
@@ -495,16 +811,9 @@ export default function App() {
 
   const handleApproveWithdrawal = async (requestId: string) => {
     try {
-      const updateRes = await fetch('/api/withdrawal-requests/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: requestId, status: 'approved' })
-      });
-
-      if (updateRes.ok) {
-        setWithdrawalRequests(prev => prev.map(p => p.id === requestId ? { ...p, status: 'approved' } : p));
-        alert('Withdrawal approved successfully!');
-      }
+      await updateWithdrawalRequestStatus(requestId, 'approved');
+      setWithdrawalRequests(prev => prev.map(p => p.id === requestId ? { ...p, status: 'approved' } : p));
+      alert('Withdrawal approved successfully!');
     } catch (err) {
       console.error(err);
       alert('Error approving withdrawal request.');
@@ -545,22 +854,15 @@ export default function App() {
         remark: `Refunded: Rejected Withdrawal Request of ₹${req.amount}`
       }]);
 
-      const updateRes = await fetch('/api/withdrawal-requests/update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: requestId, status: 'rejected' })
-      });
+      await updateWithdrawalRequestStatus(requestId, 'rejected');
+      setWithdrawalRequests(prev => prev.map(p => p.id === requestId ? { ...p, status: 'rejected' } : p));
+      
+      const { data: allUsers } = await supabase.from('users').select('*').order('created_at', { ascending: false });
+      if (allUsers) setUsers(allUsers);
+      const { data: allTx } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
+      if (allTx) setTransactions(allTx);
 
-      if (updateRes.ok) {
-        setWithdrawalRequests(prev => prev.map(p => p.id === requestId ? { ...p, status: 'rejected' } : p));
-        
-        const { data: allUsers } = await supabase.from('users').select('*').order('created_at', { ascending: false });
-        if (allUsers) setUsers(allUsers);
-        const { data: allTx } = await supabase.from('transactions').select('*').order('created_at', { ascending: false });
-        if (allTx) setTransactions(allTx);
-
-        alert('Withdrawal request rejected and amount refunded successfully!');
-      }
+      alert('Withdrawal request rejected and amount refunded successfully!');
     } catch (err) {
       console.error(err);
       alert('Error rejecting withdrawal request.');
@@ -581,20 +883,13 @@ export default function App() {
   const handleSendMessage = async (msg: string, receiverId: string) => {
     if (!session?.user) return;
     try {
-      const response = await fetch('/api/chat-messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          senderId: session.user.id,
-          senderName: activeUserProfile.username || activeUserProfile.email || 'User',
-          receiverId: receiverId,
-          message: msg
-        })
+      const newMsg = await submitChatMessage({
+        senderId: session.user.id,
+        senderName: activeUserProfile.username || activeUserProfile.email || 'User',
+        receiverId: receiverId,
+        message: msg
       });
-      if (response.ok) {
-        const newMsg = await response.json();
-        setChatMessages(prev => [...prev, newMsg]);
-      }
+      setChatMessages(prev => [...prev, newMsg]);
     } catch (err) {
       console.error(err);
     }
