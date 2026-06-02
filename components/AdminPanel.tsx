@@ -28,6 +28,8 @@ const AdminPanel: React.FC<AdminProps> = ({
   const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'packages' | 'payments' | 'withdrawals' | 'support' | 'config'>('stats');
   const [selectedChatUser, setSelectedChatUser] = useState<string | null>(null);
   const [adminReply, setAdminReply] = useState('');
+  const [paymentFilter, setPaymentFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
+  const [withdrawalFilter, setWithdrawalFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
 
   const totalVolume = transactions.reduce((a, b) => a + Math.abs(b.amount), 0);
   const activeUsers = users.filter(u => u.isActivated).length;
@@ -210,8 +212,24 @@ const AdminPanel: React.FC<AdminProps> = ({
 
       {activeTab === 'payments' && (
         <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-          <div className="p-4 border-b bg-slate-50">
-             <h3 className="font-bold text-slate-800">Pending Fund Requests</h3>
+          <div className="p-4 border-b bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+             <div>
+               <h3 className="font-bold text-slate-800">Payment & Fund Requests</h3>
+               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Verification Control Center</p>
+             </div>
+             <div className="flex gap-1.5 bg-slate-100 p-1 rounded-xl w-fit">
+               {(['pending', 'approved', 'rejected', 'all'] as const).map(f => (
+                 <button
+                   key={f}
+                   onClick={() => setPaymentFilter(f)}
+                   className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide transition-all ${
+                     paymentFilter === f ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-500 hover:bg-slate-200/50'
+                   }`}
+                 >
+                   {f}
+                 </button>
+               ))}
+             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -219,32 +237,47 @@ const AdminPanel: React.FC<AdminProps> = ({
                 <tr>
                   <th className="px-6 py-3">User</th>
                   <th className="px-6 py-3">Amount</th>
-                  <th className="px-6 py-3">Screenshot</th>
+                  <th className="px-6 py-3">Reference / UTR</th>
+                  <th className="px-6 py-3">Proof Image</th>
                   <th className="px-6 py-3">Date</th>
+                  <th className="px-6 py-3">Status</th>
                   <th className="px-6 py-3">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {paymentRequests.filter(r => r.status === 'pending').map(req => (
+                {paymentRequests.filter(r => paymentFilter === 'all' ? true : r.status === paymentFilter).map(req => (
                   <tr key={req.id}>
                     <td className="px-6 py-4 font-bold">{req.userName}</td>
-                    <td className="px-6 py-4 text-green-600 font-black">₹{req.amount}</td>
+                    <td className="px-6 py-4 text-green-600 font-extrabold">₹{req.amount}</td>
+                    <td className="px-6 py-4 font-mono text-xs text-slate-600 font-bold">{req.utr || 'N/A'}</td>
                     <td className="px-6 py-4">
-                      {req.screenshot ? <a href={req.screenshot} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-xs">View proof</a> : 'N/A'}
+                      {req.screenshot ? <a href={req.screenshot} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline font-black text-[10px] uppercase tracking-wide">View Image proof</a> : 'N/A'}
                     </td>
-                    <td className="px-6 py-4 text-[10px]">{new Date(req.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-[10px] font-medium text-slate-500">{new Date(req.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => onApprovePayment(req.id)} className="bg-green-600 hover:bg-green-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors">APPROVE</button>
-                        {onRejectPayment && (
-                          <button onClick={() => onRejectPayment(req.id)} className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors">REJECT</button>
-                        )}
-                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
+                        req.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                        req.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                        {req.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {req.status === 'pending' ? (
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => onApprovePayment(req.id)} className="bg-green-600 hover:bg-green-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors">APPROVE</button>
+                          {onRejectPayment && (
+                            <button onClick={() => onRejectPayment(req.id)} className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors">REJECT</button>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-[10px] italic font-medium">Completed</span>
+                      )}
                     </td>
                   </tr>
                 ))}
-                {paymentRequests.filter(r => r.status === 'pending').length === 0 && (
-                  <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic">No pending fund requests.</td></tr>
+                {paymentRequests.filter(r => paymentFilter === 'all' ? true : r.status === paymentFilter).length === 0 && (
+                  <tr><td colSpan={7} className="px-6 py-12 text-center text-slate-400 italic">No {paymentFilter} fund requests found.</td></tr>
                 )}
               </tbody>
             </table>
@@ -254,8 +287,24 @@ const AdminPanel: React.FC<AdminProps> = ({
 
       {activeTab === 'withdrawals' && (
         <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-          <div className="p-4 border-b bg-slate-50">
-             <h3 className="font-bold text-slate-800">Pending Withdrawal Requests</h3>
+          <div className="p-4 border-b bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+             <div>
+               <h3 className="font-bold text-slate-800">System Settlement Withdrawals</h3>
+               <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Verification Control Center</p>
+             </div>
+             <div className="flex gap-1.5 bg-slate-100 p-1 rounded-xl w-fit">
+               {(['pending', 'approved', 'rejected', 'all'] as const).map(f => (
+                 <button
+                   key={f}
+                   onClick={() => setWithdrawalFilter(f)}
+                   className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wide transition-all ${
+                     withdrawalFilter === f ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-500 hover:bg-slate-200/50'
+                   }`}
+                 >
+                   {f}
+                 </button>
+               ))}
+             </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm">
@@ -265,34 +314,47 @@ const AdminPanel: React.FC<AdminProps> = ({
                   <th className="px-6 py-3">Amount</th>
                   <th className="px-6 py-3">Bank Details</th>
                   <th className="px-6 py-3">Date</th>
+                  <th className="px-6 py-3">Status</th>
                   <th className="px-6 py-3">Action</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
-                {withdrawalRequests.filter(r => r.status === 'pending').map(req => (
+                {withdrawalRequests.filter(r => withdrawalFilter === 'all' ? true : r.status === withdrawalFilter).map(req => (
                   <tr key={req.id}>
                     <td className="px-6 py-4 font-bold">{req.userName}</td>
-                    <td className="px-6 py-4 text-green-600 font-black">₹{req.amount}</td>
+                    <td className="px-6 py-4 text-green-600 font-extrabold">₹{req.amount}</td>
                     <td className="px-6 py-4">
                       <div className="text-[10px] leading-tight">
-                        <p><strong>A/C:</strong> {req.bankDetails.accountNumber}</p>
-                        <p><strong>Bank:</strong> {req.bankDetails.bankName}</p>
-                        <p><strong>IFSC:</strong> {req.bankDetails.ifscCode}</p>
+                        <p><strong>A/C:</strong> {req.bankDetails?.accountNumber || 'N/A'}</p>
+                        <p><strong>Bank:</strong> {req.bankDetails?.bankName || 'N/A'}</p>
+                        <p><strong>IFSC:</strong> {req.bankDetails?.ifscCode || 'N/A'}</p>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-[10px]">{new Date(req.createdAt).toLocaleDateString()}</td>
+                    <td className="px-6 py-4 text-[10px] text-slate-500">{new Date(req.createdAt).toLocaleDateString()}</td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button onClick={() => onApproveWithdrawal(req.id)} className="bg-green-600 hover:bg-green-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors">APPROVE</button>
-                        {onRejectWithdrawal && (
-                          <button onClick={() => onRejectWithdrawal(req.id)} className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors">REJECT</button>
-                        )}
-                      </div>
+                      <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
+                        req.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                        req.status === 'pending' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
+                      }`}>
+                        {req.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      {req.status === 'pending' ? (
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => onApproveWithdrawal(req.id)} className="bg-green-600 hover:bg-green-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors">APPROVE</button>
+                          {onRejectWithdrawal && (
+                            <button onClick={() => onRejectWithdrawal(req.id)} className="bg-rose-600 hover:bg-rose-700 text-white px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors">REJECT</button>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-[10px] italic font-medium">Completed</span>
+                      )}
                     </td>
                   </tr>
                 ))}
-                {withdrawalRequests.filter(r => r.status === 'pending').length === 0 && (
-                  <tr><td colSpan={5} className="px-6 py-12 text-center text-slate-400 italic">No pending withdrawals.</td></tr>
+                {withdrawalRequests.filter(r => withdrawalFilter === 'all' ? true : r.status === withdrawalFilter).length === 0 && (
+                  <tr><td colSpan={6} className="px-6 py-12 text-center text-slate-400 italic">No {withdrawalFilter} withdrawals found.</td></tr>
                 )}
               </tbody>
             </table>

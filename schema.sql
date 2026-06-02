@@ -121,3 +121,69 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- 6. Create Payment Requests Table
+CREATE TABLE IF NOT EXISTS public.payment_requests (
+  id TEXT PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  user_name TEXT,
+  amount NUMERIC NOT NULL,
+  utr TEXT,
+  screenshot TEXT,
+  status TEXT DEFAULT 'pending',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- 7. Create Withdrawal Requests Table
+CREATE TABLE IF NOT EXISTS public.withdrawal_requests (
+  id TEXT PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
+  user_name TEXT,
+  amount NUMERIC NOT NULL,
+  bank_details JSONB,
+  status TEXT DEFAULT 'pending',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+);
+
+-- Enable RLS
+ALTER TABLE public.payment_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.withdrawal_requests ENABLE ROW LEVEL SECURITY;
+
+-- Drop any existing policies safely
+DO $$
+BEGIN
+  DROP POLICY IF EXISTS "Users can view own payment requests" ON public.payment_requests;
+  DROP POLICY IF EXISTS "Admins can view and manage all payment requests" ON public.payment_requests;
+  DROP POLICY IF EXISTS "Users can insert own payment requests" ON public.payment_requests;
+  
+  DROP POLICY IF EXISTS "Users can view own withdrawal requests" ON public.withdrawal_requests;
+  DROP POLICY IF EXISTS "Admins can view and manage all withdrawal requests" ON public.withdrawal_requests;
+  DROP POLICY IF EXISTS "Users can insert own withdrawal requests" ON public.withdrawal_requests;
+END $$;
+
+-- Policies for Payment Requests
+CREATE POLICY "Users can view own payment requests" 
+  ON public.payment_requests FOR SELECT 
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can view and manage all payment requests" 
+  ON public.payment_requests FOR ALL 
+  USING ((auth.jwt() ->> 'email') = 'admin@spay.com' OR COALESCE((auth.jwt() -> 'user_metadata' ->> 'role'), '') = 'ADMIN');
+
+CREATE POLICY "Users can insert own payment requests"
+  ON public.payment_requests FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- Policies for Withdrawal Requests
+CREATE POLICY "Users can view own withdrawal requests" 
+  ON public.withdrawal_requests FOR SELECT 
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can view and manage all withdrawal requests" 
+  ON public.withdrawal_requests FOR ALL 
+  USING ((auth.jwt() ->> 'email') = 'admin@spay.com' OR COALESCE((auth.jwt() -> 'user_metadata' ->> 'role'), '') = 'ADMIN');
+
+CREATE POLICY "Users can insert own withdrawal requests"
+  ON public.withdrawal_requests FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+

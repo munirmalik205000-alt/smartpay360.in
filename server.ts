@@ -2,6 +2,14 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import { createServer as createViteServer } from "vite";
+import { createClient } from "@supabase/supabase-js";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+const supabaseUrl = process.env.SUPABASE_URL || "";
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || "";
+const supabase = createClient(supabaseUrl || 'https://placeholder.supabase.co', supabaseAnonKey || 'placeholder');
 
 async function startServer() {
   const app = express();
@@ -43,53 +51,176 @@ async function startServer() {
     }
   };
 
-  // GET and POST payment requests
-  app.get("/api/payment-requests", (req, res) => {
+  // GET and POST payment requests with Supabase integration and local fallback
+  app.get("/api/payment-requests", async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from("payment_requests")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (!error && data) {
+        // Map database fields to camelCase
+        const mapped = data.map((item: any) => ({
+          id: item.id,
+          userId: item.user_id,
+          userName: item.user_name,
+          amount: parseFloat(item.amount),
+          utr: item.utr,
+          screenshot: item.screenshot,
+          status: item.status,
+          createdAt: item.created_at
+        }));
+        return res.json(mapped);
+      } else if (error) {
+        console.warn("Supabase query error, fallback to JSON storage:", error.message);
+      }
+    } catch (dbErr: any) {
+      console.warn("Supabase payment_requests query error, using local fallback:", dbErr?.message || dbErr);
+    }
     return res.json(readJsonFileSync(PAYMENTS_FILE));
   });
 
-  app.post("/api/payment-requests", (req, res) => {
+  app.post("/api/payment-requests", async (req, res) => {
     const list = readJsonFileSync(PAYMENTS_FILE);
+    const newReqId = `PAY${Date.now()}`;
     const newReq = {
-      id: `PAY${Date.now()}`,
+      id: newReqId,
       status: "pending",
       createdAt: new Date().toISOString(),
       ...req.body
     };
+
+    try {
+      const { error } = await supabase
+        .from("payment_requests")
+        .insert([{
+          id: newReq.id,
+          user_id: newReq.userId,
+          user_name: newReq.userName,
+          amount: Number(newReq.amount),
+          utr: newReq.utr,
+          screenshot: newReq.screenshot,
+          status: newReq.status,
+          created_at: newReq.createdAt
+        }]);
+      if (!error) {
+        console.log("Payment request saved to Supabase successfully.");
+      } else {
+        console.warn("Supabase insert error for payment_requests, using local fallback:", error.message);
+      }
+    } catch (dbErr: any) {
+      console.warn("Fallback to local JSON for post payment request:", dbErr?.message || dbErr);
+    }
+
     list.unshift(newReq);
     writeJsonFileSync(PAYMENTS_FILE, list);
     return res.json(newReq);
   });
 
   // UPDATE payment request status
-  app.post("/api/payment-requests/update", (req, res) => {
+  app.post("/api/payment-requests/update", async (req, res) => {
     const { id, status } = req.body;
+
+    try {
+      const { error } = await supabase
+        .from("payment_requests")
+        .update({ status })
+        .eq("id", id);
+      if (!error) {
+        console.log("Payment request status updated in Supabase.");
+      } else {
+        console.warn("Supabase update error for payment_requests:", error.message);
+      }
+    } catch (dbErr: any) {
+      console.warn("Fallback local payment request update:", dbErr?.message || dbErr);
+    }
+
     let list = readJsonFileSync(PAYMENTS_FILE);
     list = list.map((item: any) => item.id === id ? { ...item, status } : item);
     writeJsonFileSync(PAYMENTS_FILE, list);
     return res.json({ success: true, list });
   });
 
-  // GET and POST withdrawal requests
-  app.get("/api/withdrawal-requests", (req, res) => {
+  // GET and POST withdrawal requests with Supabase integration and local fallback
+  app.get("/api/withdrawal-requests", async (req, res) => {
+    try {
+      const { data, error } = await supabase
+        .from("withdrawal_requests")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (!error && data) {
+        const mapped = data.map((item: any) => ({
+          id: item.id,
+          userId: item.user_id,
+          userName: item.user_name,
+          amount: parseFloat(item.amount),
+          status: item.status,
+          createdAt: item.created_at,
+          bankDetails: item.bank_details
+        }));
+        return res.json(mapped);
+      } else if (error) {
+        console.warn("Supabase withdrawal_requests error, fallback to JSON storage:", error.message);
+      }
+    } catch (dbErr: any) {
+      console.warn("Supabase withdrawal_requests query error, using local fallback:", dbErr?.message || dbErr);
+    }
     return res.json(readJsonFileSync(WITHDRAWALS_FILE));
   });
 
-  app.post("/api/withdrawal-requests", (req, res) => {
+  app.post("/api/withdrawal-requests", async (req, res) => {
     const list = readJsonFileSync(WITHDRAWALS_FILE);
+    const newReqId = `WITH${Date.now()}`;
     const newReq = {
-      id: `WITH${Date.now()}`,
+      id: newReqId,
       status: "pending",
       createdAt: new Date().toISOString(),
       ...req.body
     };
+
+    try {
+      const { error } = await supabase
+        .from("withdrawal_requests")
+        .insert([{
+          id: newReq.id,
+          user_id: newReq.userId,
+          user_name: newReq.userName,
+          amount: Number(newReq.amount),
+          status: newReq.status,
+          created_at: newReq.createdAt,
+          bank_details: newReq.bankDetails
+        }]);
+      if (!error) {
+        console.log("Withdrawal request saved to Supabase successfully.");
+      } else {
+        console.warn("Supabase insert error for withdrawal_requests, using local fallback:", error.message);
+      }
+    } catch (dbErr: any) {
+      console.warn("Fallback to local JSON for post withdrawal request:", dbErr?.message || dbErr);
+    }
+
     list.unshift(newReq);
     writeJsonFileSync(WITHDRAWALS_FILE, list);
     return res.json(newReq);
   });
 
-  app.post("/api/withdrawal-requests/update", (req, res) => {
+  app.post("/api/withdrawal-requests/update", async (req, res) => {
     const { id, status } = req.body;
+
+    try {
+      const { error } = await supabase
+        .from("withdrawal_requests")
+        .update({ status })
+        .eq("id", id);
+      if (!error) {
+        console.log("Withdrawal request status updated in Supabase.");
+      } else {
+        console.warn("Supabase update error for withdrawal_requests:", error.message);
+      }
+    } catch (dbErr: any) {
+      console.warn("Fallback local withdrawal request update:", dbErr?.message || dbErr);
+    }
+
     let list = readJsonFileSync(WITHDRAWALS_FILE);
     list = list.map((item: any) => item.id === id ? { ...item, status } : item);
     writeJsonFileSync(WITHDRAWALS_FILE, list);
