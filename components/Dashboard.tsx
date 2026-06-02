@@ -334,158 +334,138 @@ const Dashboard: React.FC<DashboardProps> = ({
   return (
     <div className="space-y-6 max-w-5xl mx-auto px-2 sm:px-4 pb-16 font-sans text-slate-900 selection:bg-purple-100 selection:text-purple-900">
       
-      {/* 🚀 DYNAMIC NEON HEADER & DEBIT CARD SECTION */}
+      {/* 🚀 DYNAMIC NEON HEADER SECTION */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
         
-        {/* LEFT COLUMN: DYNAMIC PREMIUM BANNER & STATS */}
-        <div className="md:col-span-7 bg-gradient-to-tr from-[#140f34] via-[#1c1348] to-[#110b2a] text-white p-6 rounded-3xl border border-purple-500/20 shadow-2xl relative overflow-hidden flex flex-col justify-between">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-purple-600 rounded-full blur-[130px] opacity-25 pointer-events-none"></div>
-          <div className="absolute bottom-0 left-0 w-40 h-40 bg-cyan-500 rounded-full blur-[90px] opacity-15 pointer-events-none"></div>
+        {/* FULL WIDTH COLUMN: DYNAMIC PREMIUM BANNER & STATS */}
+        <div className="md:col-span-12 bg-gradient-to-tr from-[#0a071f] via-[#120b30] to-[#060314] text-white p-6 sm:p-8 rounded-3xl border border-purple-500/20 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-purple-600 rounded-full blur-[140px] opacity-20 pointer-events-none"></div>
+          <div className="absolute bottom-0 left-1/3 w-80 h-80 bg-cyan-500 rounded-full blur-[140px] opacity-15 pointer-events-none"></div>
           
-          <div className="relative z-10">
-            <div className="flex items-center gap-4.5">
-              <div className="relative shrink-0">
-                <div className="w-14 h-14 rounded-full bg-gradient-to-tr from-purple-500 via-[#8200ff] to-[#00d0f2] flex items-center justify-center p-[2px] shadow-lg">
-                  <div className="w-full h-full rounded-full bg-[#110c24] flex items-center justify-center text-white font-black text-xl uppercase tracking-wider">
-                    {user.email[0]}
+          <div className="relative z-10 w-full space-y-6">
+            
+            {/* Top Row: User Avatar, Name, License tier badge, security badge */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-6">
+              <div className="flex items-center gap-4">
+                <div className="relative shrink-0">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-purple-500 via-[#8200ff] to-[#00d0f2] flex items-center justify-center p-[2px] shadow-lg">
+                    <div className="w-full h-full rounded-2xl bg-[#09051d] flex items-[#09051d] justify-center text-white font-black text-2xl uppercase tracking-wider">
+                      <span className="leading-none m-auto">{user.email[0]}</span>
+                    </div>
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-4 border-[#0a071f] flex items-center justify-center text-white" title="Account Status Verified">
+                    <Check className="w-3 h-3 stroke-[3]" />
                   </div>
                 </div>
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-emerald-500 border-4 border-[#110c24] flex items-center justify-center text-white" title="Account Status">
-                  <Check className="w-3 h-3 stroke-[3]" />
+
+                <div className="min-w-0 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white truncate">
+                      {user.username || user.email.split('@')[0]}
+                    </h2>
+                    <motion.span 
+                      animate={{ scale: [1, 1.03, 1] }}
+                      transition={{ repeat: Infinity, duration: 4 }}
+                      className={`px-3 py-1 rounded-xl text-[9px] font-black uppercase tracking-widest shrink-0 shadow-md ${
+                        user.is_active ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950 border border-amber-300/30' : 'bg-slate-800 text-slate-400 border border-white/5'
+                      }`}
+                    >
+                      {user.is_active ? '✨ VIP PREMIUM' : 'BASIC USER'}
+                    </motion.span>
+                  </div>
+                  
+                  <p className="text-xs text-purple-200/85 font-medium truncate">{user.email}</p>
+                  
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-lg text-slate-300 font-mono">
+                      UPI ID: <span className="text-white font-bold">{user.email.split('@')[0]}@ybl</span>
+                    </span>
+                    <span className="text-[10px] text-purple-300 bg-purple-500/10 px-2.5 py-0.5 rounded-lg border border-purple-500/10 font-medium">
+                      Sponsor Ref: <span className="font-mono font-black text-white">{user.sponsor_id || "DIRECT SYSTEM"}</span>
+                    </span>
+                  </div>
                 </div>
               </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-xl font-black tracking-tight text-white truncate">
-                    {user.username || user.email.split('@')[0]}
-                  </h2>
-                  <motion.span 
-                    animate={{ scale: [1, 1.05, 1] }}
-                    transition={{ repeat: Infinity, duration: 4 }}
-                    className={`px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest shrink-0 shadow-md ${
-                      user.is_active ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-slate-950' : 'bg-slate-800 text-slate-300'
-                    }`}
-                  >
-                    {user.is_active ? '✨ VIP PREMIUM' : 'BASIC USER'}
-                  </motion.span>
+
+              {/* Security Audit Badge */}
+              <div className="hidden md:flex items-center gap-3 bg-white/5 backdrop-blur-md border border-white/10 p-3 rounded-2xl self-end sm:self-center">
+                <div className="p-2 bg-[#00baf2]/20 rounded-xl border border-[#00baf2]/30 text-[#00baf2]">
+                  <ShieldCheck className="w-5 h-5 animate-pulse" />
                 </div>
-                <p className="text-xs text-purple-200 mt-0.5 font-medium truncate opacity-80">{user.email}</p>
-                <div className="flex items-center gap-1.5 mt-1">
-                  <span className="text-[9px] bg-white/5 border border-white/10 px-2.5 py-0.5 rounded-md text-slate-300 font-mono">
-                    UPI ID: <span className="text-white font-bold">{user.email.split('@')[0]}@ybl</span>
-                  </span>
-                  <span className="text-[9px] text-purple-300">
-                    Sponsor: <span className="font-bold text-white">{user.sponsor_id || "None"}</span>
-                  </span>
+                <div className="text-left font-sans">
+                  <p className="text-[8px] font-black text-slate-450 uppercase tracking-widest leading-none">Security Node</p>
+                  <p className="text-xs font-mono font-extrabold text-slate-200 mt-1">SSL-SHA256 SECURED</p>
+                  <p className="text-[8px] text-[#00baf2] font-black uppercase tracking-wider leading-none mt-0.5">Status: Operational</p>
                 </div>
               </div>
             </div>
 
-            {/* QUICK STATS IN HEADER */}
-            <div className="grid grid-cols-2 gap-4 mt-6 border-t border-white/10 pt-5">
-              <div>
+            {/* THREE COLUMN PREMIUM BENTO FINANCIAL OVERVIEW */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 pt-2">
+              
+              {/* Card 1: Main Balance Wallet */}
+              <div className="bg-gradient-to-br from-white/5 via-white/[0.02] to-transparent border border-white/10 rounded-2xl p-5 hover:border-purple-500/30 transition-all group relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-3 opacity-15 group-hover:opacity-30 group-hover:scale-110 transition-all text-purple-400">
+                  <Coins className="w-10 h-10" />
+                </div>
                 <p className="text-[10px] font-bold text-purple-300 uppercase tracking-widest flex items-center gap-1.5">
                   <Coins className="w-3.5 h-3.5 text-purple-400" />
                   Main Wallet Balance
                 </p>
-                <p className="text-2xl sm:text-3xl font-black text-white mt-1 leading-none tracking-tight">
+                <p className="text-2xl sm:text-3xl font-black text-white mt-2 leading-none tracking-tight">
                   ₹{(user.wallet_balance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
+                <div className="mt-4 flex items-center justify-between text-[9px] text-slate-400 font-bold border-t border-white/5 pt-3">
+                  <span>FUND PROTOCOL: LIVE</span>
+                  <button onClick={() => setTab('add_money')} className="text-[#00baf2] hover:underline flex items-center gap-1 cursor-pointer">
+                    Add Money <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
-              <div>
+
+              {/* Card 2: E-Recharge Wallet */}
+              <div className="bg-gradient-to-br from-white/5 via-white/[0.02] to-transparent border border-white/10 rounded-2xl p-5 hover:border-cyan-500/30 transition-all group relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-3 opacity-15 group-hover:opacity-30 group-hover:scale-110 transition-all text-cyan-400">
+                  <Zap className="w-10 h-10" />
+                </div>
                 <p className="text-[10px] font-bold text-cyan-300 uppercase tracking-widest flex items-center gap-1.5">
                   <Wallet className="w-3.5 h-3.5 text-cyan-400" />
                   E-Recharge Balance
                 </p>
-                <p className="text-2xl sm:text-3xl font-black text-[#00baf2] mt-1 leading-none tracking-tight">
+                <p className="text-2xl sm:text-3xl font-black text-[#00baf2] mt-2 leading-none tracking-tight">
                   ₹{(user.recharge_wallet || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
+                <div className="mt-4 flex items-center justify-between text-[9px] text-slate-400 font-bold border-t border-white/5 pt-3">
+                  <span>BILL OVERREACH: OK</span>
+                  <button onClick={() => setTab('utility')} className="text-cyan-400 hover:underline flex items-center gap-1 cursor-pointer">
+                    Pay Utility <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
+
+              {/* Card 3: Passive Network Commissions */}
+              <div className="bg-gradient-to-br from-white/5 via-white/[0.02] to-transparent border border-white/10 rounded-2xl p-5 hover:border-emerald-500/30 transition-all group relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-3 opacity-15 group-hover:opacity-30 group-hover:scale-110 transition-all text-emerald-400">
+                  <TrendingUp className="w-10 h-10" />
+                </div>
+                <p className="text-[10px] font-bold text-emerald-300 uppercase tracking-widest flex items-center gap-1.5">
+                  <TrendingUp className="w-3.5 h-3.5 text-emerald-400" />
+                  Network Commissions
+                </p>
+                <p className="text-2xl sm:text-3xl font-black text-emerald-400 mt-2 leading-none tracking-tight">
+                  ₹{(user.earning_wallet || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </p>
+                <div className="mt-4 flex items-center justify-between text-[9px] text-slate-400 font-bold border-t border-white/5 pt-3">
+                  <span>COMMISSIONS INSTANT</span>
+                  <button onClick={() => setTab('withdraw')} className="text-emerald-400 hover:underline font-black flex items-center gap-1 cursor-pointer">
+                    Withdraw Bank <ChevronRight className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+
             </div>
+
           </div>
-
-          <div className="relative z-10 mt-6 bg-[#000000]/25 border border-white/10 rounded-2xl p-4 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-emerald-400">
-                <TrendingUp className="w-4 h-4" />
-              </div>
-              <div className="text-left">
-                <p className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Passive Network Commissions</p>
-                <p className="text-sm font-black text-slate-100">₹{(user.earning_wallet || 0).toFixed(2)} Available</p>
-              </div>
-            </div>
-            <button 
-              type="button" 
-              onClick={() => setTab('withdraw')} 
-              className="px-4 py-2 bg-gradient-to-r from-purple-500 to-indigo-600 hover:brightness-110 active:scale-95 text-white text-[10px] font-black rounded-xl uppercase tracking-wider transition-all shadow-md cursor-pointer"
-            >
-              Transfer to Bank
-            </button>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN: INTERACTIVE VIRTUAL 3D SMART CARD */}
-        <div className="md:col-span-5 flex items-center justify-center">
-          <motion.div 
-            whileHover={{ y: -5, rotateX: 6, rotateY: -6 }}
-            style={{ perspective: 1000 }}
-            className="w-full h-56 max-w-[360px] rounded-3xl bg-gradient-to-br from-[#12003c] via-[#400e6c] to-[#01092a] p-6 text-white border border-white/20 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] relative overflow-hidden flex flex-col justify-between cursor-pointer select-none group"
-          >
-            {/* Ambient glows on card */}
-            <div className="absolute -top-12 -left-12 w-36 h-36 bg-cyan-400 rounded-full blur-[50px] opacity-35 group-hover:opacity-50 transition-opacity"></div>
-            <div className="absolute -bottom-12 -right-12 w-36 h-36 bg-pink-500 rounded-full blur-[50px] opacity-35 group-hover:opacity-50 transition-opacity"></div>
-            
-            {/* Card top banner */}
-            <div className="flex justify-between items-start relative z-10">
-              <div className="flex flex-col">
-                <span className="text-sm font-black tracking-tighter text-white">SmartPay 360</span>
-                <span className="text-[7px] text-[#00baf2] font-extrabold tracking-[0.3em] uppercase">SECURE DIGITAL LEDGER CARD</span>
-              </div>
-              <div className="relative w-8 h-8 opacity-95 text-amber-300">
-                <svg viewBox="0 0 100 100" className="w-full h-full text-amber-400">
-                  <rect x="10" y="10" width="80" height="80" rx="15" fill="currentColor" opacity="0.15" />
-                  <rect x="25" y="25" width="50" height="50" rx="8" fill="none" stroke="currentColor" strokeWidth="6" />
-                  <line x1="10" y1="50" x2="25" y2="50" stroke="currentColor" strokeWidth="6" />
-                  <line x1="75" y1="50" x2="90" y2="50" stroke="currentColor" strokeWidth="6" />
-                  <line x1="50" y1="10" x2="50" y2="25" stroke="currentColor" strokeWidth="6" />
-                  <line x1="50" y1="75" x2="50" y2="90" stroke="currentColor" strokeWidth="6" />
-                </svg>
-              </div>
-            </div>
-
-            <div className="absolute top-1/2 left-6 transform -translate-y-1/2 opacity-30 group-hover:opacity-60 transition-opacity">
-              <svg className="w-6 h-6 text-white animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-
-            {/* Card Info details */}
-            <div className="relative z-10 space-y-3">
-              <p className="text-base sm:text-lg font-mono tracking-[0.2em] font-bold text-slate-100 p-1 bg-black/20 rounded-lg inline-block">
-                8830 5291 {user.id.slice(0,4).toUpperCase()} {user.id.slice(4,8).toUpperCase()}
-              </p>
-              
-              <div className="flex justify-between items-end">
-                <div>
-                  <p className="text-[7px] text-slate-400 uppercase tracking-widest">Card Holder</p>
-                  <p className="text-xs font-black tracking-wide truncate max-w-[170px] uppercase">
-                    {user.username ? user.username : user.email.split('@')[0]}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-[7px] text-slate-400 uppercase tracking-widest">Network Tier</p>
-                  <p className="text-xs font-mono font-bold tracking-widest text-[#00baf2] uppercase">
-                    {user.is_active ? 'PREMIUM VIP' : 'BASIC'}
-                  </p>
-                </div>
-                {/* Mastercard-style circles logo overlay */}
-                <div className="flex -space-x-3 opacity-90">
-                  <div className="w-8 h-8 rounded-full bg-[#f11a1a]"></div>
-                  <div className="w-8 h-8 rounded-full bg-[#f3bc17]/80 mix-blend-screen"></div>
-                </div>
-              </div>
-            </div>
-          </motion.div>
         </div>
       </div>
 
