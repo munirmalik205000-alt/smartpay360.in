@@ -524,7 +524,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="mt-6 border-t border-slate-100 pt-4">
               <h4 className="text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">Recent Cash Flow Orders</h4>
               <div className="space-y-2 max-h-32 overflow-y-auto pr-1 no-scrollbar">
-                {paymentRequests.map(r => (
+                {paymentRequests.filter(r => r.userId === user.id).map(r => (
                   <div key={r.id} className="p-3 bg-slate-50 rounded-xl border flex justify-between items-center text-[10px] border-slate-100">
                     <div>
                       <p className="font-extrabold text-slate-700">₹{r.amount} - Ref: {r.utr || 'N/A'}</p>
@@ -538,7 +538,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </span>
                   </div>
                 ))}
-                {paymentRequests.length === 0 && <p className="text-center text-slate-400 text-[9px] py-4 italic uppercase tracking-wider font-bold">No previous deposits found.</p>}
+                {paymentRequests.filter(r => r.userId === user.id).length === 0 && <p className="text-center text-slate-400 text-[9px] py-4 italic uppercase tracking-wider font-bold">No previous deposits found.</p>}
               </div>
             </div>
           </div>

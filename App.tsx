@@ -31,6 +31,40 @@ export default function App() {
   const [dashboardTab, setDashboardTab] = useState<'home' | 'utility' | 'shop' | 'transfer' | 'mlm' | 'add_money' | 'withdraw' | 'support'>('home');
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
+  // Fallback dashboard if userProfile is not found or failed to load
+  const activeUserProfile = userProfile || {
+    id: session?.user?.id || 'guest',
+    email: session?.user?.email || 'guest@spay.com',
+    username: session?.user?.user_metadata?.username || 'Guest User',
+    role: 'USER',
+    wallet_balance: 0,
+    earning_wallet: 0,
+    recharge_wallet: 0,
+    total_pv: 0,
+    self_pv: 0,
+    team_pv: 0,
+    direct_count: 0,
+    team_count: 0,
+    rank_name: 'Starter',
+    is_active: true,
+    sponsor_id: null,
+    mobile: '',
+    created_at: new Date().toISOString()
+  } as User;
+
+  // Compute UI legacy helper mappings
+  if (activeUserProfile) {
+    activeUserProfile.name = activeUserProfile.username;
+    activeUserProfile.phone = activeUserProfile.mobile;
+    activeUserProfile.isActivated = activeUserProfile.is_active;
+    activeUserProfile.wallets = {
+      main: Number(activeUserProfile.wallet_balance || 0),
+      commission: Number(activeUserProfile.earning_wallet || 0),
+      recharge: Number(activeUserProfile.recharge_wallet || 0),
+      cashback: 0
+    };
+  }
+
   useEffect(() => {
     const safetyTimeout = setTimeout(() => {
       setLoading(false);
@@ -647,40 +681,6 @@ export default function App() {
       console.error(err);
     }
   };
-
-  // Fallback dashboard if userProfile is not found or failed to load
-  const activeUserProfile = userProfile || {
-    id: session?.user?.id || 'guest',
-    email: session?.user?.email || 'guest@spay.com',
-    username: session?.user?.user_metadata?.username || 'Guest User',
-    role: 'USER',
-    wallet_balance: 0,
-    earning_wallet: 0,
-    recharge_wallet: 0,
-    total_pv: 0,
-    self_pv: 0,
-    team_pv: 0,
-    direct_count: 0,
-    team_count: 0,
-    rank_name: 'Starter',
-    is_active: true,
-    sponsor_id: null,
-    mobile: '',
-    created_at: new Date().toISOString()
-  } as User;
-
-  // Compute UI legacy helper mappings
-  if (activeUserProfile) {
-    activeUserProfile.name = activeUserProfile.username;
-    activeUserProfile.phone = activeUserProfile.mobile;
-    activeUserProfile.isActivated = activeUserProfile.is_active;
-    activeUserProfile.wallets = {
-      main: Number(activeUserProfile.wallet_balance || 0),
-      commission: Number(activeUserProfile.earning_wallet || 0),
-      recharge: Number(activeUserProfile.recharge_wallet || 0),
-      cashback: 0
-    };
-  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
