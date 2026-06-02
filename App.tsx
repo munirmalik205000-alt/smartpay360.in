@@ -75,22 +75,6 @@ const saveAppConfig = async (newConfig: any) => {
 
 const getPaymentRequestsList = async () => {
   try {
-    const res = await fetch('/api/payment-requests');
-    if (res.ok) {
-      const text = await res.text();
-      if (text && !text.includes('<!DOCTYPE html>')) {
-        const data = JSON.parse(text);
-        if (Array.isArray(data)) {
-          writeLocalData(LOCAL_PAYMENTS_KEY, data);
-          return data;
-        }
-      }
-    }
-  } catch (err) {
-    console.warn("Express payments GET failed:", err);
-  }
-
-  try {
     const { data, error } = await supabase
       .from('payment_requests')
       .select('*')
@@ -109,9 +93,27 @@ const getPaymentRequestsList = async () => {
       }));
       writeLocalData(LOCAL_PAYMENTS_KEY, mapped);
       return mapped;
+    } else if (error) {
+      console.warn("Supabase payments list fetch error:", error.message);
     }
   } catch (err) {
     console.warn("Supabase payments GET failed:", err);
+  }
+
+  try {
+    const res = await fetch('/api/payment-requests');
+    if (res.ok) {
+      const text = await res.text();
+      if (text && !text.includes('<!DOCTYPE html>')) {
+        const data = JSON.parse(text);
+        if (Array.isArray(data)) {
+          writeLocalData(LOCAL_PAYMENTS_KEY, data);
+          return data;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Express payments GET failed:", err);
   }
 
   return readLocalData(LOCAL_PAYMENTS_KEY, []);
@@ -129,6 +131,35 @@ const submitPaymentRequest = async (payload: { userId: string, userName: string,
   writeLocalData(LOCAL_PAYMENTS_KEY, [newReq, ...localList]);
 
   try {
+    const { error } = await supabase
+      .from('payment_requests')
+      .insert([{
+        id: newReq.id,
+        user_id: newReq.userId,
+        user_name: newReq.userName,
+        amount: Number(newReq.amount),
+        utr: newReq.utr,
+        screenshot: newReq.screenshot,
+        status: newReq.status,
+        created_at: newReq.createdAt
+      }]);
+    if (!error) {
+      try {
+        await fetch('/api/payment-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (_) {}
+      return newReq;
+    } else {
+      console.warn("Supabase payments insert error:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase payments INSERT failed:", err);
+  }
+
+  try {
     const res = await fetch('/api/payment-requests', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -144,26 +175,6 @@ const submitPaymentRequest = async (payload: { userId: string, userName: string,
     console.warn("Express payments POST failed:", err);
   }
 
-  try {
-    const { error } = await supabase
-      .from('payment_requests')
-      .insert([{
-        id: newReq.id,
-        user_id: newReq.userId,
-        user_name: newReq.userName,
-        amount: Number(newReq.amount),
-        utr: newReq.utr,
-        screenshot: newReq.screenshot,
-        status: newReq.status,
-        created_at: newReq.createdAt
-      }]);
-    if (!error) {
-      return newReq;
-    }
-  } catch (err) {
-    console.warn("Supabase payments INSERT failed:", err);
-  }
-
   return newReq;
 };
 
@@ -171,6 +182,27 @@ const updatePaymentRequestStatus = async (requestId: string, status: 'approved' 
   const localList = readLocalData(LOCAL_PAYMENTS_KEY, []);
   const updatedLocal = localList.map((item: any) => item.id === requestId ? { ...item, status } : item);
   writeLocalData(LOCAL_PAYMENTS_KEY, updatedLocal);
+
+  try {
+    const { error } = await supabase
+      .from('payment_requests')
+      .update({ status })
+      .eq('id', requestId);
+    if (!error) {
+      try {
+        await fetch('/api/payment-requests/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: requestId, status })
+        });
+      } catch (_) {}
+      return true;
+    } else {
+      console.warn("Supabase payments status update error:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase payments UPDATE failed:", err);
+  }
 
   try {
     const res = await fetch('/api/payment-requests/update', {
@@ -185,38 +217,10 @@ const updatePaymentRequestStatus = async (requestId: string, status: 'approved' 
     console.warn("Express payments UPDATE failed:", err);
   }
 
-  try {
-    const { error } = await supabase
-      .from('payment_requests')
-      .update({ status })
-      .eq('id', requestId);
-    if (!error) {
-      return true;
-    }
-  } catch (err) {
-    console.warn("Supabase payments UPDATE failed:", err);
-  }
-
   return true;
 };
 
 const getWithdrawalRequestsList = async () => {
-  try {
-    const res = await fetch('/api/withdrawal-requests');
-    if (res.ok) {
-      const text = await res.text();
-      if (text && !text.includes('<!DOCTYPE html>')) {
-        const data = JSON.parse(text);
-        if (Array.isArray(data)) {
-          writeLocalData(LOCAL_WITHDRAWALS_KEY, data);
-          return data;
-        }
-      }
-    }
-  } catch (err) {
-    console.warn("Express withdrawals GET failed:", err);
-  }
-
   try {
     const { data, error } = await supabase
       .from('withdrawal_requests')
@@ -235,9 +239,27 @@ const getWithdrawalRequestsList = async () => {
       }));
       writeLocalData(LOCAL_WITHDRAWALS_KEY, mapped);
       return mapped;
+    } else if (error) {
+      console.warn("Supabase withdrawals get list error:", error.message);
     }
   } catch (err) {
     console.warn("Supabase withdrawals GET failed:", err);
+  }
+
+  try {
+    const res = await fetch('/api/withdrawal-requests');
+    if (res.ok) {
+      const text = await res.text();
+      if (text && !text.includes('<!DOCTYPE html>')) {
+        const data = JSON.parse(text);
+        if (Array.isArray(data)) {
+          writeLocalData(LOCAL_WITHDRAWALS_KEY, data);
+          return data;
+        }
+      }
+    }
+  } catch (err) {
+    console.warn("Express withdrawals GET failed:", err);
   }
 
   return readLocalData(LOCAL_WITHDRAWALS_KEY, []);
@@ -255,6 +277,34 @@ const submitWithdrawalRequest = async (payload: { userId: string, userName: stri
   writeLocalData(LOCAL_WITHDRAWALS_KEY, [newReq, ...localList]);
 
   try {
+    const { error } = await supabase
+      .from('withdrawal_requests')
+      .insert([{
+        id: newReq.id,
+        user_id: newReq.userId,
+        user_name: newReq.userName,
+        amount: Number(newReq.amount),
+        status: newReq.status,
+        created_at: newReq.createdAt,
+        bank_details: newReq.bankDetails
+      }]);
+    if (!error) {
+      try {
+        await fetch('/api/withdrawal-requests', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (_) {}
+      return newReq;
+    } else {
+      console.warn("Supabase withdrawals insert error:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase withdrawals INSERT failed:", err);
+  }
+
+  try {
     const res = await fetch('/api/withdrawal-requests', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -270,25 +320,6 @@ const submitWithdrawalRequest = async (payload: { userId: string, userName: stri
     console.warn("Express withdrawals POST failed:", err);
   }
 
-  try {
-    const { error } = await supabase
-      .from('withdrawal_requests')
-      .insert([{
-        id: newReq.id,
-        user_id: newReq.userId,
-        user_name: newReq.userName,
-        amount: Number(newReq.amount),
-        status: newReq.status,
-        created_at: newReq.createdAt,
-        bank_details: newReq.bankDetails
-      }]);
-    if (!error) {
-      return newReq;
-    }
-  } catch (err) {
-    console.warn("Supabase withdrawals INSERT failed:", err);
-  }
-
   return newReq;
 };
 
@@ -296,6 +327,27 @@ const updateWithdrawalRequestStatus = async (requestId: string, status: 'approve
   const localList = readLocalData(LOCAL_WITHDRAWALS_KEY, []);
   const updatedLocal = localList.map((item: any) => item.id === requestId ? { ...item, status } : item);
   writeLocalData(LOCAL_WITHDRAWALS_KEY, updatedLocal);
+
+  try {
+    const { error } = await supabase
+      .from('withdrawal_requests')
+      .update({ status })
+      .eq('id', requestId);
+    if (!error) {
+      try {
+        await fetch('/api/withdrawal-requests/update', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: requestId, status })
+        });
+      } catch (_) {}
+      return true;
+    } else {
+      console.warn("Supabase withdrawals status update error:", error.message);
+    }
+  } catch (err) {
+    console.warn("Supabase withdrawals UPDATE failed:", err);
+  }
 
   try {
     const res = await fetch('/api/withdrawal-requests/update', {
@@ -308,18 +360,6 @@ const updateWithdrawalRequestStatus = async (requestId: string, status: 'approve
     }
   } catch (err) {
     console.warn("Express withdrawals UPDATE failed:", err);
-  }
-
-  try {
-    const { error } = await supabase
-      .from('withdrawal_requests')
-      .update({ status })
-      .eq('id', requestId);
-    if (!error) {
-      return true;
-    }
-  } catch (err) {
-    console.warn("Supabase withdrawals UPDATE failed:", err);
   }
 
   return true;
